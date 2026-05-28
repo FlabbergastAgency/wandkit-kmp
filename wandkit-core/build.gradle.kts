@@ -10,6 +10,7 @@ group = "com.flabbergast"
 version = "1.0.0"
 
 kotlin {
+    explicitApi()
     androidLibrary {
         namespace = "com.flabbergast.wandkit.core"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -30,6 +31,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(libs.kotlinx.coroutines.core)
         }
 
         commonTest.dependencies {
