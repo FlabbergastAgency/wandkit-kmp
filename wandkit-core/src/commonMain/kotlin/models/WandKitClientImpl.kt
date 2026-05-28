@@ -1,4 +1,4 @@
-package com.flabbergast.wandkit.core.core
+package com.flabbergast.wandkit.core.models
 
 import com.flabbergast.wandkit.core.config.WandKitConfig
 import kotlin.time.Instant

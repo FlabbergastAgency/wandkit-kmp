@@ -14,4 +14,8 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "wandkit-kmp"
+
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 include(":wandkit-core")
+include(":wandkit-ui-compose")

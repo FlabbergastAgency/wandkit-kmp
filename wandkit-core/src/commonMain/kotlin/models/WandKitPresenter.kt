@@ -1,4 +1,4 @@
-package com.flabbergast.wandkit.core.core
+package com.flabbergast.wandkit.core.models
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow

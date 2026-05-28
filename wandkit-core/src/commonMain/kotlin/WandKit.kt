@@ -1,9 +1,9 @@
 package com.flabbergast.wandkit.core
 
 import com.flabbergast.wandkit.core.config.WandKitConfig
-import com.flabbergast.wandkit.core.core.WandKitClient
-import com.flabbergast.wandkit.core.core.WandKitClientImpl
-import com.flabbergast.wandkit.core.core.WandKitPresenter
+import com.flabbergast.wandkit.core.models.WandKitClient
+import com.flabbergast.wandkit.core.models.WandKitClientImpl
+import com.flabbergast.wandkit.core.models.WandKitPresenter
 import kotlin.time.Instant
 
 public object WandKit {
