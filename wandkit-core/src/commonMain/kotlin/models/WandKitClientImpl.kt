@@ -13,7 +13,7 @@ internal class WandKitClientImpl(
         properties: Map<String, String>,
         occurredAt: Instant?,
     ) {
-        WandKitSdkContainer.get().eventsRepository.reportEvent(
+        WandKitSdkContainer.also { println("[matko] client getting container")}.get().eventsRepository.reportEvent(
             WandKitEvent(
                 name = name,
                 properties = properties,

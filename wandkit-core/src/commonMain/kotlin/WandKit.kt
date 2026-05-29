@@ -12,6 +12,7 @@ public object WandKit {
     public fun configure(
         config: WandKitConfig,
     ) {
+        println("[matko] configuring wandkit")
         WandKitSdkContainer.init()
         instance = WandKitClientImpl(config)
     }

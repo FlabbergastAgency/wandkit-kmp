@@ -8,7 +8,7 @@ public interface WandKitComponentFactory {
     public fun create(context: ComponentContext): WandKitComponent
 
     public companion object {
-        public fun get(): WandKitComponentFactory = WandKitComponentFactoryImpl(WandKitSdkContainer.get())
+        public fun get(): WandKitComponentFactory = WandKitComponentFactoryImpl(WandKitSdkContainer.also { println("[matko] getting container") }.get())
     }
 }
 
