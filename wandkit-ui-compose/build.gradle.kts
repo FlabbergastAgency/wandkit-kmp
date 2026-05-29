@@ -54,6 +54,13 @@ kotlin {
                 implementation(libs.compose.material3)
                 implementation(libs.compose.ui)
 
+                implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.kotlinx.serialization.core)
+                implementation(libs.kotlinx.serialization.json)
+
+                implementation(libs.decompose)
+                implementation(libs.essenty.lifecycle.coroutines)
+                implementation(libs.decompose.extensions.compose)
             }
         }
 
@@ -65,6 +72,7 @@ kotlin {
 
         androidMain {
             dependencies {
+                implementation(libs.compose.activity)
             }
         }
 
@@ -78,6 +86,9 @@ kotlin {
 
         iosMain {
             dependencies {
+                api(libs.decompose)
+                api(libs.essenty.state.keeper)
+                api(libs.essenty.lifecycle)
             }
         }
     }

@@ -5,4 +5,6 @@ plugins {
     alias(libs.plugins.android.lint) apply false
     alias(libs.plugins.composeCompiler) apply false
     alias(libs.plugins.composeMultiplatform) apply false
+    alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.kotlinxSerialization) apply false
 }

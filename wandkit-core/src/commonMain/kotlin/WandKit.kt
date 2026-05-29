@@ -1,9 +1,9 @@
 package com.flabbergast.wandkit.core
 
 import com.flabbergast.wandkit.core.config.WandKitConfig
+import com.flabbergast.wandkit.core.di.WandKitSdkContainer
 import com.flabbergast.wandkit.core.models.WandKitClient
 import com.flabbergast.wandkit.core.models.WandKitClientImpl
-import com.flabbergast.wandkit.core.models.WandKitPresenter
 import kotlin.time.Instant
 
 public object WandKit {
@@ -11,9 +11,9 @@ public object WandKit {
 
     public fun configure(
         config: WandKitConfig,
-        presenter: WandKitPresenter,
     ) {
-        instance = WandKitClientImpl(config, presenter)
+        WandKitSdkContainer.init()
+        instance = WandKitClientImpl(config)
     }
 
     public fun event(

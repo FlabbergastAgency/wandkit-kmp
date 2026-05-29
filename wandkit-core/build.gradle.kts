@@ -1,9 +1,13 @@
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.vanniktech.mavenPublish)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlinxSerialization)
 }
 
 group = "com.flabbergast"
@@ -29,13 +33,35 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
 
+    targets.withType<KotlinNativeTarget> {
+        binaries {
+            framework {
+                baseName = "WandKitCore"
+                isStatic = false
+                export(libs.decompose)
+                export(libs.essenty.lifecycle)
+                export(libs.essenty.state.keeper)
+            }
+        }
+    }
+
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.decompose)
+            implementation(libs.essenty.lifecycle.coroutines)
+            implementation(libs.kotlinx.serialization.core)
+            implementation(libs.kotlinx.serialization.json)
         }
 
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+        }
+
+        iosMain.dependencies {
+            api(libs.decompose)
+            api(libs.essenty.state.keeper)
+            api(libs.essenty.lifecycle)
         }
     }
 }
