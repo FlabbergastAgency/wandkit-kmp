@@ -7,14 +7,13 @@ import com.flabbergast.wandkit.core.models.WandKitClientImpl
 import kotlin.time.Instant
 
 public object WandKit {
-    private var instance: WandKitClient? = null
+    private val instance: WandKitClient
+        get() = WandKitSdkContainer.get().wandKitClient
 
     public fun configure(
         config: WandKitConfig,
     ) {
-        println("[matko] configuring wandkit")
-        WandKitSdkContainer.init()
-        instance = WandKitClientImpl(config)
+        WandKitSdkContainer.init(config)
     }
 
     public fun event(

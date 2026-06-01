@@ -52,6 +52,9 @@ kotlin {
             implementation(libs.essenty.lifecycle.coroutines)
             implementation(libs.kotlinx.serialization.core)
             implementation(libs.kotlinx.serialization.json)
+
+            implementation(project.dependencies.platform(libs.ktor.bom))
+            implementation(libs.bundles.ktor)
         }
 
         commonTest.dependencies {
@@ -62,6 +65,11 @@ kotlin {
             api(libs.decompose)
             api(libs.essenty.state.keeper)
             api(libs.essenty.lifecycle)
+            implementation(libs.ktor.client.darwin)
+        }
+
+        androidMain.dependencies {
+            implementation(libs.ktor.client.okhttp)
         }
     }
 }

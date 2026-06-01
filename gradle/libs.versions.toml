@@ -16,6 +16,7 @@ essenty = "2.5.0"
 kotlinx-serialization = "1.11.0"
 ksp = "2.3.6"
 compose-activity = "1.13.0"
+ktor = "3.5.0"
 
 [libraries]
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
@@ -30,6 +31,14 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 essenty-lifecycle = { module = "com.arkivanov.essenty:lifecycle", version.ref = "essenty" }
 essenty-state-keeper = { module = "com.arkivanov.essenty:state-keeper", version.ref = "essenty" }
 essenty-lifecycle-coroutines = { module = "com.arkivanov.essenty:lifecycle-coroutines", version.ref = "essenty" }
+
+ktor-bom = { group = "io.ktor", name = "ktor-bom", version.ref = "ktor" }
+ktor-core = { module = "io.ktor:ktor-client-core" }
+ktor-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation" }
+ktor-json = { module = "io.ktor:ktor-serialization-kotlinx-json" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp" }
+
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlinStdlib" }
@@ -47,3 +56,10 @@ composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-mu
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlinxSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+
+[bundles]
+ktor = [
+    "ktor-core",
+    "ktor-content-negotiation",
+    "ktor-json",
+]
