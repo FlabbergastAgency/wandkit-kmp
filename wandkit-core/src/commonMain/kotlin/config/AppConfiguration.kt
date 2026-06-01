@@ -11,7 +11,7 @@ private const val BASE_URL = "http://localhost:8080"
 
 internal fun createAppConfiguration() = AppConfiguration(
     baseUrl = BASE_URL,
-    libraryVersion = PlatformInfo.libraryVersion,
+    libraryVersion = LibraryBuildInfo.VERSION,
     platformName = PlatformInfo.name,
     platformVersion = PlatformInfo.version,
 )

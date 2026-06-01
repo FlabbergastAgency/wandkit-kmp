@@ -13,6 +13,10 @@ plugins {
 group = "com.flabbergast"
 version = "1.0.0"
 
+apply(from = rootProject.file("gradle/wandkit-core-build-info.gradle.kts"))
+
+val generatedBuildInfoDir = extra["generatedBuildInfoDir"]!!
+
 kotlin {
     explicitApi()
     androidLibrary {
@@ -46,15 +50,18 @@ kotlin {
     }
 
     sourceSets {
-        commonMain.dependencies {
-            implementation(libs.kotlinx.coroutines.core)
-            implementation(libs.decompose)
-            implementation(libs.essenty.lifecycle.coroutines)
-            implementation(libs.kotlinx.serialization.core)
-            implementation(libs.kotlinx.serialization.json)
+        commonMain {
+            kotlin.srcDir(generatedBuildInfoDir)
+            dependencies {
+                implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.decompose)
+                implementation(libs.essenty.lifecycle.coroutines)
+                implementation(libs.kotlinx.serialization.core)
+                implementation(libs.kotlinx.serialization.json)
 
-            implementation(project.dependencies.platform(libs.ktor.bom))
-            implementation(libs.bundles.ktor)
+                implementation(project.dependencies.platform(libs.ktor.bom))
+                implementation(libs.bundles.ktor)
+            }
         }
 
         commonTest.dependencies {
