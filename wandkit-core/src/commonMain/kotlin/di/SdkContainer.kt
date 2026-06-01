@@ -2,7 +2,9 @@ package com.flabbergast.wandkit.core.di
 
 import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.flabbergast.wandkit.core.WandKit
+import com.flabbergast.wandkit.core.config.AppConfiguration
 import com.flabbergast.wandkit.core.config.WandKitConfig
+import com.flabbergast.wandkit.core.config.createAppConfiguration
 import com.flabbergast.wandkit.core.data.events.EventsApi
 import com.flabbergast.wandkit.core.data.events.EventsApiImpl
 import com.flabbergast.wandkit.core.data.events.EventsRepositoryImpl
@@ -24,6 +26,8 @@ internal class WandKitSdkContainer private constructor(
 ): InstanceKeeper.Instance {
     internal val backgroundDispatcher = BackgroundDispatcher()
     internal val wandKitClient = WandKitClientImpl(backgroundDispatcher)
+
+    internal val appConfiguration = createAppConfiguration().also { println("[matko] $it") }
 
     internal val json: Json by lazy { createJson() }
 

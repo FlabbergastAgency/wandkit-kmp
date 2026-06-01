@@ -83,7 +83,7 @@ mavenPublishing {
 
     pom {
         name = "Wandkit Core"
-        description = "A KMP wandkit-core which contains the core logic of Wandkit."
+        description = "A KMP library which contains the core logic of WandKit."
         inceptionYear = "2026"
         url = "https://github.com/flabbergast-agency/wandkit-kmp"
 //        licenses {
