@@ -38,6 +38,7 @@ ktor-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation" 
 ktor-json = { module = "io.ktor:ktor-serialization-kotlinx-json" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp" }
+ktor-logging = { module = "io.ktor:ktor-client-logging" }
 
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
@@ -62,4 +63,5 @@ ktor = [
     "ktor-core",
     "ktor-content-negotiation",
     "ktor-json",
+    "ktor-logging", # TODO: remove before release, debug only
 ]

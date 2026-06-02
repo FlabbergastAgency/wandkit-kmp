@@ -3,7 +3,6 @@ package com.flabbergast.wandkit.core
 import com.flabbergast.wandkit.core.config.WandKitConfig
 import com.flabbergast.wandkit.core.di.WandKitSdkContainer
 import com.flabbergast.wandkit.core.models.WandKitClient
-import com.flabbergast.wandkit.core.models.WandKitClientImpl
 import kotlin.time.Instant
 
 public object WandKit {
@@ -16,12 +15,22 @@ public object WandKit {
         WandKitSdkContainer.init(config)
     }
 
+    public fun identify(
+        userId: String,
+    ) {
+        WandKitSdkContainer.get().setUserId(userId)
+    }
+
+    public fun clearUser() {
+        WandKitSdkContainer.get().setUserId(null)
+    }
+
     public fun event(
         name: String,
         properties: Map<String, String> = emptyMap(),
         occurredAt: Instant? = null,
     ) {
-        instance?.event(
+        instance.trackEvent(
             name = name,
             properties = properties,
             occurredAt = occurredAt,

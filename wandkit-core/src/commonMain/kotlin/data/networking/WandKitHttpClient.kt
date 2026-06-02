@@ -1,25 +1,53 @@
 package com.flabbergast.wandkit.core.data.networking
 
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpSend
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.plugin
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.request.accept
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import kotlinx.serialization.json.Json
 import kotlin.jvm.JvmInline
+
+private const val REQUEST_TIMEOUT_MILLIS = 30_000L
+private const val CONNECT_TIMEOUT_MILLIS = 10_000L
 
 @JvmInline
 internal value class WandKitHttpClient(
     val client: HttpClient
 )
 
+internal expect fun platformHttpLogger(): Logger
+
 internal fun createHttpClient(
     json: Json,
     commonInterceptor: CommonInterceptor,
 ): WandKitHttpClient {
     val client = HttpClient {
+        install(DefaultRequest) {
+            contentType(ContentType.Application.Json)
+            accept(ContentType.Application.Json)
+        }
+
         install(ContentNegotiation) {
             json(json)
+        }
+
+        install(Logging) {
+            logger = platformHttpLogger()
+            level = LogLevel.ALL
+        }
+
+        install(HttpTimeout) {
+            requestTimeoutMillis = REQUEST_TIMEOUT_MILLIS
+            connectTimeoutMillis = CONNECT_TIMEOUT_MILLIS
         }
     }
 

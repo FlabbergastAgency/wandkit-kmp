@@ -17,11 +17,15 @@ internal class WandKitApi<ApiType>(
     ): Result<RemoteSuccess<ApiResult>> =
         runCatching {
             block()
+        }.onFailure {
+            println("[matko] network call failure $it")
         }.mapCatching { response ->
             val body = response.response.body<ApiResult>()
             RemoteSuccess(
                 statusCode = response.response.status,
                 data = body,
             )
+        }.onFailure {
+            println("[matko] network response mapping failure $it")
         }
 }

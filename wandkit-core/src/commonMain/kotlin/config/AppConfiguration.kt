@@ -5,13 +5,15 @@ internal data class AppConfiguration(
     val libraryVersion: String,
     val platformName: String,
     val platformVersion: String,
+    val isLoggingEnabled: Boolean,
 )
 
-private const val BASE_URL = "http://localhost:8080"
+private const val BASE_URL = "https://api.wandkit.flabic.com"
 
-internal fun createAppConfiguration() = AppConfiguration(
+internal fun createAppConfiguration(isLoggingEnabled: Boolean) = AppConfiguration(
     baseUrl = BASE_URL,
     libraryVersion = LibraryBuildInfo.VERSION,
     platformName = PlatformInfo.name,
     platformVersion = PlatformInfo.version,
+    isLoggingEnabled = isLoggingEnabled,
 )

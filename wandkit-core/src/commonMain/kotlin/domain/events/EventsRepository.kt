@@ -2,5 +2,8 @@ package com.flabbergast.wandkit.core.domain.events
 
 internal interface EventsRepository {
 
-    suspend fun trackEvent(event: WandKitEvent)
+    suspend fun trackEvent(
+        event: WandKitEvent,
+        identifyInfo: IdentifyInfo,
+    )
 }

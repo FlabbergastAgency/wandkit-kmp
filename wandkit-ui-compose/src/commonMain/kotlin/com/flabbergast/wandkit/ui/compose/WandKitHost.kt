@@ -8,7 +8,6 @@ import com.flabbergast.wandkit.core.components.root.WandKitComponentFactory
 fun WandKitHost() {
     val componentContext = rememberWandKitComponentContext()
     val wandKitComponent = retain(componentContext) {
-        println("[matko] WandKitHost composable retaining factory")
         WandKitComponentFactory.get().create(context = componentContext)
     }
 

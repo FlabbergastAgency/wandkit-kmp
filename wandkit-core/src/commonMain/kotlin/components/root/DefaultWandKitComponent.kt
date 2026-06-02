@@ -13,11 +13,6 @@ internal class DefaultWandKitComponent(
     componentContext: ComponentContext,
     private val eventsRepository: EventsRepository,
 ): WandKitComponent, ComponentContext by componentContext {
-    var state = 0
-    init {
-        println("[matko] test root component init $state")
-        state += 1
-    }
     private val navigation = StackNavigation<Config>()
 
     override val stack: Value<ChildStack<*, WandKitComponent.Child>> =
