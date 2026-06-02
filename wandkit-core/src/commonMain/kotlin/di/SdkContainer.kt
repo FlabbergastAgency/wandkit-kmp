@@ -13,9 +13,14 @@ import com.flabbergast.wandkit.core.data.networking.createHttpClient
 import com.flabbergast.wandkit.core.data.networking.createJson
 import com.flabbergast.wandkit.core.domain.events.EventsRepository
 import com.flabbergast.wandkit.core.domain.events.IdentifyInfo
+import com.flabbergast.wandkit.core.domain.events.TrackEventUseCase
+import com.flabbergast.wandkit.core.domain.events.createTrackEventUseCase
+import com.flabbergast.wandkit.core.domain.forms.FeedbackFormController
+import com.flabbergast.wandkit.core.domain.forms.createFeedbackFormController
+import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
+import com.flabbergast.wandkit.core.domain.infrastructure.logger.createAppLogger
 import com.flabbergast.wandkit.core.domain.threading.BackgroundDispatcher
-import com.flabbergast.wandkit.core.models.WandKitClient
-import com.flabbergast.wandkit.core.models.WandKitClientImpl
+import com.flabbergast.wandkit.core.models.createWandKitClient
 import kotlinx.serialization.json.Json
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -25,9 +30,11 @@ internal class WandKitSdkContainer private constructor(
     private val config: WandKitConfig,
 ): InstanceKeeper.Instance {
     internal val backgroundDispatcher = BackgroundDispatcher()
-    internal val wandKitClient: WandKitClient = WandKitClientImpl(backgroundDispatcher)
+    internal val wandKitClient = createWandKitClient()
 
     internal val appConfiguration = createAppConfiguration(config.isDebugLoggingEnabled)
+
+    internal val logger: Logger by lazy { createAppLogger(appConfiguration.logLevel) }
 
     internal var externalUserId: String? = null
         private set
@@ -44,14 +51,31 @@ internal class WandKitSdkContainer private constructor(
     internal val httpClient: WandKitHttpClient by lazy { createHttpClient(
         json = json,
         commonInterceptor = createCommonInterceptor(config.apiKey),
+        appLogger = logger,
     ) }
 
     internal val eventsApi: WandKitApi<EventsApi> by lazy {
-        createEventsApi(httpClient, appConfiguration.baseUrl)
+        createEventsApi(
+            httpClient = httpClient,
+            baseUrl = appConfiguration.baseUrl,
+            logger = logger,
+        )
     }
 
-    internal val eventsRepository: EventsRepository by lazy { createEventsRepository(eventsApi, appConfiguration) }
+    internal val eventsRepository: EventsRepository by lazy {
+        createEventsRepository(
+            eventsApi = eventsApi,
+            appConfiguration = appConfiguration,
+            logger = logger,
+        )
+    }
 
+    internal val feedbackFormController: FeedbackFormController by lazy {
+        createFeedbackFormController(logger)
+    }
+
+    internal val trackEventUseCase: TrackEventUseCase
+        get() = createTrackEventUseCase(eventsRepository, feedbackFormController)
 
     internal companion object {
         private var instance: WandKitSdkContainer? = null

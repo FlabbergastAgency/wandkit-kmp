@@ -8,27 +8,32 @@ import com.flabbergast.wandkit.core.data.networking.WandKitApi
 import com.flabbergast.wandkit.core.domain.events.EventsRepository
 import com.flabbergast.wandkit.core.domain.events.IdentifyInfo
 import com.flabbergast.wandkit.core.domain.events.WandKitEvent
+import com.flabbergast.wandkit.core.domain.forms.models.FeedbackForm
+import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 
 internal fun createEventsRepository(
     eventsApi: WandKitApi<EventsApi>,
     appConfiguration: AppConfiguration,
+    logger: Logger,
 ): EventsRepository =
     EventsRepositoryImpl(
         eventsApi = eventsApi,
         appConfiguration = appConfiguration,
+        logger = logger,
     )
 
-internal class EventsRepositoryImpl(
+private const val LOGGER_TAG = "[Event]"
+
+private class EventsRepositoryImpl(
     private val eventsApi: WandKitApi<EventsApi>,
     private val appConfiguration: AppConfiguration,
+    private val logger: Logger,
 ) : EventsRepository {
     override suspend fun trackEvent(
         event: WandKitEvent,
         identifyInfo: IdentifyInfo,
-    ) {
-        println("[matko] EventsRepoImpl trackEvent")
+    ): FeedbackForm? {
         eventsApi {
-            println("[matko] eventsApi trackEvent")
             trackEvent(
                 EventRequestDto(
                     eventName = event.name,
@@ -38,7 +43,10 @@ internal class EventsRepositoryImpl(
                     sdk = appConfiguration.toEventRequestSdk(),
                 )
             )
+        }.onSuccess {
+            logger.debug(LOGGER_TAG, "Event \"${event.name}\" successfully sent.")
         }
+        return null // todo matko return form
     }
 
     private fun IdentifyInfo.toEventRequestUser() = EventRequestUserDto(

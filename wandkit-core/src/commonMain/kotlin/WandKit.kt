@@ -6,7 +6,7 @@ import com.flabbergast.wandkit.core.models.WandKitClient
 import kotlin.time.Instant
 
 public object WandKit {
-    private val instance: WandKitClient
+    private val client: WandKitClient
         get() = WandKitSdkContainer.get().wandKitClient
 
     public fun configure(
@@ -30,7 +30,7 @@ public object WandKit {
         properties: Map<String, String> = emptyMap(),
         occurredAt: Instant? = null,
     ) {
-        instance.trackEvent(
+        client.trackEvent(
             name = name,
             properties = properties,
             occurredAt = occurredAt,

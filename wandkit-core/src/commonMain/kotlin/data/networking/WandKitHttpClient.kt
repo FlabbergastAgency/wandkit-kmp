@@ -1,5 +1,6 @@
 package com.flabbergast.wandkit.core.data.networking
 
+import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpSend
@@ -9,7 +10,6 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.plugin
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.request.accept
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -24,11 +24,12 @@ internal value class WandKitHttpClient(
     val client: HttpClient
 )
 
-internal expect fun platformHttpLogger(): Logger
+private const val LOGGER_TAG = "[KtorHttpClient]"
 
 internal fun createHttpClient(
     json: Json,
     commonInterceptor: CommonInterceptor,
+    appLogger: Logger,
 ): WandKitHttpClient {
     val client = HttpClient {
         install(DefaultRequest) {
@@ -41,7 +42,12 @@ internal fun createHttpClient(
         }
 
         install(Logging) {
-            logger = platformHttpLogger()
+            logger = object : io.ktor.client.plugins.logging.Logger {
+                override fun log(message: String) {
+                    appLogger.debug(LOGGER_TAG, message)
+                }
+
+            }
             level = LogLevel.ALL
         }
 

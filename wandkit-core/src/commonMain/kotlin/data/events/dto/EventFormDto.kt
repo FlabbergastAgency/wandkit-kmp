@@ -12,7 +12,7 @@ internal data class EventFormDto(
     @SerialName("title")
     val title: String,
     @SerialName("description")
-    val description: String,
+    val description: String?,
     @SerialName("pages")
     val pages: List<EventPageDto>,
 )

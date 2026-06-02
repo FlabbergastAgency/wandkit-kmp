@@ -1,9 +1,13 @@
 package com.flabbergast.wandkit.core.data.networking
 
+import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import io.ktor.client.call.body
+
+private const val LOGGER_TAG = "[WandKitApi]"
 
 internal class WandKitApi<ApiType>(
     private val api: ApiType,
+    private val logger: Logger,
 ) {
     suspend inline operator fun <reified ApiResult : Any> invoke(
         crossinline apiCall: suspend ApiType.() -> WandKitHttpResponse<ApiResult>,
@@ -17,8 +21,6 @@ internal class WandKitApi<ApiType>(
     ): Result<RemoteSuccess<ApiResult>> =
         runCatching {
             block()
-        }.onFailure {
-            println("[matko] network call failure $it")
         }.mapCatching { response ->
             val body = response.response.body<ApiResult>()
             RemoteSuccess(
@@ -26,6 +28,6 @@ internal class WandKitApi<ApiType>(
                 data = body,
             )
         }.onFailure {
-            println("[matko] network response mapping failure $it")
+            logger.warn(LOGGER_TAG, "Network call failed.", it)
         }
 }

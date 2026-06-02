@@ -12,7 +12,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        initWandkit(apiKey = "abc")
+        initWandkit(apiKey = "wk_3H6I5RYCcP1_sTONVQodC7sp6mioBzjNFwd3p6zdAg8", isDebugLoggingEnabled = true)
 
         setContent {
             App()

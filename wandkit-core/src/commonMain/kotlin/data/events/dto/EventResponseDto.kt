@@ -8,5 +8,5 @@ internal data class EventResponseDto(
     @SerialName("event_id")
     val eventId: String,
     @SerialName("form")
-    val form: EventFormDto,
+    val form: EventFormDto?,
 )

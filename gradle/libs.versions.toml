@@ -63,5 +63,5 @@ ktor = [
     "ktor-core",
     "ktor-content-negotiation",
     "ktor-json",
-    "ktor-logging", # TODO: remove before release, debug only
+    "ktor-logging",
 ]
