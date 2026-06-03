@@ -13,7 +13,7 @@ internal fun createWandKitClient(): WandKitClient = WandKitClientImpl()
 private class WandKitClientImpl : WandKitClient {
     private val container: WandKitSdkContainer
         get() = WandKitSdkContainer.get()
-    private val scope = CoroutineScope(container.backgroundDispatcher.dispatcher + SupervisorJob())
+    private val scope by lazy { CoroutineScope(container.backgroundDispatcher.dispatcher + SupervisorJob()) }
 
     override fun trackEvent(
         name: String,

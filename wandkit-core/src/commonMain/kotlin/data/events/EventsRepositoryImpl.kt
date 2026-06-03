@@ -4,6 +4,9 @@ import com.flabbergast.wandkit.core.config.AppConfiguration
 import com.flabbergast.wandkit.core.data.events.dto.EventRequestDto
 import com.flabbergast.wandkit.core.data.events.dto.EventRequestSdkDto
 import com.flabbergast.wandkit.core.data.events.dto.EventRequestUserDto
+import com.flabbergast.wandkit.core.data.events.mappers.toEventRequestSdk
+import com.flabbergast.wandkit.core.data.events.mappers.toEventRequestUser
+import com.flabbergast.wandkit.core.data.events.mappers.toFeedbackForm
 import com.flabbergast.wandkit.core.data.networking.WandKitApi
 import com.flabbergast.wandkit.core.domain.events.EventsRepository
 import com.flabbergast.wandkit.core.domain.events.IdentifyInfo
@@ -32,7 +35,7 @@ private class EventsRepositoryImpl(
     override suspend fun trackEvent(
         event: WandKitEvent,
         identifyInfo: IdentifyInfo,
-    ): FeedbackForm? {
+    ): FeedbackForm? =
         eventsApi {
             trackEvent(
                 EventRequestDto(
@@ -43,19 +46,11 @@ private class EventsRepositoryImpl(
                     sdk = appConfiguration.toEventRequestSdk(),
                 )
             )
+        }.map {
+            it.data.form?.let(::toFeedbackForm)
         }.onSuccess {
             logger.debug(LOGGER_TAG, "Event \"${event.name}\" successfully sent.")
-        }
-        return null // todo matko return form
-    }
-
-    private fun IdentifyInfo.toEventRequestUser() = EventRequestUserDto(
-        externalUserId = userId,
-        deviceId = deviceId,
-    )
-
-    private fun AppConfiguration.toEventRequestSdk() = EventRequestSdkDto(
-        platform = platformName,
-        version = libraryVersion,
-    )
+        }.onFailure {
+            logger.warn(LOGGER_TAG, "There has been an error with sending event \"${event.name}\", $it")
+        }.getOrNull()
 }

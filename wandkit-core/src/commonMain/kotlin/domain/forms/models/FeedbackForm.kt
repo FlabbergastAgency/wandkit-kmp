@@ -69,6 +69,16 @@ internal sealed interface FeedbackFormPage {
         val maxLength: Int,
     ): FeedbackFormPage
 
+    data class End(
+        override val id: String,
+        override val title: String,
+        override val subtitle: String?,
+        override val imageUrl: String?,
+        override val nextButtonLabel: String?,
+        override val isRequired: Boolean,
+        override val next: List<NextPageRule>,
+    ): FeedbackFormPage
+
     sealed interface NextPageRule {
         val nextPageId: String
 

@@ -26,7 +26,7 @@ private class FeedbackFormControllerImpl(
     override fun publish(form: FeedbackForm) {
         _form.update { current ->
             current ?: form.also {
-                logger.debug(LOGGER_TAG, "Published form with formId: $form")
+                logger.debug(LOGGER_TAG, "Published form with formId: ${form.formId}")
             }
         }
     }
