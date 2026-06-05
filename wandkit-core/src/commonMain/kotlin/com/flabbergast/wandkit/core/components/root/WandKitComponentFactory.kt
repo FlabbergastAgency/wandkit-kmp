@@ -17,6 +17,7 @@ private class WandKitComponentFactoryImpl(
 ): WandKitComponentFactory, ComponentFactory {
     override fun create(context: ComponentContext) = DefaultWandKitComponent(
         componentContext = context,
+        formController = container.feedbackFormController,
     )
 }
 

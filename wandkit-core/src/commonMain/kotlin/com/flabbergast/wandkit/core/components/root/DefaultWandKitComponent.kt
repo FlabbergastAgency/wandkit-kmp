@@ -3,15 +3,20 @@ package com.flabbergast.wandkit.core.components.root
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.router.slot.SlotNavigation
+import com.arkivanov.decompose.router.slot.activate
 import com.arkivanov.decompose.router.slot.childSlot
 import com.arkivanov.decompose.router.slot.dismiss
 import com.arkivanov.decompose.value.Value
 import com.flabbergast.wandkit.core.components.feedbackForm.FeedbackFormComponentFactory
+import com.flabbergast.wandkit.core.components.utils.componentScope
+import com.flabbergast.wandkit.core.domain.forms.FeedbackFormController
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPageId
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 internal class DefaultWandKitComponent(
     componentContext: ComponentContext,
+    formController: FeedbackFormController,
 ): WandKitComponent, ComponentContext by componentContext {
     private val navigation = SlotNavigation<Config>()
 
@@ -22,6 +27,18 @@ internal class DefaultWandKitComponent(
             initialConfiguration = { null },
             childFactory = ::child,
         )
+
+    init {
+        componentScope.launch {
+            formController.form.collect { form ->
+                if (form != null) {
+                    navigation.activate(Config.FeedbackForm(form.entryPage.id))
+                } else {
+                    navigation.dismiss()
+                }
+            }
+        }
+    }
 
     override fun onBackClicked() {
         navigation.dismiss()

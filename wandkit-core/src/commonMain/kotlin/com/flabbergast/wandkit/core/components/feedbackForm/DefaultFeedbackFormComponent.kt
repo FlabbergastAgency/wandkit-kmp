@@ -56,7 +56,10 @@ internal class DefaultFeedbackFormComponent(
         formController.dismiss(null)
     }
 
-    private fun submitForm() {}
+    private fun submitForm() {
+        formController.dismiss(null)
+        println("[matko] submit form mock $pageResults")
+    }
 
     private fun submitPage(pageId: FeedbackFormPageId, result: PageInput) {
         pageResults.update {
