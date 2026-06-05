@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.flabbergast.wandkit.core.components.feedbackForm.FeedbackFormComponent
+import com.flabbergast.wandkit.ui.compose.WandKitColors
 
 @Composable
 internal fun FeedbackFormView(
@@ -33,6 +34,8 @@ internal fun FeedbackFormView(
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 24.dp)
                 .widthIn(max = 560.dp),
+            color = WandKitColors.surface,
+            contentColor = WandKitColors.onSurface,
         ) {
             AnimatedContent(
                 targetState = stack.active.instance,

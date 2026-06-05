@@ -9,7 +9,7 @@ plugins {
 }
 
 kotlin {
-
+    explicitApi()
     android {
         namespace = "com.flabbergast.wandkit.ui.compose"
         compileSdk = libs.versions.android.compileSdk.get().toInt()

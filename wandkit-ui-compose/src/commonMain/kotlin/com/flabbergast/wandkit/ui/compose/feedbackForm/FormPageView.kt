@@ -18,10 +18,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +38,8 @@ import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.flabbergast.wandkit.core.components.formPage.FormPageComponent
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageUiState
+import com.flabbergast.wandkit.ui.compose.WandKitColors
+import com.flabbergast.wandkit.ui.compose.WandKitTypography
 
 @Composable
 internal fun FormPageView(
@@ -57,7 +61,12 @@ internal fun FormPageView(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
         ) {
-            OutlinedButton(onClick = component::dismissForm) {
+            OutlinedButton(
+                onClick = component::dismissForm,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = WandKitColors.onSurface,
+                ),
+            ) {
                 Text("Close")
             }
         }
@@ -68,13 +77,13 @@ internal fun FormPageView(
                     .fillMaxWidth()
                     .height(160.dp)
                     .clip(RoundedCornerShape(20.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                    .background(WandKitColors.surfaceVariant),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = "Image",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = WandKitTypography.bodyMedium,
+                    color = WandKitColors.onSurfaceVariant,
                 )
             }
         }
@@ -82,14 +91,14 @@ internal fun FormPageView(
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 text = page.title,
-                style = MaterialTheme.typography.headlineSmall,
+                style = WandKitTypography.headlineSmall,
                 fontWeight = FontWeight.SemiBold,
             )
             page.subtitle?.takeIf { it.isNotBlank() }?.let { subtitle ->
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = WandKitTypography.bodyLarge,
+                    color = WandKitColors.onSurfaceVariant,
                 )
             }
         }
@@ -102,6 +111,10 @@ internal fun FormPageView(
         Button(
             onClick = component::submitPage,
             modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = WandKitColors.primary,
+                contentColor = WandKitColors.onPrimary,
+            ),
         ) {
             Text(page.nextButtonLabel ?: defaultButtonLabel(page.content))
         }
@@ -117,14 +130,15 @@ private fun FormPageContent(
         is FormPageUiState.Content.End -> {
             Surface(
                 shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
+                color = WandKitColors.surfaceVariant,
+                contentColor = WandKitColors.onSurfaceVariant,
             ) {
                 Text(
                     text = page.subtitle ?: "Thanks for sharing your feedback.",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(24.dp),
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = WandKitTypography.bodyLarge,
                     textAlign = TextAlign.Center,
                 )
             }
@@ -148,7 +162,7 @@ private fun FormPageContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 (1..content.totalStars).forEach { rating ->
-                    FilterChip(
+                    WandKitFilterChip(
                         selected = content.selectedStars == rating,
                         onClick = { component.updateStars(rating) },
                         label = { Text(rating.toString()) },
@@ -159,7 +173,7 @@ private fun FormPageContent(
 
         is FormPageUiState.Content.Text -> {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
+                WandKitOutlinedTextField(
                     value = content.text,
                     onValueChange = { component.updateText(it.take(content.maxLength)) },
                     modifier = Modifier.fillMaxWidth(),
@@ -171,8 +185,8 @@ private fun FormPageContent(
                 Text(
                     text = "${content.text.length}/${content.maxLength}",
                     modifier = Modifier.fillMaxWidth(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = WandKitTypography.bodySmall,
+                    color = WandKitColors.onSurfaceVariant,
                     textAlign = TextAlign.End,
                 )
             }
@@ -222,14 +236,14 @@ private fun ChoiceCard(
     onClick: () -> Unit,
 ) {
     val containerColor = if (selected) {
-        MaterialTheme.colorScheme.secondaryContainer
+        WandKitColors.secondaryContainer
     } else {
-        MaterialTheme.colorScheme.surfaceVariant
+        WandKitColors.surfaceVariant
     }
     val contentColor = if (selected) {
-        MaterialTheme.colorScheme.onSecondaryContainer
+        WandKitColors.onSecondaryContainer
     } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
+        WandKitColors.onSurfaceVariant
     }
 
     Surface(
@@ -253,7 +267,7 @@ private fun ChoiceCard(
             )
             Text(
                 text = label,
-                style = MaterialTheme.typography.titleMedium,
+                style = WandKitTypography.titleMedium,
                 color = contentColor,
             )
         }
@@ -263,4 +277,53 @@ private fun ChoiceCard(
 private fun defaultButtonLabel(content: FormPageUiState.Content): String = when (content) {
     is FormPageUiState.Content.End -> "Done"
     else -> "Continue"
+}
+
+@Composable
+private fun WandKitFilterChip(
+    selected: Boolean,
+    onClick: () -> Unit,
+    label: @Composable () -> Unit,
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = label,
+        colors = FilterChipDefaults.filterChipColors(
+            containerColor = WandKitColors.surfaceVariant,
+            labelColor = WandKitColors.onSurfaceVariant,
+            selectedContainerColor = WandKitColors.secondaryContainer,
+            selectedLabelColor = WandKitColors.onSecondaryContainer,
+        ),
+    )
+}
+
+@Composable
+private fun WandKitOutlinedTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    minLines: Int = 1,
+    maxLines: Int = Int.MAX_VALUE,
+    placeholder: @Composable (() -> Unit)? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        minLines = minLines,
+        maxLines = maxLines,
+        placeholder = placeholder,
+        keyboardOptions = keyboardOptions,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = WandKitColors.primary,
+            unfocusedBorderColor = WandKitColors.outline,
+            focusedTextColor = WandKitColors.onSurface,
+            unfocusedTextColor = WandKitColors.onSurface,
+            cursorColor = WandKitColors.primary,
+            focusedPlaceholderColor = WandKitColors.onSurfaceVariant,
+            unfocusedPlaceholderColor = WandKitColors.onSurfaceVariant,
+        ),
+    )
 }

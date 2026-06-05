@@ -5,11 +5,15 @@ import androidx.compose.runtime.retain.retain
 import com.flabbergast.wandkit.core.components.root.WandKitComponentFactory
 
 @Composable
-fun WandKitHost() {
+public fun WandKitHost(
+    theme: WandKitTheme = WandKitThemeDefaults.system(),
+) {
     val componentContext = rememberWandKitComponentContext()
     val wandKitComponent = retain(componentContext) {
         WandKitComponentFactory.get().create(context = componentContext)
     }
 
-    WandKitRootView(wandKitComponent)
+    WandKitThemeProvider(theme = theme) {
+        WandKitRootView(wandKitComponent)
+    }
 }
