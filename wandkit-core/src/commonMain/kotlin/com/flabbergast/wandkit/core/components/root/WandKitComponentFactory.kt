@@ -12,12 +12,11 @@ public interface WandKitComponentFactory {
     }
 }
 
-internal class WandKitComponentFactoryImpl(
+private class WandKitComponentFactoryImpl(
     override val container: WandKitSdkContainer,
 ): WandKitComponentFactory, ComponentFactory {
     override fun create(context: ComponentContext) = DefaultWandKitComponent(
         componentContext = context,
-        eventsRepository = container.eventsRepository,
     )
 }
 
