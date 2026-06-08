@@ -1,38 +1,46 @@
 package com.flabbergast.wandkit.ui.compose.feedbackForm
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.flabbergast.wandkit.core.components.formPage.FormPageComponent
+import com.flabbergast.wandkit.core.components.formPage.model.FormPageButton
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageUiState
+import com.flabbergast.wandkit.ui.compose.Res
 import com.flabbergast.wandkit.ui.compose.WandKitColors
+import com.flabbergast.wandkit.ui.compose.WandKitThemeProvider
 import com.flabbergast.wandkit.ui.compose.WandKitTypography
-import com.flabbergast.wandkit.ui.compose.feedbackForm.content.EndContentView
+import com.flabbergast.wandkit.ui.compose.feedbackForm.content.FormPagePreview
 import com.flabbergast.wandkit.ui.compose.feedbackForm.content.MultiChoiceContentView
 import com.flabbergast.wandkit.ui.compose.feedbackForm.content.StarsContentView
 import com.flabbergast.wandkit.ui.compose.feedbackForm.content.TextContentView
 import com.flabbergast.wandkit.ui.compose.feedbackForm.content.ThumbsContentView
+import com.flabbergast.wandkit.ui.compose.ic_close
+import com.flabbergast.wandkit.ui.compose.shared.WandKitButton
+import com.flabbergast.wandkit.ui.compose.shared.WandKitButtonColors
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 internal fun FormPageView(
@@ -42,74 +50,86 @@ internal fun FormPageView(
 
     val page = state.page ?: return
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .animateContentSize()
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+            .verticalScroll(rememberScrollState()),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
+        IconButton(
+            onClick = component::dismissForm,
+            colors = IconButtonDefaults.iconButtonColors(
+                contentColor = WandKitColors.label,
+            ),
+            modifier = Modifier.align(Alignment.TopEnd)
         ) {
-            OutlinedButton(
-                onClick = component::dismissForm,
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = WandKitColors.onSurface,
-                ),
-            ) {
-                Text("Close")
-            }
+            Icon(
+                painter = painterResource(Res.drawable.ic_close),
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+            )
         }
 
-        page.imageUrl?.let {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(160.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(WandKitColors.surfaceVariant),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "Image",
-                    style = WandKitTypography.bodyMedium,
-                    color = WandKitColors.onSurfaceVariant,
-                )
-            }
-        }
-
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .padding(top = 32.dp, bottom = 12.dp)
+        ) {
             Text(
                 text = page.title,
                 style = WandKitTypography.headlineSmall,
                 fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
             )
+
             page.subtitle?.takeIf { it.isNotBlank() }?.let { subtitle ->
                 Text(
                     text = subtitle,
                     style = WandKitTypography.bodyLarge,
-                    color = WandKitColors.onSurfaceVariant,
+                    color = WandKitColors.secondaryLabel,
+                    textAlign = TextAlign.Center,
                 )
             }
-        }
 
-        FormPageContent(
-            page = page,
-            component = component,
-        )
+            Spacer(Modifier.height(24.dp))
 
-        Button(
-            onClick = component::submitPage,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = WandKitColors.primary,
-                contentColor = WandKitColors.onPrimary,
-            ),
-        ) {
-            Text(page.nextButtonLabel ?: defaultButtonLabel(page.content))
+            FormPageContent(
+                page = page,
+                component = component,
+            )
+
+            if (page.buttons.isNotEmpty()) {
+                Spacer(Modifier.height(24.dp))
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                page.buttons.forEach { button ->
+                    WandKitButton(
+                        text = button.label,
+                        onClick = { component.buttonAction(button.action) },
+                        colors = when (button.type) {
+                            FormPageButton.Type.PRIMARY -> WandKitButtonColors.Primary
+                            FormPageButton.Type.SECONDARY -> WandKitButtonColors.Secondary
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+
+            page.promoLabel?.let { promoLabel ->
+                Text(
+                    text = promoLabel,
+                    style = WandKitTypography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    color = WandKitColors.tertiaryLabel,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                )
+            }
         }
     }
 }
@@ -120,7 +140,7 @@ private fun FormPageContent(
     component: FormPageComponent,
 ) {
     when (val content = page.content) {
-        is FormPageUiState.Content.End -> EndContentView(page)
+        is FormPageUiState.Content.End -> Unit
         is FormPageUiState.Content.MultiChoice -> MultiChoiceContentView(content, component::updateMultiChoice)
         is FormPageUiState.Content.Stars -> StarsContentView(content, component::updateStars)
         is FormPageUiState.Content.Text -> TextContentView(content, component::updateText)
@@ -128,7 +148,27 @@ private fun FormPageContent(
     }
 }
 
-private fun defaultButtonLabel(content: FormPageUiState.Content): String = when (content) {
-    is FormPageUiState.Content.End -> "Done"
-    else -> "Continue"
+@Preview(showBackground = true)
+@Composable
+private fun FormPageViewPreview() {
+    WandKitThemeProvider {
+        FormPagePreview(
+            page = FormPageUiState(
+                id = "123",
+                title = "Welcome to the form page",
+                subtitle = "This is the subtitle",
+                imageUrl = null,
+                content = FormPageUiState.Content.Stars(4, 5),
+                buttons = listOf(
+                    FormPageButton(
+                        label = "Continue",
+                        type = FormPageButton.Type.PRIMARY,
+                        action = FormPageButton.Action.CONTINUE,
+                    )
+                ),
+                promoLabel = "Powered by WandKit",
+            )
+        )
+    }
 }
+

@@ -13,6 +13,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.flabbergast.wandkit.core.components.formPage.model.FormPageButton
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageUiState
 import com.flabbergast.wandkit.ui.compose.WandKitColors
 import com.flabbergast.wandkit.ui.compose.WandKitTypography
@@ -36,7 +37,7 @@ internal fun TextContentView(
             text = "${content.text.length}/${content.maxLength}",
             modifier = Modifier.fillMaxWidth(),
             style = WandKitTypography.bodySmall,
-            color = WandKitColors.onSurfaceVariant,
+            color = WandKitColors.secondaryLabel,
             textAlign = TextAlign.End,
         )
     }
@@ -61,13 +62,13 @@ private fun WandKitOutlinedTextField(
         placeholder = placeholder,
         keyboardOptions = keyboardOptions,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = WandKitColors.primary,
-            unfocusedBorderColor = WandKitColors.outline,
-            focusedTextColor = WandKitColors.onSurface,
-            unfocusedTextColor = WandKitColors.onSurface,
-            cursorColor = WandKitColors.primary,
-            focusedPlaceholderColor = WandKitColors.onSurfaceVariant,
-            unfocusedPlaceholderColor = WandKitColors.onSurfaceVariant,
+            focusedBorderColor = WandKitColors.tintColor,
+            unfocusedBorderColor = WandKitColors.separator,
+            focusedTextColor = WandKitColors.label,
+            unfocusedTextColor = WandKitColors.label,
+            cursorColor = WandKitColors.tintColor,
+            focusedPlaceholderColor = WandKitColors.placeholderText,
+            unfocusedPlaceholderColor = WandKitColors.placeholderText,
         ),
     )
 }
@@ -81,12 +82,24 @@ private fun TextFormPagePreview() {
             title = "Tell us more",
             subtitle = "Anything we should improve or keep doing?",
             imageUrl = null,
-            nextButtonLabel = "Continue",
             content = FormPageUiState.Content.Text(
                 placeholder = "Share your thoughts...",
                 maxLength = 140,
                 text = "The onboarding was smooth and the UI felt polished.",
             ),
+            buttons = listOf(
+                FormPageButton(
+                    label = "Continue",
+                    type = FormPageButton.Type.PRIMARY,
+                    action = FormPageButton.Action.CONTINUE,
+                ),
+                FormPageButton(
+                    label = "Skip",
+                    type = FormPageButton.Type.SECONDARY,
+                    action = FormPageButton.Action.SKIP,
+                )
+            ),
+            promoLabel = "Powered by WandKit",
         )
     )
 }

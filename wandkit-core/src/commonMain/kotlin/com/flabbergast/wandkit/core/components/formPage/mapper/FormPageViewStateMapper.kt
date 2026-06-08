@@ -1,5 +1,6 @@
 package com.flabbergast.wandkit.core.components.formPage.mapper
 
+import com.flabbergast.wandkit.core.components.formPage.model.FormPageButton
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageUiState
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPage
 import com.flabbergast.wandkit.core.components.formPage.model.PageInput
@@ -13,34 +14,59 @@ internal fun formPageViewStateMapper(
         title = page.title,
         subtitle = page.subtitle,
         imageUrl = page.imageUrl,
-        nextButtonLabel = page.nextButtonLabel,
-        content = when (page) {
-            is FeedbackFormPage.End -> FormPageUiState.Content.End
-            is FeedbackFormPage.MultiChoice -> FormPageUiState.Content.MultiChoice(
-                choices = page.options.map {
+        content = when (val content = page.content) {
+            is FeedbackFormPage.Content.End -> FormPageUiState.Content.End
+            is FeedbackFormPage.Content.MultiChoice -> FormPageUiState.Content.MultiChoice(
+                choices = content.options.map {
                     FormPageUiState.Content.MultiChoice.Option(
                         id = it.id,
                         label = it.label,
                         isSelected = input.optionIds?.contains(it.id) ?: false,
                     )
                 },
-                allowMultiple = page.allowMultiple,
+                allowMultiple = content.allowMultiple,
             )
 
-            is FeedbackFormPage.Stars -> FormPageUiState.Content.Stars(
-                totalStars = page.starCount,
+            is FeedbackFormPage.Content.Stars -> FormPageUiState.Content.Stars(
+                totalStars = content.starCount,
                 selectedStars = input.stars,
             )
 
-            is FeedbackFormPage.Text -> FormPageUiState.Content.Text(
-                placeholder = page.placeholder,
-                maxLength = page.maxLength,
+            is FeedbackFormPage.Content.Text -> FormPageUiState.Content.Text(
+                placeholder = content.placeholder,
+                maxLength = content.maxLength,
                 text = input.text.orEmpty(),
             )
 
-            is FeedbackFormPage.Thumbs -> FormPageUiState.Content.Thumbs(
+            is FeedbackFormPage.Content.Thumbs -> FormPageUiState.Content.Thumbs(
                 isThumbsUp = input.isThumbsUp,
             )
         },
+        buttons = mapButtons(page),
+        promoLabel = page.promoLabel,
     )
+}
+
+private fun mapButtons(page: FeedbackFormPage?) = buildList {
+    if (page?.content is FeedbackFormPage.Content.End) return@buildList
+
+    page?.nextButtonLabel?.let { nextButtonLabel ->
+        add(
+            FormPageButton(
+                label = nextButtonLabel,
+                type = FormPageButton.Type.PRIMARY,
+                action = FormPageButton.Action.CONTINUE,
+            )
+        )
+    }
+
+    if (page?.isRequired == false && page.skipButtonLabel != null) {
+        add(
+            FormPageButton(
+                label = page.skipButtonLabel,
+                type = FormPageButton.Type.PRIMARY,
+                action = FormPageButton.Action.CONTINUE,
+            )
+        )
+    }
 }

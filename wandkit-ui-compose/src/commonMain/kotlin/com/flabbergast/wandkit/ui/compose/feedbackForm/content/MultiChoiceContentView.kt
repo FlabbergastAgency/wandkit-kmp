@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.flabbergast.wandkit.core.components.formPage.model.FormPageButton
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageUiState
 import com.flabbergast.wandkit.ui.compose.WandKitColors
 import com.flabbergast.wandkit.ui.compose.WandKitTypography
@@ -60,8 +61,8 @@ private fun ChoiceCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    val containerColor = if (selected) WandKitColors.secondaryContainer else WandKitColors.surfaceVariant
-    val contentColor = if (selected) WandKitColors.onSecondaryContainer else WandKitColors.onSurfaceVariant
+    val containerColor = if (selected) WandKitColors.secondarySystemFill else WandKitColors.secondarySystemBackground
+    val contentColor = if (selected) WandKitColors.label else WandKitColors.secondaryLabel
 
     Surface(
         modifier = modifier,
@@ -100,7 +101,6 @@ private fun MultiChoiceFormPagePreview() {
             title = "What stood out the most?",
             subtitle = "Select one or more things you liked.",
             imageUrl = null,
-            nextButtonLabel = "Continue",
             content = FormPageUiState.Content.MultiChoice(
                 choices = listOf(
                     FormPageUiState.Content.MultiChoice.Option("speed", "Fast setup", true),
@@ -109,6 +109,19 @@ private fun MultiChoiceFormPagePreview() {
                 ),
                 allowMultiple = true,
             ),
+            buttons = listOf(
+                FormPageButton(
+                    label = "Continue",
+                    type = FormPageButton.Type.PRIMARY,
+                    action = FormPageButton.Action.CONTINUE,
+                ),
+                FormPageButton(
+                    label = "Skip",
+                    type = FormPageButton.Type.SECONDARY,
+                    action = FormPageButton.Action.SKIP,
+                )
+            ),
+            promoLabel = "Powered by WandKit",
         )
     )
 }

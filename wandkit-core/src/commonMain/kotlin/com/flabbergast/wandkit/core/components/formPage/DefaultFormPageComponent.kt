@@ -3,6 +3,7 @@ package com.flabbergast.wandkit.core.components.formPage
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.value.Value
 import com.flabbergast.wandkit.core.components.formPage.mapper.formPageViewStateMapper
+import com.flabbergast.wandkit.core.components.formPage.model.FormPageButton
 import com.flabbergast.wandkit.core.components.utils.componentScope
 import com.flabbergast.wandkit.core.components.utils.toValue
 import com.flabbergast.wandkit.core.domain.forms.FeedbackFormController
@@ -20,6 +21,7 @@ internal class DefaultFormPageComponent(
     formController: FeedbackFormController,
     private val onDismissForm: () -> Unit,
     private val onSubmitPage: (pageId: FeedbackFormPageId, result: PageInput) -> Unit,
+    private val onSkipPage: (pageId: FeedbackFormPageId) -> Unit,
     componentContext: ComponentContext,
 ): FormPageComponent, ComponentContext by componentContext {
 
@@ -38,8 +40,11 @@ internal class DefaultFormPageComponent(
 
     override fun dismissForm() = onDismissForm()
 
-    override fun submitPage() {
-        onSubmitPage(pageId, input.value)
+    override fun buttonAction(action: FormPageButton.Action) {
+        when (action) {
+            FormPageButton.Action.CONTINUE -> onSubmitPage(pageId, input.value)
+            FormPageButton.Action.SKIP -> onSkipPage(pageId)
+        }
     }
 
     override fun updateThumbs(isThumbsUp: Boolean) {

@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,9 +20,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.flabbergast.wandkit.core.components.formPage.model.FormPageButton
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageUiState
+import com.flabbergast.wandkit.ui.compose.Res
 import com.flabbergast.wandkit.ui.compose.WandKitColors
 import com.flabbergast.wandkit.ui.compose.WandKitTypography
+import com.flabbergast.wandkit.ui.compose.ic_thumbs_down_filled
+import com.flabbergast.wandkit.ui.compose.ic_thumbs_up_filled
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 internal fun ThumbsContentView(
@@ -29,18 +37,16 @@ internal fun ThumbsContentView(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
     ) {
         ThumbsChoiceCard(
-            label = "Thumbs up",
+            resource = Res.drawable.ic_thumbs_up_filled,
             selected = content.isThumbsUp == true,
-            modifier = Modifier.weight(1f),
             onClick = { onUpdateThumbs(true) },
         )
         ThumbsChoiceCard(
-            label = "Thumbs down",
+            resource = Res.drawable.ic_thumbs_down_filled,
             selected = content.isThumbsUp == false,
-            modifier = Modifier.weight(1f),
             onClick = { onUpdateThumbs(false) },
         )
     }
@@ -48,43 +54,32 @@ internal fun ThumbsContentView(
 
 @Composable
 private fun ThumbsChoiceCard(
-    label: String,
+    resource: DrawableResource,
     selected: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    val containerColor = if (selected) WandKitColors.secondaryContainer else WandKitColors.surfaceVariant
-    val contentColor = if (selected) WandKitColors.onSecondaryContainer else WandKitColors.onSurfaceVariant
+    val containerColor = if (selected) WandKitColors.link else WandKitColors.secondarySystemFill
+    val contentColor = if (selected) WandKitColors.label else WandKitColors.tintColor
 
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
-        color = containerColor,
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .size(64.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(containerColor, RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(horizontal = 16.dp, vertical = 18.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(16.dp)
-                    .clip(CircleShape)
-                    .background(if (selected) contentColor else contentColor.copy(alpha = 0.25f)),
-            )
-            Text(
-                text = label,
-                style = WandKitTypography.titleMedium,
-                color = contentColor,
-            )
-        }
+        Icon(
+            painter = painterResource(resource),
+            contentDescription = null,
+            tint = contentColor,
+            modifier = Modifier.size(32.dp),
+        )
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 private fun ThumbsFormPagePreview() {
     FormPagePreview(
@@ -93,8 +88,20 @@ private fun ThumbsFormPagePreview() {
             title = "How was your experience?",
             subtitle = "A quick rating helps us understand overall sentiment.",
             imageUrl = null,
-            nextButtonLabel = "Continue",
             content = FormPageUiState.Content.Thumbs(isThumbsUp = true),
+            buttons = listOf(
+                FormPageButton(
+                    label = "Continue",
+                    type = FormPageButton.Type.PRIMARY,
+                    action = FormPageButton.Action.CONTINUE,
+                ),
+                FormPageButton(
+                    label = "Skip",
+                    type = FormPageButton.Type.SECONDARY,
+                    action = FormPageButton.Action.SKIP,
+                )
+            ),
+            promoLabel = "Powered by WandKit",
         )
     )
 }

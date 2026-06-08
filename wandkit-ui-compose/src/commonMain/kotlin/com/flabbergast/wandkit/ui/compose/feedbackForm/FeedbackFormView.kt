@@ -37,8 +37,8 @@ internal fun FeedbackFormView(
                 .padding(horizontal = 16.dp, vertical = 24.dp)
                 .clip(RoundedCornerShape(24.dp))
                 .widthIn(max = 560.dp),
-            color = WandKitColors.surface,
-            contentColor = WandKitColors.onSurface,
+            color = WandKitColors.systemBackground,
+            contentColor = WandKitColors.label,
         ) {
             AnimatedContent(
                 targetState = stack.active.instance,

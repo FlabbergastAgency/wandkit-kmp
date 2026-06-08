@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
-import kotlin.collections.listOf
 
 private const val LOGGER_TAG = "[FeedbackFormComponent]"
 private const val FETCH_TIMEOUT_MILLIS = 500L
@@ -61,10 +60,7 @@ internal class DefaultFeedbackFormComponent(
         println("[matko] submit form mock $pageResults")
     }
 
-    private fun submitPage(pageId: FeedbackFormPageId, result: PageInput) {
-        pageResults.update {
-            it + (pageId to result)
-        }
+    private fun goToNextPage(pageId: FeedbackFormPageId, result: PageInput?) {
         componentScope.launch {
             val currentPage = withTimeoutOrNull(FETCH_TIMEOUT_MILLIS) {
                 formController.form.firstOrNull()
@@ -81,6 +77,13 @@ internal class DefaultFeedbackFormComponent(
         }
     }
 
+    private fun submitPage(pageId: FeedbackFormPageId, result: PageInput) {
+        pageResults.update {
+            it + (pageId to result)
+        }
+        goToNextPage(pageId, result)
+    }
+
     private fun child(
         config: Config,
         context: ComponentContext,
@@ -91,6 +94,7 @@ internal class DefaultFeedbackFormComponent(
                 pageId = config.pageId,
                 onDismissForm = ::dismissForm,
                 onSubmitPage = ::submitPage,
+                onSkipPage = { goToNextPage(it, null) }
             )
         )
     }
@@ -102,14 +106,14 @@ internal class DefaultFeedbackFormComponent(
 
     private fun resolveNextPage(
         current: FeedbackFormPage,
-        result: PageInput,
+        result: PageInput?,
     ): FeedbackFormPageId? =
         current.next.firstNotNullOfOrNull { rule ->
             when (rule) {
                 is FeedbackFormPage.NextPageRule.None -> rule.nextPageId
-                is FeedbackFormPage.NextPageRule.Option -> rule.takeIf { result.optionIds?.contains(it.optionId) ?: false }?.nextPageId
-                is FeedbackFormPage.NextPageRule.Stars -> rule.takeIf { result.stars == it.starRating }?.nextPageId
-                is FeedbackFormPage.NextPageRule.Thumbs -> rule.takeIf { result.isThumbsUp == it.isThumbsUp }?.nextPageId
+                is FeedbackFormPage.NextPageRule.Option -> rule.takeIf { result?.optionIds?.contains(it.optionId) ?: false }?.nextPageId
+                is FeedbackFormPage.NextPageRule.Stars -> rule.takeIf { result?.stars == it.starRating }?.nextPageId
+                is FeedbackFormPage.NextPageRule.Thumbs -> rule.takeIf { result?.isThumbsUp == it.isThumbsUp }?.nextPageId
             }
         }
 }

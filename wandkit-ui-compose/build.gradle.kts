@@ -24,6 +24,10 @@ kotlin {
             instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         }
 
+        androidResources {
+            enable = true
+        }
+
         compilerOptions {
             jvmTarget = JvmTarget.JVM_11
         }
@@ -54,6 +58,7 @@ kotlin {
                 implementation(libs.compose.material3)
                 implementation(libs.compose.ui)
                 implementation(libs.compose.ui.tooling.preview)
+                implementation(libs.compose.components.resources)
 
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.serialization.core)
@@ -98,4 +103,10 @@ kotlin {
 
 dependencies {
     androidRuntimeClasspath(libs.compose.ui.tooling)
+}
+
+compose.resources {
+    publicResClass = false
+    packageOfResClass = "com.flabbergast.wandkit.ui.compose"
+    generateResClass = auto
 }

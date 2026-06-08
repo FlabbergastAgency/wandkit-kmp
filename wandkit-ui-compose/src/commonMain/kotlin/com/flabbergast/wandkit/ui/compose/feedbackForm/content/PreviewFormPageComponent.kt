@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import com.arkivanov.decompose.Cancellation
 import com.arkivanov.decompose.value.Value
 import com.flabbergast.wandkit.core.components.formPage.FormPageComponent
+import com.flabbergast.wandkit.core.components.formPage.model.FormPageButton
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageUiState
 import com.flabbergast.wandkit.ui.compose.WandKitThemeDefaults
 import com.flabbergast.wandkit.ui.compose.WandKitThemeProvider
@@ -35,7 +36,7 @@ private class PreviewFormPageComponent(
 
     override fun dismissForm() = Unit
 
-    override fun submitPage() = Unit
+    override fun buttonAction(action: FormPageButton.Action) = Unit
 
     override fun updateThumbs(isThumbsUp: Boolean) = Unit
 

@@ -7,8 +7,9 @@ public data class FormPageUiState(
     val title: String,
     val subtitle: String?,
     val imageUrl: String?,
-    val nextButtonLabel: String?,
     val content: Content,
+    val buttons: List<FormPageButton>,
+    val promoLabel: String?,
 ) {
     public sealed interface Content {
         public data class Thumbs(
@@ -34,5 +35,19 @@ public data class FormPageUiState(
         ): Content
 
         public data object End: Content
+    }
+}
+
+public data class FormPageButton(
+    val label: String,
+    val type: Type,
+    val action: Action,
+) {
+    public enum class Type {
+        PRIMARY, SECONDARY
+    }
+
+    public enum class Action {
+        CONTINUE, SKIP
     }
 }

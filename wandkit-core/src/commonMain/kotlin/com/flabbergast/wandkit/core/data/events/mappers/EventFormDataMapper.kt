@@ -16,58 +16,34 @@ internal fun toFeedbackForm(dto: EventFormDto): FeedbackForm? = FeedbackForm(
 )
 
 private fun EventPageDto.mapFormPage(): FeedbackFormPage {
-    return when (type) {
-        EventPageTypeDto.THUMBS -> FeedbackFormPage.Thumbs(
-            id = id,
-            title = title,
-            subtitle = subtitle,
-            imageUrl = imageUrl,
-            nextButtonLabel = nextButtonLabel,
-            isRequired = required,
-            next = next.map(::mapNextPageRule)
-        )
-        EventPageTypeDto.STARS -> FeedbackFormPage.Stars(
-            id = id,
-            title = title,
-            subtitle = subtitle,
-            imageUrl = imageUrl,
-            nextButtonLabel = nextButtonLabel,
-            isRequired = required,
-            next = next.map(::mapNextPageRule),
-            starCount = 5,
-        )
-        EventPageTypeDto.MULTI_CHOICE -> FeedbackFormPage.MultiChoice(
-            id = id,
-            title = title,
-            subtitle = subtitle,
-            imageUrl = imageUrl,
-            nextButtonLabel = nextButtonLabel,
-            isRequired = required,
-            next = next.map(::mapNextPageRule),
-            options = options?.map { FeedbackFormPage.MultiChoice.Option(it.id, it.label)} ?: listOf(),
-            allowMultiple = allowMultiple ?: false,
-        )
-        EventPageTypeDto.TEXT -> FeedbackFormPage.Text(
-            id = id,
-            title = title,
-            subtitle = subtitle,
-            imageUrl = imageUrl,
-            nextButtonLabel = nextButtonLabel,
-            isRequired = required,
-            next = next.map(::mapNextPageRule),
-            placeholder = placeholder.orEmpty(),
-            maxLength = maxLength ?: Int.MAX_VALUE,
-        )
-        EventPageTypeDto.END -> FeedbackFormPage.End(
-            id = id,
-            title = title,
-            subtitle = subtitle,
-            imageUrl = imageUrl,
-            nextButtonLabel = nextButtonLabel,
-            isRequired = required,
-            next = next.map(::mapNextPageRule)
-        )
-    }
+    return FeedbackFormPage(
+        id = id,
+        title = title,
+        subtitle = subtitle,
+        imageUrl = imageUrl,
+        nextButtonLabel = nextButtonLabel,
+        skipButtonLabel = "Skip", // todo matko: put backend value
+        promoLabel = "Powered by WandKit", // todo matko: put backend value
+        isRequired = required,
+        content = mapContent(),
+        next = next.map(::mapNextPageRule)
+    )
+}
+
+private fun EventPageDto.mapContent() = when (type) {
+    EventPageTypeDto.THUMBS -> FeedbackFormPage.Content.Thumbs
+    EventPageTypeDto.STARS -> FeedbackFormPage.Content.Stars(
+        starCount = 5,
+    )
+    EventPageTypeDto.MULTI_CHOICE -> FeedbackFormPage.Content.MultiChoice(
+        options = options?.map { FeedbackFormPage.Content.MultiChoice.Option(it.id, it.label)} ?: listOf(),
+        allowMultiple = allowMultiple ?: false,
+    )
+    EventPageTypeDto.TEXT -> FeedbackFormPage.Content.Text(
+        placeholder = placeholder.orEmpty(),
+        maxLength = maxLength ?: Int.MAX_VALUE,
+    )
+    EventPageTypeDto.END -> FeedbackFormPage.Content.End
 }
 
 private fun mapNextPageRule(dto: EventNextRuleDto): FeedbackFormPage.NextPageRule = when {

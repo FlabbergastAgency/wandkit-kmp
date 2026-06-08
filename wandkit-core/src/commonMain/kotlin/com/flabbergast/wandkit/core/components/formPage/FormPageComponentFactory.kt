@@ -11,6 +11,7 @@ internal fun interface FormPageComponentFactory {
         pageId: FeedbackFormPageId,
         onDismissForm: () -> Unit,
         onSubmitPage: (pageId: FeedbackFormPageId, result: PageInput) -> Unit,
+        onSkipPage: (pageId: FeedbackFormPageId) -> Unit,
     ): FormPageComponent
 
     companion object {
@@ -25,12 +26,14 @@ internal fun interface FormPageComponentFactory {
             pageId: FeedbackFormPageId,
             onDismissForm: () -> Unit,
             onSubmitPage: (pageId: FeedbackFormPageId, result: PageInput) -> Unit,
+            onSkipPage: (pageId: FeedbackFormPageId) -> Unit,
         ) = DefaultFormPageComponent(
             componentContext = context,
             formController = sdkContainer.feedbackFormController,
             pageId = pageId,
             onDismissForm = onDismissForm,
             onSubmitPage = onSubmitPage,
+            onSkipPage = onSkipPage,
         )
     }
 }
