@@ -3,7 +3,6 @@ agp = "9.0.1"
 kotlin = "2.3.21"
 android-minSdk = "24"
 android-compileSdk = "36"
-vanniktechMavenPublish = "0.36.0"
 kotlinx-coroutines = "1.11.0"
 kotlinStdlib = "2.3.21"
 runner = "1.7.0"
@@ -17,6 +16,8 @@ kotlinx-serialization = "1.11.0"
 ksp = "2.3.6"
 compose-activity = "1.13.0"
 ktor = "3.5.0"
+kmmBridge = "1.2.1"
+skie = "0.10.12"
 
 [libraries]
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
@@ -54,12 +55,15 @@ junit = { group = "androidx.test.ext", name = "junit", version.ref = "junit" }
 android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-vanniktech-mavenPublish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktechMavenPublish" }
 android-lint = { id = "com.android.lint", version.ref = "agp" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlinxSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kmmbridge = { id = "co.touchlab.kmmbridge", version.ref = "kmmBridge" }
+kmmbridge-github = { id = "co.touchlab.kmmbridge.github", version.ref = "kmmBridge" }
+kmmbridge-spm = { id = "co.touchlab.kmmbridge.spm", version.ref = "kmmBridge" }
+skie = { id = "co.touchlab.skie", version.ref = "skie" }
 
 [bundles]
 ktor = [

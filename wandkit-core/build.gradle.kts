@@ -5,13 +5,12 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.android.kotlin.multiplatform.library)
-    alias(libs.plugins.vanniktech.mavenPublish)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlinxSerialization)
+    alias(libs.plugins.kmmbridge.github)
+    alias(libs.plugins.skie)
+    `maven-publish`
 }
-
-group = "com.flabbergast"
-version = "1.0.0"
 
 apply(from = rootProject.file("gradle/wandkit-core-build-info.gradle.kts"))
 
@@ -81,36 +80,15 @@ kotlin {
     }
 }
 
-mavenPublishing {
-    publishToMavenCentral()
+kmmbridge {
+    gitHubReleaseArtifacts()
+    spm(swiftToolVersion = "5.8") {
+        iOS { v("14") }
+    }
+}
 
-    signAllPublications()
-
-    coordinates(group.toString(), "wandkit-core", version.toString())
-
-    pom {
-        name = "Wandkit Core"
-        description = "A KMP library which contains the core logic of WandKit."
-        inceptionYear = "2026"
-        url = "https://github.com/flabbergast-agency/wandkit-kmp"
-//        licenses {
-//            license {
-//                name = "XXX"
-//                url = "YYY"
-//                distribution = "ZZZ"
-//            }
-//        }
-//        developers {
-//            developer {
-//                id = "XXX"
-//                name = "YYY"
-//                url = "ZZZ"
-//            }
-//        }
-//        scm {
-//            url = "XXX"
-//            connection = "YYY"
-//            developerConnection = "ZZZ"
-//        }
+skie {
+    build {
+        produceDistributableFramework()
     }
 }
