@@ -57,7 +57,7 @@ private fun RatingStar(
     )
 }
 
-@Preview(showBackground = true)
+@Preview
 @Composable
 private fun StarsFormPagePreview() {
     FormPagePreview(

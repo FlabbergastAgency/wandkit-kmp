@@ -1,6 +1,7 @@
 package com.flabbergast.wandkit.ui.compose.feedbackForm.content
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,27 +32,14 @@ internal fun MultiChoiceContentView(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         content.choices.forEach { choice ->
-            ChoiceRow(
+            ChoiceCard(
                 label = choice.label,
                 selected = choice.isSelected,
                 onClick = { onUpdateMultiChoice(choice.id) },
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
-}
-
-@Composable
-private fun ChoiceRow(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    ChoiceCard(
-        label = label,
-        selected = selected,
-        modifier = Modifier.fillMaxWidth(),
-        onClick = onClick,
-    )
 }
 
 @Composable
@@ -61,38 +49,31 @@ private fun ChoiceCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    val containerColor = if (selected) WandKitColors.secondarySystemFill else WandKitColors.secondarySystemBackground
-    val contentColor = if (selected) WandKitColors.label else WandKitColors.secondaryLabel
-
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
-        color = containerColor,
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(CircleShape)
+            .clickable(onClick = onClick)
+            .padding(vertical = 6.dp, horizontal = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(horizontal = 16.dp, vertical = 18.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(16.dp)
-                    .clip(CircleShape)
-                    .background(if (selected) contentColor else contentColor.copy(alpha = 0.25f)),
-            )
-            Text(
-                text = label,
-                style = WandKitTypography.titleMedium,
-                color = contentColor,
-            )
-        }
+                .size(16.dp)
+                .clip(CircleShape)
+                .border(2.dp, WandKitColors.link, CircleShape)
+                .background(WandKitColors.link.copy(alpha = if (selected) 1f else 0f)),
+        )
+        Text(
+            text = label,
+            style = WandKitTypography.bodyLarge,
+            color = WandKitColors.label,
+        )
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 private fun MultiChoiceFormPagePreview() {
     FormPagePreview(

@@ -64,7 +64,7 @@ private fun mapButtons(page: FeedbackFormPage?) = buildList {
         add(
             FormPageButton(
                 label = page.skipButtonLabel,
-                type = FormPageButton.Type.PRIMARY,
+                type = FormPageButton.Type.SECONDARY,
                 action = FormPageButton.Action.CONTINUE,
             )
         )

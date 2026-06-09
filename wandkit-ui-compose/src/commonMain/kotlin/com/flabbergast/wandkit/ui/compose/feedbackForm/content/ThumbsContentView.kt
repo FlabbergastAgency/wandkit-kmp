@@ -79,7 +79,7 @@ private fun ThumbsChoiceCard(
     }
 }
 
-@Preview(showBackground = true)
+@Preview
 @Composable
 private fun ThumbsFormPagePreview() {
     FormPagePreview(

@@ -1,6 +1,7 @@
 package com.flabbergast.wandkit.ui.compose.feedbackForm
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,6 +54,7 @@ internal fun FormPageView(
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .background(WandKitColors.secondarySystemBackground)
             .animateContentSize()
             .verticalScroll(rememberScrollState()),
     ) {
@@ -148,7 +150,7 @@ private fun FormPageContent(
     }
 }
 
-@Preview(showBackground = true)
+@Preview
 @Composable
 private fun FormPageViewPreview() {
     WandKitThemeProvider {

@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -35,6 +36,7 @@ internal fun FeedbackFormView(
         Surface(
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 24.dp)
+                .border(1.dp, WandKitColors.quaternaryLabel, RoundedCornerShape(24.dp))
                 .clip(RoundedCornerShape(24.dp))
                 .widthIn(max = 560.dp),
             color = WandKitColors.systemBackground,
