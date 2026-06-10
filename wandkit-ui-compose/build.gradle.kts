@@ -1,4 +1,6 @@
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -7,6 +9,8 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.kmmbridge.github)
+    alias(libs.plugins.skie)
+    `maven-publish`
 }
 
 kotlin {
@@ -34,17 +38,15 @@ kotlin {
         }
     }
 
-    val xcfName = "wandkit-ui-compose"
+    iosArm64()
+    iosSimulatorArm64()
 
-    iosArm64 {
-        binaries.framework {
-            baseName = xcfName
-        }
-    }
-
-    iosSimulatorArm64 {
-        binaries.framework {
-            baseName = xcfName
+    targets.withType<KotlinNativeTarget> {
+        binaries {
+            framework {
+                baseName = "WandKitUICompose"
+                isStatic = true
+            }
         }
     }
 
@@ -111,3 +113,30 @@ compose.resources {
     packageOfResClass = "com.flabbergast.wandkit.ui.compose"
     generateResClass = auto
 }
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/FlabbergastAgency/wandkit-kmp")
+
+            credentials {
+                username = providers.gradleProperty("gpr.user").orNull
+                    ?: System.getenv("GITHUB_ACTOR")
+                password = providers.gradleProperty("gpr.key").orNull
+                    ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+}
+
+kmmbridge {
+    mavenPublishArtifacts()
+}
+
+skie {
+    build {
+        produceDistributableFramework()
+    }
+}
+

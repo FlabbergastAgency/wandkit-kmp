@@ -13,7 +13,9 @@ plugins {
 }
 
 apply(from = rootProject.file("gradle/wandkit-core-build-info.gradle.kts"))
-
+tasks.named("sourcesJar") {
+    dependsOn("generateLibraryBuildInfo")
+}
 val generatedBuildInfoDir = extra["generatedBuildInfoDir"]!!
 
 kotlin {
@@ -40,7 +42,7 @@ kotlin {
         binaries {
             framework {
                 baseName = "WandKitCore"
-                isStatic = false
+                isStatic = true
                 export(libs.decompose)
                 export(libs.essenty.lifecycle)
                 export(libs.essenty.state.keeper)
@@ -80,8 +82,24 @@ kotlin {
     }
 }
 
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/FlabbergastAgency/wandkit-kmp")
+
+            credentials {
+                username = providers.gradleProperty("gpr.user").orNull
+                    ?: System.getenv("GITHUB_ACTOR")
+                password = providers.gradleProperty("gpr.key").orNull
+                    ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+}
+
 kmmbridge {
-    gitHubReleaseArtifacts()
+    mavenPublishArtifacts()
     spm(swiftToolVersion = "5.8") {
         iOS { v("14") }
     }
