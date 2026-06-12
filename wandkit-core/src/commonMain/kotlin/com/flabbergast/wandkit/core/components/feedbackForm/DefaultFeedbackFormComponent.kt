@@ -116,6 +116,7 @@ internal class DefaultFeedbackFormComponent(
 
     @Serializable
     private sealed interface Config {
+        @Serializable
         data class FormPage(val pageId: FeedbackFormPageId): Config
     }
 

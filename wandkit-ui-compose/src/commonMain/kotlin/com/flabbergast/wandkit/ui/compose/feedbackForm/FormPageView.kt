@@ -4,6 +4,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,6 +55,16 @@ internal fun FormPageView(
     val state by component.viewState.subscribeAsState()
 
     val page = state.page ?: return
+    val focusManager = LocalFocusManager.current
+    val clearFocusOnBackgroundTapModifier = if (page.content is FormPageUiState.Content.Text) {
+        Modifier.pointerInput(page.id) {
+            detectTapGestures(onTap = {
+                focusManager.clearFocus()
+            })
+        }
+    } else {
+        Modifier
+    }
 
     Box(
         modifier = Modifier
@@ -62,7 +75,7 @@ internal fun FormPageView(
                     stiffness = Spring.StiffnessVeryLow
                 )
             )
-            .verticalScroll(rememberScrollState()),
+            .then(clearFocusOnBackgroundTapModifier),
     ) {
         IconButton(
             onClick = component::dismissForm,
@@ -83,6 +96,7 @@ internal fun FormPageView(
             modifier = Modifier
                 .padding(horizontal = 24.dp)
                 .padding(top = 32.dp, bottom = 12.dp)
+                .verticalScroll(rememberScrollState()),
         ) {
             Text(
                 text = page.title,
@@ -183,4 +197,3 @@ private fun FormPageViewPreview() {
         )
     }
 }
-

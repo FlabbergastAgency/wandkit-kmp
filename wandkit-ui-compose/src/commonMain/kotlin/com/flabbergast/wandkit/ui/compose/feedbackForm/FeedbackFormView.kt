@@ -9,7 +9,9 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
@@ -30,12 +32,15 @@ internal fun FeedbackFormView(
     val stack by component.stack.subscribeAsState()
 
     Box(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .imePadding()
+            .systemBarsPadding(),
         contentAlignment = Alignment.TopCenter,
     ) {
         Surface(
             modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 24.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
                 .border(1.dp, WandKitColors.quaternaryLabel, RoundedCornerShape(24.dp))
                 .clip(RoundedCornerShape(24.dp))
                 .widthIn(max = 560.dp),
