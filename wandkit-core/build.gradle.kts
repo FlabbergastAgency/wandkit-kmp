@@ -7,9 +7,8 @@ plugins {
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlinxSerialization)
-    alias(libs.plugins.kmmbridge.github)
     alias(libs.plugins.skie)
-    `maven-publish`
+    alias(libs.plugins.vanniktech.mavenPublish)
 }
 
 apply(from = rootProject.file("gradle/wandkit-core-build-info.gradle.kts"))
@@ -82,12 +81,26 @@ kotlin {
     }
 }
 
+skie {
+    build {
+        produceDistributableFramework()
+    }
+}
+
+mavenPublishing {
+    pom {
+        name = "WandKit KMP Core"
+        description = "The core library for WandKit KMP."
+        inceptionYear = "2026"
+        url = "https://github.com/FlabbergastAgency/wandkit-kmp"
+    }
+}
+
 publishing {
     repositories {
         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/FlabbergastAgency/wandkit-kmp")
-
             credentials {
                 username = providers.gradleProperty("gpr.user").orNull
                     ?: System.getenv("GITHUB_ACTOR")
@@ -95,15 +108,5 @@ publishing {
                     ?: System.getenv("GITHUB_TOKEN")
             }
         }
-    }
-}
-
-kmmbridge {
-    mavenPublishArtifacts()
-}
-
-skie {
-    build {
-        produceDistributableFramework()
     }
 }

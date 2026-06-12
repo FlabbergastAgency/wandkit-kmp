@@ -8,9 +8,8 @@ plugins {
     alias(libs.plugins.android.lint)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeMultiplatform)
-    alias(libs.plugins.kmmbridge.github)
     alias(libs.plugins.skie)
-    `maven-publish`
+    alias(libs.plugins.vanniktech.mavenPublish)
 }
 
 kotlin {
@@ -114,12 +113,26 @@ compose.resources {
     generateResClass = auto
 }
 
+skie {
+    build {
+        produceDistributableFramework()
+    }
+}
+
+mavenPublishing {
+    pom {
+        name = "WandKit Compose UI"
+        description = "The Compose UI library for WandKit Compose Multiplatform."
+        inceptionYear = "2026"
+        url = "https://github.com/FlabbergastAgency/wandkit-kmp"
+    }
+}
+
 publishing {
     repositories {
         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/FlabbergastAgency/wandkit-kmp")
-
             credentials {
                 username = providers.gradleProperty("gpr.user").orNull
                     ?: System.getenv("GITHUB_ACTOR")
@@ -127,16 +140,6 @@ publishing {
                     ?: System.getenv("GITHUB_TOKEN")
             }
         }
-    }
-}
-
-kmmbridge {
-    mavenPublishArtifacts()
-}
-
-skie {
-    build {
-        produceDistributableFramework()
     }
 }
 
