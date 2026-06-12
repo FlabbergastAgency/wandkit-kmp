@@ -45,8 +45,8 @@ internal fun FeedbackFormView(
             AnimatedContent(
                 targetState = stack.active.instance,
                 transitionSpec = {
-                    fadeIn(animationSpec = tween(durationMillis = 220)) togetherWith
-                        fadeOut(animationSpec = tween(durationMillis = 180)) using
+                    fadeIn(animationSpec = tween(durationMillis = 300)) togetherWith
+                        fadeOut(animationSpec = tween(durationMillis = 300)) using
                         SizeTransform(clip = false)
                 },
                 label = "feedback-form-page",

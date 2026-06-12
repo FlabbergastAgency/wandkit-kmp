@@ -1,6 +1,8 @@
 package com.flabbergast.wandkit.ui.compose.feedbackForm
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,7 +57,11 @@ internal fun FormPageView(
         modifier = Modifier
             .fillMaxWidth()
             .background(WandKitColors.secondarySystemBackground)
-            .animateContentSize()
+            .animateContentSize(
+                animationSpec = spring(
+                    stiffness = Spring.StiffnessVeryLow
+                )
+            )
             .verticalScroll(rememberScrollState()),
     ) {
         IconButton(
@@ -143,7 +149,11 @@ private fun FormPageContent(
 ) {
     when (val content = page.content) {
         is FormPageUiState.Content.End -> Unit
-        is FormPageUiState.Content.MultiChoice -> MultiChoiceContentView(content, component::updateMultiChoice)
+        is FormPageUiState.Content.MultiChoice -> MultiChoiceContentView(
+            content,
+            component::updateMultiChoice
+        )
+
         is FormPageUiState.Content.Stars -> StarsContentView(content, component::updateStars)
         is FormPageUiState.Content.Text -> TextContentView(content, component::updateText)
         is FormPageUiState.Content.Thumbs -> ThumbsContentView(content, component::updateThumbs)

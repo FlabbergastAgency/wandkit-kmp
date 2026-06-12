@@ -10,6 +10,7 @@ import com.flabbergast.wandkit.core.domain.forms.FeedbackFormController
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPageId
 import com.flabbergast.wandkit.core.domain.forms.models.PageInput
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPage
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,6 +23,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 private const val DATA_TIMEOUT_MILLIS = 500L
+private const val AUTO_CONTINUE_DELAY = 300L
+private const val END_PAGE_DISMISS_DELAY = 2000L
 
 internal class DefaultFormPageComponent(
     private val pageId: FeedbackFormPageId,
@@ -47,6 +50,17 @@ internal class DefaultFormPageComponent(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = FormPageComponent.ViewState(null),
         ).toValue(componentScope)
+
+    init {
+        componentScope.launch {
+            page.collect {
+                if (it?.content is FeedbackFormPage.Content.End) {
+                    delay(END_PAGE_DISMISS_DELAY)
+                    dismissForm()
+                }
+            }
+        }
+    }
 
     override fun dismissForm() = onDismissForm()
 
@@ -106,6 +120,7 @@ internal class DefaultFormPageComponent(
     private fun autoContinueIfNeeded() {
         componentScope.launch {
             if (shouldAutoContinueOnInput.firstWithTimeout() == true) {
+                delay(AUTO_CONTINUE_DELAY)
                 onSubmitPage(pageId, input.value)
             }
         }
