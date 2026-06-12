@@ -1,4 +1,4 @@
-package com.flabbergast.wandkit.core.components.formPage.model
+package com.flabbergast.wandkit.core.domain.forms.models
 
 internal data class PageInput(
     val text: String? = null,

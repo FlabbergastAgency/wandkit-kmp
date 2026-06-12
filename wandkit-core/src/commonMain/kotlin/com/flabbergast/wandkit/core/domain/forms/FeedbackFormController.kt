@@ -1,6 +1,7 @@
 package com.flabbergast.wandkit.core.domain.forms
 
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackForm
+import com.flabbergast.wandkit.core.domain.forms.models.ImpressionId
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,7 +11,7 @@ internal interface FeedbackFormController {
     val form: Flow<FeedbackForm?>
 
     fun publish(form: FeedbackForm)
-    fun dismiss(formId: String?)
+    fun dismiss(): ImpressionId?
 }
 
 internal fun createFeedbackFormController(logger: Logger): FeedbackFormController = FeedbackFormControllerImpl(logger)
@@ -31,16 +32,13 @@ private class FeedbackFormControllerImpl(
         }
     }
 
-    override fun dismiss(formId: String?) {
+    override fun dismiss(): ImpressionId? {
+        val impressionId = _form.value?.impressionId
         _form.update { current ->
             if (current == null) return@update null
-
-            if (formId == null || current.formId == formId) {
-                logger.debug(LOGGER_TAG, "Dismissed form with formId: ${current.formId}")
-                null
-            } else {
-                current
-            }
+            logger.debug(LOGGER_TAG, "Dismissed form with formId: ${current.formId}")
+            null
         }
+        return impressionId
     }
 }

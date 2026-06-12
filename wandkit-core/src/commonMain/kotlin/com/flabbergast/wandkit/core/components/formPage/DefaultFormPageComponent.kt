@@ -8,7 +8,7 @@ import com.flabbergast.wandkit.core.components.utils.componentScope
 import com.flabbergast.wandkit.core.components.utils.toValue
 import com.flabbergast.wandkit.core.domain.forms.FeedbackFormController
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPageId
-import com.flabbergast.wandkit.core.components.formPage.model.PageInput
+import com.flabbergast.wandkit.core.domain.forms.models.PageInput
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

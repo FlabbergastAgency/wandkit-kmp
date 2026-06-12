@@ -1,4 +1,4 @@
-package com.flabbergast.wandkit.core.domain.threading
+package com.flabbergast.wandkit.core.domain.infrastructure.threading
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers

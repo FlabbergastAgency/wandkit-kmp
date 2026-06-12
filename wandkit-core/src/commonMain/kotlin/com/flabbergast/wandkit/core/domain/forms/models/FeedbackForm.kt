@@ -1,8 +1,10 @@
 package com.flabbergast.wandkit.core.domain.forms.models
 
+internal typealias ImpressionId = String
+
 internal data class FeedbackForm(
     val formId: String,
-    val impressionId: String,
+    val impressionId: ImpressionId,
     val entryPage: FeedbackFormPage,
     val pages: Map<FeedbackFormPageId, FeedbackFormPage>,
     val description: String?,

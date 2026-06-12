@@ -3,7 +3,7 @@ package com.flabbergast.wandkit.core.components.formPage
 import com.arkivanov.decompose.ComponentContext
 import com.flabbergast.wandkit.core.di.WandKitSdkContainer
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPageId
-import com.flabbergast.wandkit.core.components.formPage.model.PageInput
+import com.flabbergast.wandkit.core.domain.forms.models.PageInput
 
 internal fun interface FormPageComponentFactory {
     fun create(

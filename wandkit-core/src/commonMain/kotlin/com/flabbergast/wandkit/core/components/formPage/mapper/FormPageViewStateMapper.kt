@@ -3,7 +3,7 @@ package com.flabbergast.wandkit.core.components.formPage.mapper
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageButton
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageUiState
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPage
-import com.flabbergast.wandkit.core.components.formPage.model.PageInput
+import com.flabbergast.wandkit.core.domain.forms.models.PageInput
 
 internal fun formPageViewStateMapper(
     input: PageInput,

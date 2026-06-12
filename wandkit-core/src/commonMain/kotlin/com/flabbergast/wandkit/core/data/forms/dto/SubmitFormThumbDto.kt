@@ -9,5 +9,9 @@ internal enum class SubmitFormThumbDto {
     UP,
 
     @SerialName("down")
-    DOWN,
+    DOWN;
+
+    internal companion object {
+        fun fromBoolean(value: Boolean) = if (value) UP else DOWN
+    }
 }

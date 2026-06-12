@@ -13,7 +13,7 @@ import com.flabbergast.wandkit.core.domain.forms.FeedbackFormController
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPage
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPageId
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
-import com.flabbergast.wandkit.core.components.formPage.model.PageInput
+import com.flabbergast.wandkit.core.domain.forms.models.PageInput
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
@@ -52,11 +52,11 @@ internal class DefaultFeedbackFormComponent(
     }
 
     private fun dismissForm() {
-        formController.dismiss(null)
+        formController.dismiss()
     }
 
     private fun submitForm() {
-        formController.dismiss(null)
+        formController.dismiss()
         println("[matko] submit form mock $pageResults")
     }
 
