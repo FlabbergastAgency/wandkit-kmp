@@ -14,6 +14,8 @@ import com.flabbergast.wandkit.core.data.networking.WandKitHttpClient
 import com.flabbergast.wandkit.core.data.networking.createCommonInterceptor
 import com.flabbergast.wandkit.core.data.networking.createHttpClient
 import com.flabbergast.wandkit.core.data.networking.createJson
+import com.flabbergast.wandkit.core.platform.PlatformContext
+import com.flabbergast.wandkit.core.platform.createInstallReferralCodeProvider
 import com.flabbergast.wandkit.core.domain.events.EventsRepository
 import com.flabbergast.wandkit.core.domain.events.IdentifyInfo
 import com.flabbergast.wandkit.core.domain.events.TrackEventUseCase
@@ -37,6 +39,7 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalUuidApi::class)
 internal class WandKitSdkContainer private constructor(
     private val config: WandKitConfig,
+    platformContext: PlatformContext?,
 ): InstanceKeeper.Instance {
     internal val backgroundDispatcher = BackgroundDispatcher()
     internal val wandKitClient = createWandKitClient()
@@ -64,6 +67,8 @@ internal class WandKitSdkContainer private constructor(
     ) }
 
     internal val fireAndForgetTask by lazy { createFireAndForgetTask(dispatcher = backgroundDispatcher, logger = logger) }
+
+    internal val installReferralCodeProvider by lazy { createInstallReferralCodeProvider(platformContext) }
 
     internal val eventsApi: WandKitApi<EventsApi> by lazy {
         createEventsApi(
@@ -113,8 +118,8 @@ internal class WandKitSdkContainer private constructor(
         private var instance: WandKitSdkContainer? = null
 
         fun get(): WandKitSdkContainer = instance ?: error("WandKit SDK isn't initialized.")
-        fun init(config: WandKitConfig) {
-            instance = WandKitSdkContainer(config)
+        fun init(config: WandKitConfig, platformContext: PlatformContext? = null) {
+            instance = WandKitSdkContainer(config, platformContext)
         }
     }
 }

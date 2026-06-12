@@ -76,6 +76,7 @@ kotlin {
         }
 
         androidMain.dependencies {
+            implementation(libs.android.installreferrer)
             implementation(libs.ktor.client.okhttp)
         }
     }

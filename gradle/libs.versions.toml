@@ -15,6 +15,7 @@ essenty = "2.5.0"
 kotlinx-serialization = "1.11.0"
 ksp = "2.3.6"
 compose-activity = "1.13.0"
+android-installreferrer = "2.2"
 ktor = "3.5.0"
 skie = "0.10.12"
 vanniktechMavenPublish = "0.36.0"
@@ -28,6 +29,7 @@ compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-pre
 compose-ui-tooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "compose-multiplatform" }
 compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
 compose-activity = { module = "androidx.activity:activity-compose", version.ref = "compose-activity" }
+android-installreferrer = { module = "com.android.installreferrer:installreferrer", version.ref = "android-installreferrer" }
 decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
 decompose-extensions-compose = { module = "com.arkivanov.decompose:extensions-compose", version.ref = "decompose" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }

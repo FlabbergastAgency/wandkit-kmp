@@ -36,4 +36,6 @@ public object WandKit {
             occurredAt = occurredAt,
         )
     }
+
+    public suspend fun getInstallReferralCode(): String? = WandKitSdkContainer.get().installReferralCodeProvider.getReferralCode()
 }
