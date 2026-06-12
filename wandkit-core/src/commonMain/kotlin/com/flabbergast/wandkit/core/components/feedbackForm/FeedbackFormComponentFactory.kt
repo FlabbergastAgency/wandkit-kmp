@@ -19,6 +19,9 @@ internal fun interface FeedbackFormComponentFactory {
                 componentContext = context,
                 entryPageId = entryPageId,
                 formController = sdkContainer.feedbackFormController,
+                dismissFormUseCase = sdkContainer.dismissFormUseCase,
+                submitFormUseCase = sdkContainer.submitFormUseCase,
+                fireAndForgetTask = sdkContainer.fireAndForgetTask,
                 logger = sdkContainer.logger,
             )
     }

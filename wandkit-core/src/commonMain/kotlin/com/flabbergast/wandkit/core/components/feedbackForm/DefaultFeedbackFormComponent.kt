@@ -9,9 +9,12 @@ import com.arkivanov.decompose.router.stack.replaceAll
 import com.arkivanov.decompose.value.Value
 import com.flabbergast.wandkit.core.components.formPage.FormPageComponentFactory
 import com.flabbergast.wandkit.core.components.utils.componentScope
+import com.flabbergast.wandkit.core.domain.forms.DismissFormUseCase
 import com.flabbergast.wandkit.core.domain.forms.FeedbackFormController
+import com.flabbergast.wandkit.core.domain.forms.SubmitFormUseCase
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPage
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPageId
+import com.flabbergast.wandkit.core.domain.infrastructure.concurrency.FireAndForgetTask
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import com.flabbergast.wandkit.core.domain.forms.models.PageInput
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +32,9 @@ internal class DefaultFeedbackFormComponent(
     componentContext: ComponentContext,
     entryPageId: FeedbackFormPageId,
     private val formController: FeedbackFormController,
+    private val dismissFormUseCase: DismissFormUseCase,
+    private val submitFormUseCase: SubmitFormUseCase,
+    private val fireAndForgetTask: FireAndForgetTask,
     private val logger: Logger,
 ): FeedbackFormComponent, ComponentContext by componentContext {
     private val navigation = StackNavigation<Config>()
@@ -52,19 +58,23 @@ internal class DefaultFeedbackFormComponent(
     }
 
     private fun dismissForm() {
-        formController.dismiss()
+        fireAndForgetTask {
+            dismissFormUseCase()
+        }
     }
 
-    private fun submitForm() {
-        formController.dismiss()
-        println("[matko] submit form mock $pageResults")
+    private fun submitForm(dismissForm: Boolean = true) {
+        fireAndForgetTask {
+            submitFormUseCase(pageResults.value, dismissForm)
+        }
     }
 
     private fun goToNextPage(pageId: FeedbackFormPageId, result: PageInput?) {
         componentScope.launch {
-            val currentPage = withTimeoutOrNull(FETCH_TIMEOUT_MILLIS) {
+            val form = withTimeoutOrNull(FETCH_TIMEOUT_MILLIS) {
                 formController.form.firstOrNull()
-            }?.pages[pageId] ?: run {
+            }
+            val currentPage = form?.pages[pageId] ?: run {
                 logger.debug(LOGGER_TAG, "Couldn't find next page with id $pageId, submitting form.")
                 submitForm()
                 return@launch
@@ -73,6 +83,11 @@ internal class DefaultFeedbackFormComponent(
                 submitForm()
                 return@launch
             }
+
+            if (form.pages[nextPageId]?.content is FeedbackFormPage.Content.End) {
+                submitForm(dismissForm = false)
+            }
+
             navigation.push(Config.FormPage(nextPageId))
         }
     }

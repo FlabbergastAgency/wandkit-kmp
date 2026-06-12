@@ -23,7 +23,7 @@ private const val LOGGER_TAG = "[FeedbackFormRepository]"
 private class FeedbackFormRepositoryImpl(
     private val formsApi: WandKitApi<FormsApi>,
     private val logger: Logger,
-): FeedbackFormRepository {
+) : FeedbackFormRepository {
     override suspend fun submit(
         impressionId: String,
         results: Map<FeedbackFormPageId, PageInput>
@@ -32,18 +32,23 @@ private class FeedbackFormRepositoryImpl(
             submitFormResponse(
                 impressionId = impressionId,
                 request = SubmitFormResponseRequestDto(
-                    answers = results.map { (pageId, pageInput) -> SubmitFormAnswerDto(
-                        pageId = pageId,
-                        thumb = pageInput.isThumbsUp?.let(SubmitFormThumbDto::fromBoolean),
-                        stars = pageInput.stars,
-                        selectedOptionIds = pageInput.optionIds,
-                        text = pageInput.text,
-                    ) },
+                    answers = results.mapNotNull { (pageId, pageInput) ->
+                        SubmitFormAnswerDto(
+                            pageId = pageId,
+                            thumb = pageInput.isThumbsUp?.let(SubmitFormThumbDto::fromBoolean),
+                            stars = pageInput.stars,
+                            selectedOptionIds = pageInput.optionIds,
+                            text = pageInput.text,
+                        ).takeIf { pageInput.hasInput() }
+                    },
                     completedAt = Clock.System.now().toString(),
                 )
             )
         }.onSuccess {
-            logger.debug(LOGGER_TAG, "Submitted form with impressionId: $impressionId, results: $results")
+            logger.debug(
+                LOGGER_TAG,
+                "Submitted form with impressionId: $impressionId, results: $results"
+            )
         }.onFailure {
             logger.debug(LOGGER_TAG, "Couldn't submit form with impressionId: $impressionId, $it")
         }

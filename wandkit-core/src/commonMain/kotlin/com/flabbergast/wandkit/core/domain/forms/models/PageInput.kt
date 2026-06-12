@@ -5,4 +5,6 @@ internal data class PageInput(
     val stars: Int? = null,
     val optionIds: List<String>? = null,
     val isThumbsUp: Boolean? = null,
-)
+) {
+    fun hasInput() = text != null || stars != null || optionIds != null || isThumbsUp != null
+}

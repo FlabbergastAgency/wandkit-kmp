@@ -18,9 +18,13 @@ import com.flabbergast.wandkit.core.domain.events.EventsRepository
 import com.flabbergast.wandkit.core.domain.events.IdentifyInfo
 import com.flabbergast.wandkit.core.domain.events.TrackEventUseCase
 import com.flabbergast.wandkit.core.domain.events.createTrackEventUseCase
+import com.flabbergast.wandkit.core.domain.forms.DismissFormUseCase
 import com.flabbergast.wandkit.core.domain.forms.FeedbackFormController
 import com.flabbergast.wandkit.core.domain.forms.FeedbackFormRepository
+import com.flabbergast.wandkit.core.domain.forms.SubmitFormUseCase
+import com.flabbergast.wandkit.core.domain.forms.createDismissFormUseCase
 import com.flabbergast.wandkit.core.domain.forms.createFeedbackFormController
+import com.flabbergast.wandkit.core.domain.forms.createSubmitFormUseCase
 import com.flabbergast.wandkit.core.domain.infrastructure.concurrency.createFireAndForgetTask
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.createAppLogger
@@ -98,6 +102,12 @@ internal class WandKitSdkContainer private constructor(
 
     internal val trackEventUseCase: TrackEventUseCase
         get() = createTrackEventUseCase(eventsRepository, feedbackFormController)
+
+    internal val dismissFormUseCase: DismissFormUseCase
+        get() = createDismissFormUseCase(feedbackFormRepository, feedbackFormController)
+
+    internal val submitFormUseCase: SubmitFormUseCase
+        get() = createSubmitFormUseCase(feedbackFormRepository, feedbackFormController)
 
     internal companion object {
         private var instance: WandKitSdkContainer? = null
