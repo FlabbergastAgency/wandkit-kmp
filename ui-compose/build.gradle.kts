@@ -52,7 +52,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(projects.wandkitCore)
+                implementation(projects.core)
                 implementation(libs.kotlin.stdlib)
 
                 implementation(libs.compose.runtime)

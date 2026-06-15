@@ -13,7 +13,7 @@ kotlin {
 }
 dependencies {
     implementation(projects.sample.composeApp.shared)
-    implementation(projects.wandkitCore)
+    implementation(projects.core)
     implementation(libs.compose.activity)
 }
 

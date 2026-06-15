@@ -46,8 +46,8 @@ kotlin {
         }
 
         commonMain.dependencies {
-            implementation(projects.wandkitCore)
-            implementation(projects.wandkitUiCompose)
+            implementation(projects.core)
+            implementation(projects.uiCompose)
 
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
