@@ -14,6 +14,9 @@ import com.flabbergast.wandkit.core.data.networking.WandKitHttpClient
 import com.flabbergast.wandkit.core.data.networking.createCommonInterceptor
 import com.flabbergast.wandkit.core.data.networking.createHttpClient
 import com.flabbergast.wandkit.core.data.networking.createJson
+import com.flabbergast.wandkit.core.data.referrals.ReferralsApi
+import com.flabbergast.wandkit.core.data.referrals.createReferralsApi
+import com.flabbergast.wandkit.core.data.referrals.createReferralsRepository
 import com.flabbergast.wandkit.core.platform.PlatformContext
 import com.flabbergast.wandkit.core.platform.createInstallReferralCodeProvider
 import com.flabbergast.wandkit.core.domain.events.EventsRepository
@@ -30,6 +33,7 @@ import com.flabbergast.wandkit.core.domain.forms.createSubmitFormUseCase
 import com.flabbergast.wandkit.core.domain.infrastructure.concurrency.createFireAndForgetTask
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.createAppLogger
+import com.flabbergast.wandkit.core.domain.referrals.ReferralsRepository
 import com.flabbergast.wandkit.core.domain.infrastructure.threading.BackgroundDispatcher
 import com.flabbergast.wandkit.core.models.createWandKitClient
 import kotlinx.serialization.json.Json
@@ -86,6 +90,14 @@ internal class WandKitSdkContainer private constructor(
         )
     }
 
+    internal val referralsApi: WandKitApi<ReferralsApi> by lazy {
+        createReferralsApi(
+            httpClient = httpClient,
+            baseUrl = appConfiguration.baseUrl,
+            logger = logger,
+        )
+    }
+
     internal val eventsRepository: EventsRepository by lazy {
         createEventsRepository(
             eventsApi = eventsApi,
@@ -97,6 +109,16 @@ internal class WandKitSdkContainer private constructor(
     internal val feedbackFormRepository: FeedbackFormRepository by lazy {
         createFeedbackFormRepository(
             formsApi = formsApi,
+            logger = logger,
+        )
+    }
+
+    internal val referralsRepository: ReferralsRepository by lazy {
+        createReferralsRepository(
+            referralsApi = referralsApi,
+            installReferralCodeProvider = installReferralCodeProvider,
+            deviceId = deviceId,
+            json = json,
             logger = logger,
         )
     }
