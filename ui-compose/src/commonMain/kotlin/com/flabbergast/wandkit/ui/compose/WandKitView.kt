@@ -13,6 +13,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.flabbergast.wandkit.core.components.root.WandKitComponent
 import com.flabbergast.wandkit.ui.compose.feedbackForm.FeedbackFormView
@@ -20,6 +21,8 @@ import com.flabbergast.wandkit.ui.compose.feedbackForm.FeedbackFormView
 @Composable
 internal fun WandKitRootView(
     component: WandKitComponent,
+    contentAlignment: Alignment,
+    modifier: Modifier = Modifier,
 ) {
     val slotStack by component.slot.subscribeAsState()
 
@@ -39,9 +42,10 @@ internal fun WandKitRootView(
                     SizeTransform(clip = false)
         },
         label = "wandkit-root-slot",
+        modifier = modifier,
     ) { slot ->
         when (slot) {
-            is WandKitComponent.Child.FeedbackForm -> FeedbackFormView(slot.component)
+            is WandKitComponent.Child.FeedbackForm -> FeedbackFormView(slot.component, contentAlignment)
             null -> Unit
         }
     }

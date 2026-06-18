@@ -26,12 +26,8 @@ import com.flabbergast.wandkit.ui.compose.WandKitHost
 fun App() {
     MaterialTheme {
         Scaffold {
-            Box(
-                contentAlignment = Alignment.Center
-            ) {
-                Content()
-                WandKitHost()
-            }
+            Content()
+            WandKitHost()
         }
     }
 }

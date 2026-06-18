@@ -57,7 +57,7 @@ internal class DefaultFeedbackFormComponent(
         }
     }
 
-    private fun dismissForm() {
+    override fun dismissForm() {
         fireAndForgetTask {
             dismissFormUseCase()
         }
