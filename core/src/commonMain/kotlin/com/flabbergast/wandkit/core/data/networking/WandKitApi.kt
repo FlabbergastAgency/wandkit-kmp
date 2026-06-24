@@ -2,6 +2,7 @@ package com.flabbergast.wandkit.core.data.networking
 
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import io.ktor.client.call.body
+import io.ktor.http.HttpStatusCode
 
 private const val LOGGER_TAG = "[WandKitApi]"
 
@@ -22,11 +23,17 @@ internal class WandKitApi<ApiType>(
         runCatching {
             block()
         }.mapCatching { response ->
-            val body = response.response.body<ApiResult>()
-            RemoteSuccess(
-                statusCode = response.response.status,
-                data = body,
-            )
+            when (response.response.status.value) {
+                in 200..299 -> {
+                    val body = response.response.body<ApiResult>()
+                    RemoteSuccess(
+                        statusCode = response.response.status,
+                        data = body,
+                    )
+                }
+                else -> throw Error("Non 2xx response code: ${response.response.status}")
+            }
+
         }.onFailure {
             logger.warn(LOGGER_TAG, "Network call failed.", it)
         }
