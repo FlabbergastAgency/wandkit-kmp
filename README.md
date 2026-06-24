@@ -101,6 +101,102 @@ WandKit.event(
 )
 ```
 
+## Referrals
+
+The SDK also supports creating and redeeming referral links and codes.
+
+### Create A Referral Link
+
+Identify the current user first, then create a referral for a campaign:
+
+```kotlin
+WandKit.identify(userId = "user_123")
+
+val referral = WandKit.invite(
+    userId = "user_123",
+    campaign = "samplecampaign",
+)
+
+val referralUrl = referral?.url
+```
+
+`WandKit.invite(...)` returns `ReferralInfo?`. Use `ReferralInfo.url` as the shareable referral link.
+
+You can also pass optional string properties:
+
+```kotlin
+val referral = WandKit.invite(
+    userId = "user_123",
+    campaign = "samplecampaign",
+    properties = mapOf(
+        "source" to "profile_screen",
+    ),
+)
+```
+
+### Inspect A Referral
+
+If you have a referral short path, you can fetch its metadata:
+
+```kotlin
+val referral = WandKit.getReferral(path = "abc123")
+```
+
+`WandKit.getReferral(...)` returns `GetReferralResponse?`.
+
+### Redeem A Referral Code
+
+If your app already has a referral code, redeem it directly:
+
+```kotlin
+val match = WandKit.redeemCode(code = "INVITE_CODE")
+```
+
+`WandKit.redeemCode(...)` returns `ReferralMatch?`.
+
+### Match An Install Referral
+
+You can also ask the SDK to read the install referral code from the platform provider and redeem it:
+
+```kotlin
+val match = WandKit.matchReferral()
+```
+
+`WandKit.matchReferral()` returns `ReferralMatch?`.
+
+### Install Referral Code Provider
+
+Important: if you want to use the install referral code provider, you must pass `context` when calling `WandKit.configure(...)` on Android.
+
+Without `context`, the SDK cannot create the Android install referrer client, so `WandKit.getInstallReferralCode()` and `WandKit.matchReferral()` will not be able to read the install referral code.
+
+The SDK exposes the raw install referral code lookup as well:
+
+```kotlin
+val installReferralCode = WandKit.getInstallReferralCode()
+```
+
+Required Android setup:
+
+```kotlin
+WandKit.configure(
+    config = WandKitConfig(
+        apiKey = "your_api_key",
+        isDebugLoggingEnabled = true,
+    ),
+    context = applicationContext,
+)
+```
+
+On Android, this uses the Play Install Referrer API and extracts the `referral_code` query parameter from the install referrer payload.
+
+`WandKit.matchReferral()` uses this provider internally. If a referral code is available, it redeems that code automatically.
+
+On iOS, the install referral code provider is currently not implemented and always returns `null`. Because of that:
+
+- `WandKit.getInstallReferralCode()` returns `null` on iOS
+- `WandKit.matchReferral()` also returns `null` on iOS unless install referral support is implemented there later
+
 ## How Forms Work
 
 Forms are event-driven.
