@@ -4,8 +4,10 @@ import com.flabbergast.wandkit.core.config.WandKitConfig
 import com.flabbergast.wandkit.core.di.WandKitSdkContainer
 import com.flabbergast.wandkit.core.models.WandKitClient
 import com.flabbergast.wandkit.core.domain.referrals.GetReferralResponse
+import com.flabbergast.wandkit.core.domain.referrals.ReferralDetection
 import com.flabbergast.wandkit.core.domain.referrals.ReferralInfo
 import com.flabbergast.wandkit.core.domain.referrals.ReferralMatch
+import com.flabbergast.wandkit.core.domain.referrals.ReferralProgress
 import kotlin.time.Instant
 
 public object WandKit {
@@ -17,6 +19,14 @@ public object WandKit {
     ) {
         WandKitSdkContainer.init(config)
     }
+
+    /**
+     * This device's install ID, the same one [redeemCode] claims with.
+     *
+     * Forward it to your own backend so it can report referral conversions.
+     */
+    public val installId: String
+        get() = WandKitSdkContainer.get().installIdentity.installId
 
     public fun identify(
         userId: String,
@@ -48,9 +58,57 @@ public object WandKit {
         properties: Map<String, String> = emptyMap(),
     ): ReferralInfo? = WandKitSdkContainer.get().referralsRepository.invite(userId, campaign, properties)
 
+    /**
+     * How far an inviter is toward their reward.
+     *
+     * Null when the campaign does not exist, or when this inviter has no referral
+     * yet - create one with [invite] first.
+     */
+    public suspend fun getReferralProgress(
+        userId: String,
+        campaign: String,
+    ): ReferralProgress? = WandKitSdkContainer.get().referralsRepository.getReferralProgress(userId, campaign)
+
     public suspend fun getReferral(path: String): GetReferralResponse? =
         WandKitSdkContainer.get().referralsRepository.getReferral(path)
 
+    /**
+     * Reports which referral this install probably came from, binding nothing.
+     *
+     * Offer the returned `code` back to the user to confirm or replace, then pass
+     * their answer to [redeemCode] - that is what actually claims it.
+     */
+    public suspend fun detectReferral(): ReferralDetection? =
+        WandKitSdkContainer.get().referralsRepository.detectReferral()
+
+    /**
+     * The referral detected for this install, if any. Survives launches, so it is
+     * still readable when you get round to asking the user about it.
+     */
+    public val detectedReferral: ReferralDetection?
+        get() = WandKitSdkContainer.get().referralsRepository.detectedReferral
+
+    /**
+     * Detects this install's referral once, in the background.
+     *
+     * Call it right after [configure]. Fingerprint accuracy decays quickly and the
+     * server-side match window is short, so detection has to happen early - long
+     * before the user has agreed to anything. Nothing is claimed here; the result
+     * is persisted and readable via [detectedReferral].
+     */
+    public fun detectReferralOnFirstLaunchIfNeeded() {
+        val container = WandKitSdkContainer.get()
+        container.fireAndForgetTask {
+            container.referralsRepository.detectReferralOnFirstLaunchIfNeeded()
+        }
+    }
+
+    /**
+     * Redeems the Play install referrer code outright, without asking the user.
+     *
+     * Predates [detectReferral] and binds the install immediately. Prefer
+     * detection unless you specifically want the old auto-claim behaviour.
+     */
     public suspend fun matchReferral(): ReferralMatch? = WandKitSdkContainer.get().referralsRepository.matchReferral()
 
     public suspend fun redeemCode(code: String): ReferralMatch? =

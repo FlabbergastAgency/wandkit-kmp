@@ -24,6 +24,10 @@ class MainActivity : ComponentActivity() {
             context = applicationContext,
         )
 
+        // Right after configure: fingerprint accuracy decays fast, so detection
+        // has to run long before there is any UI to show the result in.
+        WandKit.detectReferralOnFirstLaunchIfNeeded()
+
         setContent {
             App()
         }

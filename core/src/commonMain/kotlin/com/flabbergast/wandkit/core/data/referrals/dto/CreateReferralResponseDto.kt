@@ -34,6 +34,10 @@ internal data class CreateReferralResponseDto(
     val maxUses: Int? = null,
     @SerialName("claimed_count")
     val claimedCount: Int,
+    @SerialName("converted_count")
+    val convertedCount: Long = 0,
+    @SerialName("reward")
+    val reward: ReferralRewardProgressDto? = null,
     @SerialName("created_at")
     val createdAt: String,
     @SerialName("expires_at")

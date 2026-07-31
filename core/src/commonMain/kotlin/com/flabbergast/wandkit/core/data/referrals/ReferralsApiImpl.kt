@@ -6,13 +6,16 @@ import com.flabbergast.wandkit.core.data.networking.WandKitHttpResponse
 import com.flabbergast.wandkit.core.data.referrals.dto.CaptureReferralFingerprintRequestDto
 import com.flabbergast.wandkit.core.data.referrals.dto.CreateReferralRequestDto
 import com.flabbergast.wandkit.core.data.referrals.dto.CreateReferralResponseDto
+import com.flabbergast.wandkit.core.data.referrals.dto.DetectReferralRequestDto
 import com.flabbergast.wandkit.core.data.referrals.dto.GetReferralResponseDto
 import com.flabbergast.wandkit.core.data.referrals.dto.RedeemCodeRequestDto
-import com.flabbergast.wandkit.core.data.referrals.dto.ReferralMatchRequestDto
+import com.flabbergast.wandkit.core.data.referrals.dto.ReferralDetectionDto
 import com.flabbergast.wandkit.core.data.referrals.dto.ReferralMatchResponseDto
+import com.flabbergast.wandkit.core.data.referrals.dto.ReferralProgressResponseDto
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 
@@ -48,9 +51,20 @@ private class ReferralsApiImpl(
         return WandKitHttpResponse(response)
     }
 
-    override suspend fun matchReferral(request: ReferralMatchRequestDto): WandKitHttpResponse<ReferralMatchResponseDto> {
-        val response = client.post("$baseUrl/api/v1/referrals/match") {
+    override suspend fun detectReferral(request: DetectReferralRequestDto): WandKitHttpResponse<ReferralDetectionDto> {
+        val response = client.post("$baseUrl/api/v1/referrals/detect") {
             setBody(request)
+        }
+        return WandKitHttpResponse(response)
+    }
+
+    override suspend fun getReferralProgress(
+        userId: String,
+        campaign: String,
+    ): WandKitHttpResponse<ReferralProgressResponseDto> {
+        val response = client.get("$baseUrl/api/v1/referrals/progress") {
+            parameter("campaign", campaign)
+            parameter("user_id", userId)
         }
         return WandKitHttpResponse(response)
     }
