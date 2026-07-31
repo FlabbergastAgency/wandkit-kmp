@@ -1,6 +1,8 @@
 package com.flabbergast.wandkit.core.platform
 
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.cinterop.useContents
 import platform.Foundation.NSLocale
 import platform.Foundation.NSTimeZone
@@ -15,13 +17,13 @@ import platform.UIKit.UIScreen
 private const val SECONDS_PER_MINUTE = 60
 
 @OptIn(ExperimentalForeignApi::class)
-internal actual fun readDeviceFingerprint(): DeviceFingerprint {
+internal actual suspend fun readDeviceFingerprint(): DeviceFingerprint = withContext(Dispatchers.Main) {
     val screen = UIScreen.mainScreen
     val size = screen.bounds.useContents { size.width to size.height }
     val languages = NSLocale.preferredLanguages.filterIsInstance<String>()
     val timeZone = NSTimeZone.localTimeZone
 
-    return DeviceFingerprint(
+    DeviceFingerprint(
         deviceModel = UIDevice.currentDevice.model,
         language = languages.firstOrNull() ?: NSLocale.currentLocale.localeIdentifier,
         languages = languages,

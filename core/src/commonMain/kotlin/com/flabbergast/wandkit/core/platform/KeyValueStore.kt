@@ -20,6 +20,8 @@ internal interface KeyValueStore {
         key: String,
         value: Boolean,
     )
+
+    fun remove(key: String)
 }
 
 internal expect fun createKeyValueStore(platformContext: PlatformContext?): KeyValueStore
@@ -50,5 +52,9 @@ internal class InMemoryKeyValueStore : KeyValueStore {
         value: Boolean,
     ) {
         values[key] = value
+    }
+
+    override fun remove(key: String) {
+        values.remove(key)
     }
 }

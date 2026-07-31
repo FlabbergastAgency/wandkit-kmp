@@ -89,12 +89,24 @@ public object WandKit {
         get() = WandKitSdkContainer.get().referralsRepository.detectedReferral
 
     /**
+     * Forgets the detected referral. [redeemCode] already does this on success,
+     * so call it only when the user dismisses the prefilled code instead.
+     */
+    public fun clearDetectedReferral() {
+        WandKitSdkContainer.get().referralsRepository.clearDetectedReferral()
+    }
+
+    /**
      * Detects this install's referral once, in the background.
      *
      * Call it right after [configure]. Fingerprint accuracy decays quickly and the
      * server-side match window is short, so detection has to happen early - long
      * before the user has agreed to anything. Nothing is claimed here; the result
      * is persisted and readable via [detectedReferral].
+     *
+     * Runs once per install. A transient failure is retried on later launches,
+     * but only up to a ceiling, so an install that can never get an answer stops
+     * fingerprinting instead of retrying forever.
      */
     public fun detectReferralOnFirstLaunchIfNeeded() {
         val container = WandKitSdkContainer.get()
@@ -111,6 +123,11 @@ public object WandKit {
      */
     public suspend fun matchReferral(): ReferralMatch? = WandKitSdkContainer.get().referralsRepository.matchReferral()
 
+    /**
+     * Claims a referral for this install using the code the user confirmed or
+     * typed. Clears [detectedReferral] on success, since the question it exists
+     * to answer has now been answered.
+     */
     public suspend fun redeemCode(code: String): ReferralMatch? =
         WandKitSdkContainer.get().referralsRepository.redeemCode(code)
 }

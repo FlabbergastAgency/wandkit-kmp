@@ -1,6 +1,7 @@
 package com.flabbergast.wandkit.core.data.referrals
 
 import com.flabbergast.wandkit.core.data.networking.WandKitApi
+import com.flabbergast.wandkit.core.data.networking.WandKitHttpException
 import com.flabbergast.wandkit.core.data.referrals.dto.CreateReferralRequestDto
 import com.flabbergast.wandkit.core.data.referrals.dto.RedeemCodeRequestDto
 import com.flabbergast.wandkit.core.config.AppConfiguration
@@ -20,6 +21,8 @@ import com.flabbergast.wandkit.core.domain.referrals.ReferralDetection
 import com.flabbergast.wandkit.core.domain.referrals.ReferralInfo
 import com.flabbergast.wandkit.core.domain.referrals.ReferralMatch
 import com.flabbergast.wandkit.core.domain.referrals.ReferralProgress
+import io.ktor.http.HttpStatusCode
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
 internal fun createReferralsRepository(
@@ -97,7 +100,7 @@ private class ReferralsRepositoryImpl(
         userId: String,
         campaign: String,
     ): ReferralProgress? =
-        referralsApi.optional {
+        referralsApi.optional(HttpStatusCode.NotFound) {
             getReferralProgress(userId = userId, campaign = campaign)
         }
             .onSuccess {
@@ -120,23 +123,32 @@ private class ReferralsRepositoryImpl(
     override suspend fun detectReferralOnFirstLaunchIfNeeded() {
         if (detectionStore.detectionAttempted) return
 
-        // Only a definitive answer counts as an attempt - "no referral" included.
-        // A network failure deliberately leaves it unrecorded so the next launch
-        // retries, since a dropped attempt costs an inviter a referral they earned.
-        requestDetection()
-            .onSuccess { detectionStore.markDetectionAttempted() }
-            .onFailure {
-                logger.debug(LOGGER_TAG, "Referral detection attempt failed; will retry next launch.")
+        requestDetection().onFailure { error ->
+            // A transient failure is worth another launch - a dropped attempt
+            // costs an inviter a referral they earned. A permanent one is not:
+            // a rejected key or an unreadable body fails the same way every
+            // time, and retrying just repeats the fingerprint POST for the life
+            // of the install. The ceiling bounds even the transient case.
+            if (isTransientDetectionFailure(error) && detectionStore.detectionFailureCount + 1 < MAX_DETECTION_RETRIES) {
+                detectionStore.recordDetectionFailure()
+                logger.debug(LOGGER_TAG, "Referral detection failed, retrying next launch.")
+            } else {
+                detectionStore.markDetectionAttempted()
+                logger.debug(LOGGER_TAG, "Referral detection gave up.")
             }
+        }
     }
 
     /**
      * Separates "the server says no referral" from "we never got an answer",
      * which [detectReferral] flattens to null but first-launch detection has to
      * tell apart.
+     *
+     * Records the attempt on any definitive answer, so a manual detect also
+     * settles the question first-launch detection would otherwise re-ask.
      */
     private suspend fun requestDetection(): Result<ReferralDetection?> =
-        referralsApi.optional {
+        referralsApi.optional(HttpStatusCode.NoContent) {
             detectReferral(
                 createDetectReferralRequest(
                     installId = installIdentity.installId,
@@ -156,8 +168,13 @@ private class ReferralsRepositoryImpl(
                     logger.debug(LOGGER_TAG, "Detected referral for this install.")
                     detectionStore.setDetection(detection)
                 }
+                detectionStore.markDetectionAttempted()
                 detection
             }
+
+    override fun clearDetectedReferral() {
+        detectionStore.clearDetection()
+    }
 
     override suspend fun matchReferral(): ReferralMatch? {
         val code =
@@ -181,9 +198,31 @@ private class ReferralsRepositoryImpl(
         }
             .onSuccess {
                 logger.debug(LOGGER_TAG, "Redeemed referral code.")
+                detectionStore.clearDetection()
             }.onFailure {
                 logger.warn(LOGGER_TAG, "Couldn't redeem referral code.", it)
             }.map {
                 it.data.toReferralMatch(json)
             }.getOrNull()
 }
+
+/** How many transient failures detection retries across launches before it stops asking. */
+private const val MAX_DETECTION_RETRIES = 5
+
+/**
+ * Whether a later launch could plausibly get a different answer.
+ *
+ * 404 counts as transient: detect answers "no referral" with 204, so a 404 is by
+ * construction an endpoint that is not there - deploy skew or a wrong baseURL -
+ * rather than the server's answer.
+ */
+internal fun isTransientDetectionFailure(error: Throwable): Boolean =
+    when (error) {
+        is WandKitHttpException ->
+            error.statusCode == 404 ||
+                error.statusCode == 408 ||
+                error.statusCode == 429 ||
+                error.statusCode in 500..599
+        is SerializationException -> false
+        else -> true
+    }

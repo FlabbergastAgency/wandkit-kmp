@@ -25,4 +25,8 @@ private class UserDefaultsKeyValueStore(
     ) {
         defaults.setBool(value, key)
     }
+
+    override fun remove(key: String) {
+        defaults.removeObjectForKey(key)
+    }
 }

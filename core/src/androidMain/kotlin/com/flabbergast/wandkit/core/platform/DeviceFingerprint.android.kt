@@ -7,7 +7,7 @@ import java.util.TimeZone
 
 private const val MILLIS_PER_MINUTE = 60_000
 
-internal actual fun readDeviceFingerprint(): DeviceFingerprint {
+internal actual suspend fun readDeviceFingerprint(): DeviceFingerprint {
     // Resources.getSystem() gives display metrics without a context, so the
     // fingerprint stays available even when the SDK was configured without one.
     val metrics = Resources.getSystem().displayMetrics

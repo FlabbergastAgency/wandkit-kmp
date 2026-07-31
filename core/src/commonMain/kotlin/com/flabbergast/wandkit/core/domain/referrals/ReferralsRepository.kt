@@ -23,6 +23,9 @@ internal interface ReferralsRepository {
     /** The referral detected for this install, if detection has ever succeeded. */
     val detectedReferral: ReferralDetection?
 
+    /** Forgets the detected referral once the question it answers is settled. */
+    fun clearDetectedReferral()
+
     /**
      * Runs detection once per install, doing nothing on later calls.
      */

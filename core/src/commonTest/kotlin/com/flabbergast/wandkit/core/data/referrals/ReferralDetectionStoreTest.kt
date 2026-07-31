@@ -34,6 +34,35 @@ class ReferralDetectionStoreTest {
     }
 
     @Test
+    fun clearedDetectionStaysCleared() {
+        val store = InMemoryKeyValueStore()
+        val json = createJson()
+        val detection = ReferralDetection(
+            referralId = "a3f1",
+            code = "INVITE10",
+            campaign = "invite-5-for-1-year",
+            inviterId = "user_123",
+        )
+
+        createReferralDetectionStore(store, json).setDetection(detection)
+        createReferralDetectionStore(store, json).clearDetection()
+
+        assertNull(createReferralDetectionStore(store, json).detection)
+    }
+
+    @Test
+    fun failureCountAccumulatesAcrossLaunches() {
+        val store = InMemoryKeyValueStore()
+        val json = createJson()
+
+        assertEquals(0, createReferralDetectionStore(store, json).detectionFailureCount)
+        createReferralDetectionStore(store, json).recordDetectionFailure()
+        createReferralDetectionStore(store, json).recordDetectionFailure()
+
+        assertEquals(2, createReferralDetectionStore(store, json).detectionFailureCount)
+    }
+
+    @Test
     fun detectionAttemptIsRecordedOnce() {
         val store = InMemoryKeyValueStore()
         val json = createJson()

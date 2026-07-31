@@ -17,9 +17,16 @@ internal interface ReferralDetectionStore {
 
     val detection: ReferralDetection?
 
+    /** How many transient failures detection has already retried through. */
+    val detectionFailureCount: Int
+
     fun setDetection(detection: ReferralDetection)
 
+    fun clearDetection()
+
     fun markDetectionAttempted()
+
+    fun recordDetectionFailure()
 }
 
 internal fun createReferralDetectionStore(
@@ -29,6 +36,7 @@ internal fun createReferralDetectionStore(
 
 private const val KEY_DETECTION_ATTEMPTED = "wandkit.referral.detectionAttempted"
 private const val KEY_DETECTION = "wandkit.referral.detection"
+private const val KEY_DETECTION_FAILURE_COUNT = "wandkit.referral.detectionFailureCount"
 
 private class ReferralDetectionStoreImpl(
     private val keyValueStore: KeyValueStore,
@@ -49,7 +57,18 @@ private class ReferralDetectionStoreImpl(
         keyValueStore.putString(KEY_DETECTION, encoded)
     }
 
+    override val detectionFailureCount: Int
+        get() = keyValueStore.getString(KEY_DETECTION_FAILURE_COUNT)?.toIntOrNull() ?: 0
+
+    override fun clearDetection() {
+        keyValueStore.remove(KEY_DETECTION)
+    }
+
     override fun markDetectionAttempted() {
         keyValueStore.putBoolean(KEY_DETECTION_ATTEMPTED, true)
+    }
+
+    override fun recordDetectionFailure() {
+        keyValueStore.putString(KEY_DETECTION_FAILURE_COUNT, (detectionFailureCount + 1).toString())
     }
 }

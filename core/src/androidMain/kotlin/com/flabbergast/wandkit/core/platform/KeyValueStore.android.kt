@@ -37,4 +37,8 @@ private class SharedPreferencesKeyValueStore(
     ) {
         preferences.edit().putBoolean(key, value).apply()
     }
+
+    override fun remove(key: String) {
+        preferences.edit().remove(key).apply()
+    }
 }

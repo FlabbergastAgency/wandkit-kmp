@@ -192,8 +192,19 @@ whenever your UI is ready:
 val detection = WandKit.detectedReferral
 ```
 
-A network failure deliberately does not count as an attempt, so the next launch
-retries - a dropped attempt costs an inviter a referral they earned.
+A transient failure does not count as an attempt, so the next launch retries - a
+dropped attempt costs an inviter a referral they earned. Retries are capped, and
+a permanent failure (a rejected key, an unreadable response) gives up at once, so
+an install that can never get an answer stops fingerprinting rather than
+re-sending on every launch.
+
+`redeemCode` clears the detection on success, since the question it exists to
+answer has been answered. If the user dismisses the prefilled code instead, clear
+it yourself:
+
+```kotlin
+WandKit.clearDetectedReferral()
+```
 
 ### Redeem A Referral Code
 

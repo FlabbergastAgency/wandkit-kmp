@@ -17,4 +17,8 @@ internal data class DeviceFingerprint(
     val devicePixelRatio: Double,
 )
 
-internal expect fun readDeviceFingerprint(): DeviceFingerprint
+/**
+ * Suspending because UIKit screen metrics must be read on the main thread, and
+ * detection runs on a background dispatcher.
+ */
+internal expect suspend fun readDeviceFingerprint(): DeviceFingerprint
