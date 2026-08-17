@@ -89,11 +89,36 @@ skie {
 }
 
 mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
+
     pom {
         name = "WandKit KMP Core"
         description = "The core library for WandKit KMP."
         inceptionYear = "2026"
         url = "https://github.com/FlabbergastAgency/wandkit-kmp"
+
+        licenses {
+            license {
+                name = "Apache-2.0"
+                url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                distribution = "repo"
+            }
+        }
+
+        developers {
+            developer {
+                id = "FlabbergastAgency"
+                name = "Flabbergast Agency"
+                url = "https://github.com/FlabbergastAgency"
+            }
+        }
+
+        scm {
+            url = "https://github.com/FlabbergastAgency/wandkit-kmp"
+            connection = "scm:git:git://github.com/FlabbergastAgency/wandkit-kmp.git"
+            developerConnection = "scm:git:ssh://git@github.com/FlabbergastAgency/wandkit-kmp.git"
+        }
     }
 }
 
