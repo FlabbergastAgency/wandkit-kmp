@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 @Serializable
-internal data class ReferralMatchRequestDto(
+internal data class DetectReferralRequestDto(
     @SerialName("install_id")
     val installId: String,
     @SerialName("user_agent")

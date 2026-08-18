@@ -16,9 +16,12 @@ import com.flabbergast.wandkit.core.data.networking.createHttpClient
 import com.flabbergast.wandkit.core.data.networking.createJson
 import com.flabbergast.wandkit.core.data.referrals.ReferralsApi
 import com.flabbergast.wandkit.core.data.referrals.createReferralsApi
+import com.flabbergast.wandkit.core.data.referrals.ReferralDetectionStore
+import com.flabbergast.wandkit.core.data.referrals.createReferralDetectionStore
 import com.flabbergast.wandkit.core.data.referrals.createReferralsRepository
 import com.flabbergast.wandkit.core.platform.PlatformContext
 import com.flabbergast.wandkit.core.platform.createInstallReferralCodeProvider
+import com.flabbergast.wandkit.core.platform.createKeyValueStore
 import com.flabbergast.wandkit.core.domain.events.EventsRepository
 import com.flabbergast.wandkit.core.domain.events.IdentifyInfo
 import com.flabbergast.wandkit.core.domain.events.TrackEventUseCase
@@ -33,6 +36,8 @@ import com.flabbergast.wandkit.core.domain.forms.createSubmitFormUseCase
 import com.flabbergast.wandkit.core.domain.infrastructure.concurrency.createFireAndForgetTask
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.createAppLogger
+import com.flabbergast.wandkit.core.domain.install.InstallIdentity
+import com.flabbergast.wandkit.core.domain.install.createInstallIdentity
 import com.flabbergast.wandkit.core.domain.referrals.ReferralsRepository
 import com.flabbergast.wandkit.core.domain.infrastructure.threading.BackgroundDispatcher
 import com.flabbergast.wandkit.core.models.createWandKitClient
@@ -58,6 +63,14 @@ internal class WandKitSdkContainer private constructor(
     internal fun setUserId(userId: String?) { externalUserId = userId }
 
     internal val deviceId = Uuid.generateV4().toString()
+
+    internal val keyValueStore by lazy { createKeyValueStore(platformContext) }
+
+    internal val installIdentity: InstallIdentity by lazy { createInstallIdentity(keyValueStore) }
+
+    internal val referralDetectionStore: ReferralDetectionStore by lazy {
+        createReferralDetectionStore(keyValueStore = keyValueStore, json = json)
+    }
 
     internal val identityInfo: IdentifyInfo
         get() = IdentifyInfo(externalUserId ?: Uuid.generateV4().toString(), deviceId)
@@ -117,7 +130,9 @@ internal class WandKitSdkContainer private constructor(
         createReferralsRepository(
             referralsApi = referralsApi,
             installReferralCodeProvider = installReferralCodeProvider,
-            deviceId = deviceId,
+            installIdentity = installIdentity,
+            detectionStore = referralDetectionStore,
+            appConfiguration = appConfiguration,
             json = json,
             logger = logger,
         )

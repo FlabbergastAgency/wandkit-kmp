@@ -144,15 +144,88 @@ val referral = WandKit.getReferral(path = "abc123")
 
 `WandKit.getReferral(...)` returns `GetReferralResponse?`.
 
+### Track An Inviter's Progress
+
+How far an inviter is toward their reward - what drives an in-app
+"3 of 5 friends joined" meter:
+
+```kotlin
+val progress = WandKit.getReferralProgress(
+    userId = "user_123",
+    campaign = "samplecampaign",
+)
+
+val joined = progress?.convertedCount
+val goal = progress?.reward?.threshold
+```
+
+`WandKit.getReferralProgress(...)` returns `ReferralProgress?`, and `null` when the
+campaign does not exist or this inviter has no referral yet - call
+`WandKit.invite(...)` first.
+
+`convertedCount` is what counts toward the reward: claims that went on to sign up.
+`claimedCount` is the larger number of installs that merely entered the code.
+
+### Detect Which Referral An Install Came From
+
+Ask the backend which referral this install probably came from. **Nothing is bound
+by this** - the returned code is meant to be offered back to the user to confirm or
+replace, and `redeemCode` is what actually claims it:
+
+```kotlin
+val detection = WandKit.detectReferral()
+val prefill = detection?.code
+```
+
+Fingerprint accuracy decays quickly and the server-side match window is short, so
+detection has to run early - long before the user has agreed to anything. Call this
+right after `configure`:
+
+```kotlin
+WandKit.detectReferralOnFirstLaunchIfNeeded()
+```
+
+It runs once per install, in the background, and persists the result. Read it back
+whenever your UI is ready:
+
+```kotlin
+val detection = WandKit.detectedReferral
+```
+
+A transient failure does not count as an attempt, so the next launch retries - a
+dropped attempt costs an inviter a referral they earned. Retries are capped, and
+a permanent failure (a rejected key, an unreadable response) gives up at once, so
+an install that can never get an answer stops fingerprinting rather than
+re-sending on every launch.
+
+`redeemCode` clears the detection on success, since the question it exists to
+answer has been answered. If the user dismisses the prefilled code instead, clear
+it yourself:
+
+```kotlin
+WandKit.clearDetectedReferral()
+```
+
 ### Redeem A Referral Code
 
-If your app already has a referral code, redeem it directly:
+Redeem a code, whether the user typed it or confirmed a detected one:
 
 ```kotlin
 val match = WandKit.redeemCode(code = "INVITE_CODE")
 ```
 
-`WandKit.redeemCode(...)` returns `ReferralMatch?`.
+`WandKit.redeemCode(...)` returns `ReferralMatch?`. This is the only call that
+creates a claim.
+
+### Report Conversions From Your Own Backend
+
+`WandKit.installId` is this device's install ID, the same one `redeemCode` claims
+with, and it is stable across launches. Forward it to your own backend so it can
+report referral conversions server-to-server:
+
+```kotlin
+myBackend.reportReferralAttribution(wandkitInstallId = WandKit.installId)
+```
 
 ### Match An Install Referral
 
@@ -163,6 +236,10 @@ val match = WandKit.matchReferral()
 ```
 
 `WandKit.matchReferral()` returns `ReferralMatch?`.
+
+Note that this predates `detectReferral()` and claims the referral immediately,
+without asking the user. Prefer detection unless you specifically want the old
+auto-claim behaviour.
 
 ### Install Referral Code Provider
 

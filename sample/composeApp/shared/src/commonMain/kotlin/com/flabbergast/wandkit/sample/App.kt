@@ -60,6 +60,9 @@ private fun Content(snackbarHostState: SnackbarHostState) {
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isGeneratingReferral by remember { mutableStateOf(false) }
     var isRedeeming by remember { mutableStateOf(false) }
+    var isDetecting by remember { mutableStateOf(false) }
+    var detectionResult by remember { mutableStateOf<String?>(null) }
+    var progressText by remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
     val activeUserId = userIdInput.trim().takeIf { it.isNotEmpty() }
@@ -69,6 +72,17 @@ private fun Content(snackbarHostState: SnackbarHostState) {
             WandKit.event(
                 name = "my_event",
             )
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        // First-launch detection may have finished before this screen existed.
+        WandKit.detectedReferral?.let { detection ->
+            if (redeemCodeInput.isEmpty()) {
+                redeemCodeInput = detection.code
+                detectionResult = "Detected ${detection.campaignName ?: detection.campaign} " +
+                    "invite from ${detection.inviterId}. Confirm or replace it below."
+            }
         }
     }
 
@@ -153,8 +167,72 @@ private fun Content(snackbarHostState: SnackbarHostState) {
                 Text("Copy referral link")
             }
         }
+        if (referralUrl != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    val currentUserId = activeUserId ?: return@Button
+                    coroutineScope.launch {
+                        val progress = runCatching {
+                            WandKit.getReferralProgress(
+                                userId = currentUserId,
+                                campaign = SAMPLE_REFERRAL_CAMPAIGN,
+                            )
+                        }.getOrNull()
+
+                        progressText = progress?.let {
+                            val threshold = it.reward.threshold
+                            val goal = if (threshold != null) " of $threshold" else ""
+                            "${it.convertedCount}$goal friends joined " +
+                                "(${it.claimedCount} entered the code) - reward: ${it.reward.status}"
+                        } ?: "No progress yet"
+                    }
+                },
+            ) {
+                Text("Refresh progress")
+            }
+        }
+        if (progressText != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = progressText.orEmpty(), modifier = Modifier.fillMaxWidth())
+        }
         AnimatedVisibility(activeUserId != null) {
             Column(modifier = Modifier.fillMaxWidth()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            isDetecting = true
+                            detectionResult = null
+                            errorMessage = null
+
+                            runCatching { WandKit.detectReferral() }
+                                .onSuccess { detection ->
+                                    if (detection == null) {
+                                        detectionResult = "No referral detected for this install"
+                                    } else {
+                                        // Detection only prefills. Redeeming is what claims it.
+                                        redeemCodeInput = detection.code
+                                        detectionResult =
+                                            "Detected ${detection.campaignName ?: detection.campaign} " +
+                                                "invite from ${detection.inviterId}"
+                                    }
+                                }
+                                .onFailure {
+                                    errorMessage = it.message ?: "Failed to detect referral"
+                                }
+
+                            isDetecting = false
+                        }
+                    },
+                    enabled = !isDetecting && !isRedeeming,
+                ) {
+                    Text(if (isDetecting) "Detecting..." else "Detect my invite code")
+                }
+                if (detectionResult != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = detectionResult.orEmpty(), modifier = Modifier.fillMaxWidth())
+                }
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = redeemCodeInput,
