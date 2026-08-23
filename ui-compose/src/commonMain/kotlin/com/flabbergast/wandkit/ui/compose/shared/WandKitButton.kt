@@ -1,9 +1,11 @@
 package com.flabbergast.wandkit.ui.compose.shared
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -11,6 +13,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.flabbergast.wandkit.ui.compose.WandKitColors
 import com.flabbergast.wandkit.ui.compose.WandKitThemeDefaults
 import com.flabbergast.wandkit.ui.compose.WandKitThemeProvider
@@ -23,19 +26,32 @@ internal fun WandKitButton(
     modifier: Modifier = Modifier,
     colors: WandKitButtonColors = WandKitButtonColors.Primary,
     textStyle: TextStyle = WandKitTypography.labelMedium,
+    enabled: Boolean = true,
+    isLoading: Boolean = false,
 ) {
     Button(
         onClick = onClick,
+        enabled = enabled && !isLoading,
         colors = ButtonDefaults.buttonColors(
             containerColor = colors.backgroundColor,
             contentColor = colors.textColor,
+            disabledContainerColor = colors.backgroundColor.copy(alpha = 0.5f),
+            disabledContentColor = colors.textColor.copy(alpha = 0.5f),
         ),
         modifier = modifier.clip(CircleShape),
     ) {
-        Text(
-            text = text,
-            style = textStyle,
-        )
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(16.dp),
+                color = colors.textColor,
+                strokeWidth = 2.dp,
+            )
+        } else {
+            Text(
+                text = text,
+                style = textStyle,
+            )
+        }
     }
 }
 

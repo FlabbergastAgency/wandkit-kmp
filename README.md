@@ -6,6 +6,7 @@ This README covers:
 - SDK setup
 - event tracking
 - form rendering
+- feedback and screenshot reporting
 - Compose UI host setup
 - available configuration
 
@@ -20,6 +21,10 @@ This README covers:
 
 - `apiKey`: your WandKit API key
 - `isDebugLoggingEnabled`: enables SDK debug logging
+- `apiBaseUrl`: overrides the API host (events, forms, referrals, feedback sessions); `null` uses production
+- `feedbackWebUrl`: origin the feedback web app is served from, for pointing a build at a staging deployment (see [Feedback](#feedback))
+- `feedbackTheme`: styling for the feedback web app (see [Theming](#theming))
+- `screenshotReporting`: turns a screenshot into a "Report a problem?" prompt (see [Screenshot reporting](#screenshot-reporting))
 
 Example:
 
@@ -274,6 +279,127 @@ On iOS, the install referral code provider is currently not implemented and alwa
 - `WandKit.getInstallReferralCode()` returns `null` on iOS
 - `WandKit.matchReferral()` also returns `null` on iOS unless install referral support is implemented there later
 
+## Feedback
+
+`WandKit.presentFeedback()` opens the feedback screen - the feed, the composer, and the roadmap - on top of whatever is currently visible:
+
+```kotlin
+WandKit.presentFeedback()
+```
+
+It uses whichever user `identify(...)` last named. Without one the session is anonymous, which the backend makes **read-only**: the user can read the feed and the roadmap but not post, comment, or vote. Nothing errors and nothing is hidden - the web app simply renders without the write actions.
+
+Open straight on the new-post composer, optionally seeded with something the user already typed elsewhere in your app:
+
+```kotlin
+WandKit.presentFeedback(
+    startAt = WandKitFeedbackScreen.Composer(
+        WandKitComposerPrefill(description = "It crashes when…"),
+    ),
+)
+```
+
+`WandKitComposerPrefill` can also pre-select the type and attach an image - say, a screenshot your own "report a bug" button captured:
+
+```kotlin
+WandKit.presentFeedback(
+    startAt = WandKitFeedbackScreen.Composer(
+        WandKitComposerPrefill(
+            type = WandKitPostType.BUG,
+            attachments = listOfNotNull(WandKitComposerAttachment.image(bitmap)),
+        ),
+    ),
+)
+```
+
+`WandKitComposerAttachment.image(bitmap)` is an Android helper: it JPEG-encodes the bitmap, downscaled to 2000 px on the long edge, and returns `null` only if the image can't be made to fit the SDK's payload cap. A `type` the project has disabled is ignored by the composer.
+
+The screen itself is a WandKit-hosted web app rendered in a WebView, inside an Activity the SDK declares in its own manifest - there is nothing to add to yours. It changes when WandKit ships, not when your app does.
+
+**Android only.** The iOS targets of this library log a warning and do nothing; use the native WandKit iOS SDK there.
+
+For custom launching - a notification tap, a deep link handler, anywhere else that already holds a `Context` - build the `Intent` yourself instead of going through `presentFeedback`:
+
+```kotlin
+val intent = WandKit.feedbackIntent(context, startAt)
+context.startActivity(intent)
+```
+
+### Theming
+
+Style the feedback web app with `feedbackTheme` at configure time. It is serialized into the webview and applied as CSS custom properties.
+
+```kotlin
+WandKit.configure(
+    config = WandKitConfig(
+        apiKey = "your_api_key",
+        feedbackTheme = WandKitFeedbackTheme(
+            primaryColor = "#4F46E5",
+            backgroundColor = "#FFFFFF",
+            cornerRadius = 16.0,
+            fontFamily = "-apple-system, system-ui, sans-serif",
+            preferredColorScheme = WandKitColorSchemePreference.SYSTEM,
+        ),
+    ),
+    context = applicationContext,
+)
+```
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `primaryColor` | `String?` | `null` | Buttons, links, anything accented |
+| `backgroundColor` | `String?` | `null` | Page background, also painted behind the webview so a slow first paint doesn't flash white |
+| `cornerRadius` | `Double?` | `null` | |
+| `fontFamily` | `String?` | `null` | A CSS font family the webview can resolve - a web-safe stack, or a font the hosted app bundles. A font that only exists inside your app will not resolve |
+| `preferredColorScheme` | `WandKitColorSchemePreference` | `SYSTEM` | `LIGHT` and `DARK` also override the native chrome around the webview |
+
+Colors are CSS hex strings (`#RRGGBB`, or `#RRGGBBAA` when translucent); the native chrome around the webview - window background, spinner - only honours the opaque form. Omit the theme entirely and the web app keeps its own defaults.
+
+`feedbackWebUrl` overrides the origin the web app is served from, and `apiBaseUrl` the API host, for pointing a build at a staging deployment. Both take plain `http://` origins for a local stack, which also needs `android:usesCleartextTraffic="true"` (or a network security config) in your manifest.
+
+### Screenshot reporting
+
+Opt in at configure time and a screenshot turns into a "Report a problem?" prompt:
+
+```kotlin
+WandKit.configure(
+    config = WandKitConfig(
+        apiKey = "your_api_key",
+        screenshotReporting = true,
+    ),
+    context = applicationContext,
+)
+```
+
+When the user takes a screenshot, `WandKitHost()` shows a small card over your app with a thumbnail of what they just captured. The whole flow is native - there is no webview involved:
+
+1. **Card.** "Report a problem" moves to the text box; "Not now" or tapping outside dismisses it.
+2. **Composer.** The thumbnail stays visible above a plain text field ("What went wrong?"). "Send" uploads the screenshot and creates the report post directly against the API, using a short-lived posts session minted just for that send (the token never touches disk). A failure shows an inline message under the field and relabels the button "Try again"; nothing is retried automatically.
+3. **Thank-you.** On success the card shows a short thank-you and auto-dismisses about 1.2 seconds later.
+
+The report lands as a pending post (`type=bug`) in the project's triage inbox, same as anything else a user sends - the team publishes it from there. Another screenshot within two seconds of the last card is debounced rather than shown again.
+
+Requirements:
+
+- **Android 14+.** Uses `Activity.ScreenCaptureCallback`; earlier versions never see a card. The SDK's own manifest merges the `android.permission.DETECT_SCREEN_CAPTURE` normal permission into your app - there is no runtime prompt to wire up.
+- **An identified user** (`identify(...)`). Anonymous sessions cannot post, so without one the screenshot is skipped silently rather than shown to a user who could never submit it.
+- **`WandKitHost()` mounted** on the screen, the same as for survey forms.
+- **`configure` called in `Application.onCreate`**, so the SDK sees the first Activity and can register its capture callback as soon as it resumes.
+
+What it does not do:
+
+- **Read the gallery.** The image is read back from your app's own window via `PixelCopy`, not from Photos, so there is no permission prompt for it. `SurfaceView` content comes out black, and a window flagged `FLAG_SECURE` never triggers a callback at all.
+- **Upload anything until Send.** The image stays in memory while the card or text box is open, and only leaves the device once the user taps Send.
+- **Prompt on Android 13 and below.** There is no capture callback to hook there. If you want a screenshot-report entry point on older devices, wire your own trigger to the (webview) composer directly - this deep-links to the simplified web composer, which still accepts a `type`:
+
+  ```kotlin
+  WandKit.presentFeedback(
+      startAt = WandKitFeedbackScreen.Composer(
+          WandKitComposerPrefill(type = WandKitPostType.BUG),
+      ),
+  )
+  ```
+
 ## How Forms Work
 
 Forms are event-driven.
@@ -298,7 +424,7 @@ fun App() {
 }
 ```
 
-`WandKitHost()` should be mounted at the root of the composable container where forms can appear.
+`WandKitHost()` should be mounted at the root of the composable container where forms can appear. It also renders the screenshot-report card (see [Screenshot reporting](#screenshot-reporting)) when `screenshotReporting` is enabled.
 
 If that container uses `ModalBottomSheetLayout`, place the host at that root level so the SDK can present forms correctly inside the same container.
 

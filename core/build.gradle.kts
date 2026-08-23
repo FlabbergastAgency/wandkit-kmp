@@ -66,6 +66,10 @@ kotlin {
 
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(project.dependencies.platform(libs.ktor.bom))
+            implementation(libs.ktor.client.mock)
         }
 
         iosMain.dependencies {
@@ -78,6 +82,12 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.android.installreferrer)
             implementation(libs.ktor.client.okhttp)
+            // The feedback screen: document-start script injection and
+            // window-insets helpers. `coroutines-android` supplies
+            // Dispatchers.Main for hosts that use core without Compose.
+            implementation(libs.androidx.webkit)
+            implementation(libs.androidx.core)
+            implementation(libs.kotlinx.coroutines.android)
         }
     }
 }

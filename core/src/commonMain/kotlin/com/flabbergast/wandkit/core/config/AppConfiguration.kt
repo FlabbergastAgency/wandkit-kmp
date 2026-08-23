@@ -12,8 +12,11 @@ internal data class AppConfiguration(
 
 private const val BASE_URL = "https://api.wandkit.flabic.com"
 
-internal fun createAppConfiguration(isDebugLoggingEnabled: Boolean) = AppConfiguration(
-    baseUrl = BASE_URL,
+internal fun createAppConfiguration(
+    isDebugLoggingEnabled: Boolean,
+    apiBaseUrl: String? = null,
+) = AppConfiguration(
+    baseUrl = apiBaseUrl?.trimEnd('/')?.takeIf { it.isNotBlank() } ?: BASE_URL,
     libraryVersion = LibraryBuildInfo.VERSION,
     platformName = PlatformInfo.name,
     platformVersion = PlatformInfo.version,

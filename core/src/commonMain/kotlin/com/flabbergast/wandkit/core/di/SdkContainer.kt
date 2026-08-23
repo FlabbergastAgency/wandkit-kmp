@@ -14,6 +14,9 @@ import com.flabbergast.wandkit.core.data.networking.WandKitHttpClient
 import com.flabbergast.wandkit.core.data.networking.createCommonInterceptor
 import com.flabbergast.wandkit.core.data.networking.createHttpClient
 import com.flabbergast.wandkit.core.data.networking.createJson
+import com.flabbergast.wandkit.core.data.posts.PostsApi
+import com.flabbergast.wandkit.core.data.posts.createPostsApi
+import com.flabbergast.wandkit.core.data.posts.createPostsSessionRepository
 import com.flabbergast.wandkit.core.data.referrals.ReferralsApi
 import com.flabbergast.wandkit.core.data.referrals.createReferralsApi
 import com.flabbergast.wandkit.core.data.referrals.ReferralDetectionStore
@@ -38,7 +41,12 @@ import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.createAppLogger
 import com.flabbergast.wandkit.core.domain.install.InstallIdentity
 import com.flabbergast.wandkit.core.domain.install.createInstallIdentity
+import com.flabbergast.wandkit.core.domain.posts.PostsSessionRepository
 import com.flabbergast.wandkit.core.domain.referrals.ReferralsRepository
+import com.flabbergast.wandkit.core.domain.screenshot.ScreenshotPromptController
+import com.flabbergast.wandkit.core.domain.screenshot.SubmitScreenshotReportUseCase
+import com.flabbergast.wandkit.core.domain.screenshot.createScreenshotPromptController
+import com.flabbergast.wandkit.core.domain.screenshot.createSubmitScreenshotReportUseCase
 import com.flabbergast.wandkit.core.domain.infrastructure.threading.BackgroundDispatcher
 import com.flabbergast.wandkit.core.models.createWandKitClient
 import kotlinx.serialization.json.Json
@@ -47,13 +55,13 @@ import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
 internal class WandKitSdkContainer private constructor(
-    private val config: WandKitConfig,
-    platformContext: PlatformContext?,
+    internal val config: WandKitConfig,
+    internal val platformContext: PlatformContext?,
 ): InstanceKeeper.Instance {
     internal val backgroundDispatcher = BackgroundDispatcher()
     internal val wandKitClient = createWandKitClient()
 
-    internal val appConfiguration = createAppConfiguration(config.isDebugLoggingEnabled)
+    internal val appConfiguration = createAppConfiguration(config.isDebugLoggingEnabled, config.apiBaseUrl)
 
     internal val logger: Logger by lazy { createAppLogger(appConfiguration.logLevel) }
 
@@ -79,7 +87,7 @@ internal class WandKitSdkContainer private constructor(
 
     internal val httpClient: WandKitHttpClient by lazy { createHttpClient(
         json = json,
-        commonInterceptor = createCommonInterceptor(config.apiKey),
+        commonInterceptor = createCommonInterceptor(config.apiKey, appConfiguration.baseUrl),
         appLogger = logger,
     ) }
 
@@ -103,6 +111,14 @@ internal class WandKitSdkContainer private constructor(
         )
     }
 
+    internal val postsApi: WandKitApi<PostsApi> by lazy {
+        createPostsApi(
+            httpClient = httpClient,
+            baseUrl = appConfiguration.baseUrl,
+            logger = logger,
+        )
+    }
+
     internal val referralsApi: WandKitApi<ReferralsApi> by lazy {
         createReferralsApi(
             httpClient = httpClient,
@@ -116,6 +132,7 @@ internal class WandKitSdkContainer private constructor(
             eventsApi = eventsApi,
             appConfiguration = appConfiguration,
             logger = logger,
+            platformContext = platformContext,
         )
     }
 
@@ -123,6 +140,8 @@ internal class WandKitSdkContainer private constructor(
         createFeedbackFormRepository(
             formsApi = formsApi,
             logger = logger,
+            appConfiguration = appConfiguration,
+            platformContext = platformContext,
         )
     }
 
@@ -138,8 +157,34 @@ internal class WandKitSdkContainer private constructor(
         )
     }
 
+    internal val postsSessionRepository: PostsSessionRepository by lazy {
+        createPostsSessionRepository(
+            postsApi = postsApi,
+            appConfiguration = appConfiguration,
+            platformContext = platformContext,
+            externalUserId = { externalUserId },
+            logger = logger,
+        )
+    }
+
     internal val feedbackFormController: FeedbackFormController by lazy {
         createFeedbackFormController(logger)
+    }
+
+    internal val submitScreenshotReportUseCase: SubmitScreenshotReportUseCase by lazy {
+        createSubmitScreenshotReportUseCase(
+            postsApi = postsApi,
+            postsSessionRepository = postsSessionRepository,
+            logger = logger,
+        )
+    }
+
+    internal val screenshotPromptController: ScreenshotPromptController by lazy {
+        createScreenshotPromptController(
+            submitReport = submitScreenshotReportUseCase,
+            fireAndForgetTask = fireAndForgetTask,
+            logger = logger,
+        )
     }
 
     internal val trackEventUseCase: TrackEventUseCase

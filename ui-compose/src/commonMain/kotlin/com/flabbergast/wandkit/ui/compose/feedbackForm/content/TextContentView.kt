@@ -8,7 +8,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,6 +36,7 @@ internal fun TextContentView(
             maxLines = 8,
             placeholder = { Text(content.placeholder) },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            autoFocus = true,
         )
         Text(
             text = "${content.text.length}/${content.maxLength}",
@@ -43,8 +48,13 @@ internal fun TextContentView(
     }
 }
 
+/**
+ * @param autoFocus Focus the field (and so raise the keyboard) as soon as it
+ * enters composition. Use on pages where typing is the only thing to do, so
+ * the user doesn't have to tap the box first.
+ */
 @Composable
-private fun WandKitOutlinedTextField(
+internal fun WandKitOutlinedTextField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -52,11 +62,21 @@ private fun WandKitOutlinedTextField(
     maxLines: Int = Int.MAX_VALUE,
     placeholder: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    autoFocus: Boolean = false,
 ) {
+    val focusRequester = remember { FocusRequester() }
+
+    if (autoFocus) {
+        // Runs once the field is attached, which is what requestFocus() needs.
+        LaunchedEffect(Unit) {
+            focusRequester.requestFocus()
+        }
+    }
+
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier,
+        modifier = modifier.focusRequester(focusRequester),
         minLines = minLines,
         maxLines = maxLines,
         placeholder = placeholder,

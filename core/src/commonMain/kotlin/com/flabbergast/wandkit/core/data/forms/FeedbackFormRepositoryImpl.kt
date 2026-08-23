@@ -1,21 +1,29 @@
 package com.flabbergast.wandkit.core.data.forms
 
+import com.flabbergast.wandkit.core.config.AppConfiguration
 import com.flabbergast.wandkit.core.data.forms.dto.SubmitFormAnswerDto
 import com.flabbergast.wandkit.core.data.forms.dto.SubmitFormResponseRequestDto
 import com.flabbergast.wandkit.core.data.forms.dto.SubmitFormThumbDto
+import com.flabbergast.wandkit.core.data.forms.mappers.toSubmitFormDeviceDto
 import com.flabbergast.wandkit.core.data.networking.WandKitApi
 import com.flabbergast.wandkit.core.domain.forms.FeedbackFormRepository
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPageId
 import com.flabbergast.wandkit.core.domain.forms.models.PageInput
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
+import com.flabbergast.wandkit.core.platform.PlatformContext
+import com.flabbergast.wandkit.core.platform.readDeviceContext
 import kotlin.time.Clock
 
 internal fun createFeedbackFormRepository(
     formsApi: WandKitApi<FormsApi>,
     logger: Logger,
+    appConfiguration: AppConfiguration,
+    platformContext: PlatformContext?,
 ): FeedbackFormRepository = FeedbackFormRepositoryImpl(
     formsApi = formsApi,
-    logger = logger
+    logger = logger,
+    appConfiguration = appConfiguration,
+    platformContext = platformContext,
 )
 
 private const val LOGGER_TAG = "[FeedbackFormRepository]"
@@ -23,6 +31,8 @@ private const val LOGGER_TAG = "[FeedbackFormRepository]"
 private class FeedbackFormRepositoryImpl(
     private val formsApi: WandKitApi<FormsApi>,
     private val logger: Logger,
+    private val appConfiguration: AppConfiguration,
+    private val platformContext: PlatformContext?,
 ) : FeedbackFormRepository {
     override suspend fun submit(
         impressionId: String,
@@ -42,6 +52,7 @@ private class FeedbackFormRepositoryImpl(
                         ).takeIf { pageInput.hasInput() }
                     },
                     completedAt = Clock.System.now().toString(),
+                    device = appConfiguration.toSubmitFormDeviceDto(readDeviceContext(platformContext)),
                 )
             )
         }.onSuccess {

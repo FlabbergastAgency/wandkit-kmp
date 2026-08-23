@@ -9,4 +9,6 @@ internal data class SubmitFormResponseRequestDto(
     val answers: List<SubmitFormAnswerDto>,
     @SerialName("completed_at")
     val completedAt: String,
+    @SerialName("device")
+    val device: SubmitFormDeviceDto? = null,
 )

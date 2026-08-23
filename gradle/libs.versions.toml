@@ -19,6 +19,8 @@ android-installreferrer = "2.2"
 ktor = "3.5.0"
 skie = "0.10.12"
 vanniktechMavenPublish = "0.36.0"
+androidx-webkit = "1.15.0"
+androidx-core = "1.17.0"
 
 [libraries]
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
@@ -30,6 +32,9 @@ compose-ui-tooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.r
 compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
 compose-activity = { module = "androidx.activity:activity-compose", version.ref = "compose-activity" }
 android-installreferrer = { module = "com.android.installreferrer:installreferrer", version.ref = "android-installreferrer" }
+androidx-webkit = { module = "androidx.webkit:webkit", version.ref = "androidx-webkit" }
+androidx-core = { module = "androidx.core:core", version.ref = "androidx-core" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
 decompose-extensions-compose = { module = "com.arkivanov.decompose:extensions-compose", version.ref = "decompose" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
@@ -45,9 +50,11 @@ ktor-json = { module = "io.ktor:ktor-serialization-kotlinx-json" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp" }
 ktor-logging = { module = "io.ktor:ktor-client-logging" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock" }
 
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlinStdlib" }
 runner = { group = "androidx.test", name = "runner", version.ref = "runner" }
 core = { group = "androidx.test", name = "core", version.ref = "core" }

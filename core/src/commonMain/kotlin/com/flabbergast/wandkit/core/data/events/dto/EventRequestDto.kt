@@ -15,4 +15,6 @@ internal data class EventRequestDto(
     val occurredAt: String,
     @SerialName("sdk")
     val sdk: EventRequestSdkDto,
+    @SerialName("device")
+    val device: EventRequestDeviceDto? = null,
 )

@@ -301,6 +301,12 @@ private fun Content(snackbarHostState: SnackbarHostState) {
         Button(onClick = { showContent = !showContent }) {
             Text("Feedback Form")
         }
+        Spacer(modifier = Modifier.height(8.dp))
+        // Screenshot reporting (screenshotReporting = true in MainActivity) needs an
+        // identified user to post - enter a User ID above first.
+        Button(onClick = { WandKit.presentFeedback() }) {
+            Text("Open feedback")
+        }
         AnimatedVisibility(showContent) {
             val greeting = remember { Greeting().greet() }
             Column(
