@@ -31,6 +31,8 @@ internal data class FeedbackBootstrap(
     val platform: String,
     /** Present only when the host opened the composer with seed content. The web app consumes it once. */
     val prefill: Prefill? = null,
+    /** The user's effective display name - their own if set, else the host's suggestion. `null` for an anonymous session. */
+    val displayName: String? = null,
 ) {
     @Serializable
     internal data class Config(
@@ -121,6 +123,7 @@ internal data class FeedbackBootstrap(
             locale = locale,
             platform = platform,
             prefill = prefill?.takeUnless { it.isEmpty }?.toPayload(),
+            displayName = session.displayName,
         )
 
         /** What `refreshSession` hands back, as a JS call the webview can evaluate. */

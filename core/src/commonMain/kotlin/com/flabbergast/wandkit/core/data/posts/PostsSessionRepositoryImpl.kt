@@ -18,12 +18,14 @@ internal fun createPostsSessionRepository(
     appConfiguration: AppConfiguration,
     platformContext: PlatformContext?,
     externalUserId: () -> String?,
+    displayName: () -> String?,
     logger: Logger,
 ): PostsSessionRepository = PostsSessionRepositoryImpl(
     postsApi = postsApi,
     appConfiguration = appConfiguration,
     platformContext = platformContext,
     externalUserId = externalUserId,
+    displayName = displayName,
     logger = logger,
 )
 
@@ -34,12 +36,15 @@ private class PostsSessionRepositoryImpl(
     private val appConfiguration: AppConfiguration,
     private val platformContext: PlatformContext?,
     private val externalUserId: () -> String?,
+    private val displayName: () -> String?,
     private val logger: Logger,
 ) : PostsSessionRepository {
     override suspend fun mintSession(): Result<PostsSession> {
         val deviceContext = readDeviceContext(platformContext)
+        val externalUserId = externalUserId()?.takeIf { it.isNotBlank() }
         val request = SdkPostsSessionRequestDto(
-            externalUserId = externalUserId()?.takeIf { it.isNotBlank() },
+            externalUserId = externalUserId,
+            displayName = externalUserId?.let { displayName()?.trim()?.takeIf { name -> name.isNotBlank() } },
             device = SdkPostsSessionDeviceDto(
                 platform = appConfiguration.platformName.lowercase(),
                 osVersion = deviceContext.osVersion,
@@ -65,4 +70,5 @@ private fun SdkPostsSessionResponseDto.toDomain() = PostsSession(
         roadmapEnabled = config.roadmapEnabled,
         tags = config.tags.map { PostsTag(id = it.id, name = it.name, color = it.color) },
     ),
+    displayName = displayName,
 )

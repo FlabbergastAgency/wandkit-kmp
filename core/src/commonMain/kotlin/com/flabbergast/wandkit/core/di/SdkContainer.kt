@@ -68,7 +68,25 @@ internal class WandKitSdkContainer private constructor(
     internal var externalUserId: String? = null
         private set
 
-    internal fun setUserId(userId: String?) { externalUserId = userId }
+    internal var displayName: String? = null
+        private set
+
+    /**
+     * Sets the identified user id and, optionally, a display name suggestion.
+     *
+     * A `null` [userId] clears both - there is no user to suggest a name for.
+     * A non-null [userId] with a `null` [displayName] leaves any previously
+     * set name untouched, so re-identifying without a name is a no-op on it
+     * rather than clearing it.
+     */
+    internal fun setUserId(userId: String?, displayName: String? = null) {
+        externalUserId = userId
+        if (userId == null) {
+            this.displayName = null
+        } else if (displayName != null) {
+            this.displayName = displayName
+        }
+    }
 
     internal val deviceId = Uuid.generateV4().toString()
 
@@ -163,6 +181,7 @@ internal class WandKitSdkContainer private constructor(
             appConfiguration = appConfiguration,
             platformContext = platformContext,
             externalUserId = { externalUserId },
+            displayName = { displayName },
             logger = logger,
         )
     }

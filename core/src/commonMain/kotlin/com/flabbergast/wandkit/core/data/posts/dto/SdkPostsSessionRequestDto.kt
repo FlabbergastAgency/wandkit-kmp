@@ -13,6 +13,9 @@ internal data class SdkPostsSessionRequestDto(
      */
     @SerialName("external_user_id")
     val externalUserId: String? = null,
+    /** The host app's suggested name for this user, if any. */
+    @SerialName("display_name")
+    val displayName: String? = null,
     /** Whatever the host app wants the feedback UI to know about this user. */
     @SerialName("attributes")
     val attributes: JsonObject? = null,

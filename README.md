@@ -77,6 +77,14 @@ If you have a known user id, identify the user before sending events:
 WandKit.identify(userId = "user_123")
 ```
 
+You can also suggest a display name for the user:
+
+```kotlin
+WandKit.identify(userId = "user_123", displayName = "Jane")
+```
+
+`displayName` is only a suggestion: it is shown on the user's feedback posts until they set their own name in the feedback UI, and re-identifying with a new name updates the suggestion but never overwrites a name the user has already set themselves. Passing `null` (the default) leaves any previously suggested name untouched.
+
 Clear the identified user when needed:
 
 ```kotlin
@@ -288,6 +296,8 @@ WandKit.presentFeedback()
 ```
 
 It uses whichever user `identify(...)` last named. Without one the session is anonymous, which the backend makes **read-only**: the user can read the feed and the roadmap but not post, comment, or vote. Nothing errors and nothing is hidden - the web app simply renders without the write actions.
+
+When a display name was suggested via `identify(...)`, it appears on that user's posts and is editable by the user right in the feedback UI - editing it there does not change what your app passed to `identify(...)`, and future calls to `identify(...)` will not overwrite a name the user has set for themselves.
 
 Open straight on the new-post composer, optionally seeded with something the user already typed elsewhere in your app:
 

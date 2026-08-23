@@ -20,6 +20,9 @@ internal data class SdkPostsSessionResponseDto(
      */
     @SerialName("read_only")
     val readOnly: Boolean = false,
+    /** The user's effective display name - their own if set, else the host's suggestion. */
+    @SerialName("display_name")
+    val displayName: String? = null,
     @SerialName("config")
     val config: SdkPostsConfigDto,
 )

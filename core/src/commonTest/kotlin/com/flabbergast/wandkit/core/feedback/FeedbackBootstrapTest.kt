@@ -142,6 +142,20 @@ class FeedbackBootstrapTest {
     }
 
     @Test
+    fun displayNameKeyIsPresentWhenSet() {
+        val script = bootstrap(session = session.copy(displayName = "Jane")).toJavaScript(createJson())
+
+        assertEquals("Jane", payloadOf(script)["displayName"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun displayNameKeyIsAbsentWhenNull() {
+        val script = bootstrap(session = session.copy(displayName = null)).toJavaScript(createJson())
+
+        assertFalse(payloadOf(script).containsKey("displayName"))
+    }
+
+    @Test
     fun themeKeyIsAbsentWhenNull() {
         val script = bootstrap(theme = null).toJavaScript(createJson())
 

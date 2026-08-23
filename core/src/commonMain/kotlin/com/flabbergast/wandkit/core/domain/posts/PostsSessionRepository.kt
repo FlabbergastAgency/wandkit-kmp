@@ -15,6 +15,8 @@ internal data class PostsSession(
     val expiresAt: String,
     val readOnly: Boolean,
     val config: PostsConfig,
+    /** The user's effective display name - their own if set, else the host's suggestion. */
+    val displayName: String? = null,
 )
 
 internal data class PostsConfig(

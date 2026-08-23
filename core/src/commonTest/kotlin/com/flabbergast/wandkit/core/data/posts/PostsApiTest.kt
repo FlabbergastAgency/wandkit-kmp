@@ -1,5 +1,6 @@
 package com.flabbergast.wandkit.core.data.posts
 
+import com.flabbergast.wandkit.core.config.createAppConfiguration
 import com.flabbergast.wandkit.core.data.networking.WandKitApi
 import com.flabbergast.wandkit.core.data.networking.WandKitHttpClient
 import com.flabbergast.wandkit.core.data.networking.WandKitHttpException
@@ -95,6 +96,65 @@ class PostsApiTest {
         assertTrue(body.contains(""""external_user_id":"u1""""), "Expected external_user_id in $body")
         assertTrue(body.contains(""""platform":"android""""), "Expected platform in $body")
         assertFalse(body.contains(""""attributes""""), "Did not expect attributes key in $body")
+    }
+
+    @Test
+    fun createSessionBodyIncludesDisplayNameWhenSet() = runBlocking {
+        var capturedBody: String? = null
+        val postsApi = createTestPostsApi { request ->
+            capturedBody = (request.body as OutgoingContent.ByteArrayContent).bytes().decodeToString()
+            respond(
+                content = """{"token":"tok","expires_at":"2026-08-21T10:00:00Z","config":{}}""",
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+            )
+        }
+
+        postsApi { createSession(testSessionRequest(displayName = "Jane")) }
+
+        val body = requireNotNull(capturedBody)
+        assertTrue(body.contains(""""display_name":"Jane""""), "Expected display_name in $body")
+    }
+
+    @Test
+    fun createSessionBodyOmitsDisplayNameWhenAbsent() = runBlocking {
+        var capturedBody: String? = null
+        val postsApi = createTestPostsApi { request ->
+            capturedBody = (request.body as OutgoingContent.ByteArrayContent).bytes().decodeToString()
+            respond(
+                content = """{"token":"tok","expires_at":"2026-08-21T10:00:00Z","config":{}}""",
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+            )
+        }
+
+        postsApi { createSession(testSessionRequest()) }
+
+        val body = requireNotNull(capturedBody)
+        assertFalse(body.contains(""""display_name""""), "Did not expect display_name key in $body")
+    }
+
+    @Test
+    fun mintSessionMapsDisplayNameFromResponseToDomain() = runBlocking {
+        val postsApi = createTestPostsApi { _ ->
+            respond(
+                content = """{"token":"tok","expires_at":"2026-08-21T10:00:00Z","display_name":"Jane","config":{}}""",
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+            )
+        }
+        val repository = createPostsSessionRepository(
+            postsApi = postsApi,
+            appConfiguration = createAppConfiguration(isDebugLoggingEnabled = false, apiBaseUrl = "https://example.test"),
+            platformContext = null,
+            externalUserId = { "u1" },
+            displayName = { null },
+            logger = NoOpLogger,
+        )
+
+        val session = repository.mintSession().getOrThrow()
+
+        assertEquals("Jane", session.displayName)
     }
 
     @Test
@@ -237,8 +297,9 @@ class PostsApiTest {
         assertEquals(500, exception.statusCode)
     }
 
-    private fun testSessionRequest() = SdkPostsSessionRequestDto(
+    private fun testSessionRequest(displayName: String? = null) = SdkPostsSessionRequestDto(
         externalUserId = "u1",
+        displayName = displayName,
         device = SdkPostsSessionDeviceDto(platform = "android", osVersion = "16"),
     )
 

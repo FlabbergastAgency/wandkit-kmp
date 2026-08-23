@@ -54,6 +54,7 @@ fun App() {
 private fun Content(snackbarHostState: SnackbarHostState) {
     var showContent by remember { mutableStateOf(false) }
     var userIdInput by remember { mutableStateOf("") }
+    var displayNameInput by remember { mutableStateOf("") }
     var referralUrl by remember { mutableStateOf<String?>(null) }
     var redeemCodeInput by remember { mutableStateOf("") }
     var redeemResult by remember { mutableStateOf<String?>(null) }
@@ -106,11 +107,27 @@ private fun Content(snackbarHostState: SnackbarHostState) {
                 if (trimmedValue.isEmpty()) {
                     WandKit.clearUser()
                 } else {
-                    WandKit.identify(trimmedValue)
+                    WandKit.identify(trimmedValue, displayNameInput.trim().takeIf { it.isNotEmpty() })
                 }
             },
             modifier = Modifier.fillMaxWidth(),
             label = { Text("User ID") },
+            singleLine = true,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = displayNameInput,
+            onValueChange = { value ->
+                displayNameInput = value
+
+                // Only a suggestion, and only meaningful once a user is
+                // identified - re-send identify() so it takes effect.
+                if (activeUserId != null) {
+                    WandKit.identify(activeUserId, value.trim().takeIf { it.isNotEmpty() })
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Display name") },
             singleLine = true,
         )
         Spacer(modifier = Modifier.height(8.dp))

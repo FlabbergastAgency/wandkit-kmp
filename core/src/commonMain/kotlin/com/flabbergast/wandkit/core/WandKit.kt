@@ -30,10 +30,20 @@ public object WandKit {
     public val installId: String
         get() = WandKitSdkContainer.get().installIdentity.installId
 
+    /**
+     * Identifies the current user, optionally suggesting a display name for
+     * them.
+     *
+     * [displayName] is only a suggestion: it is shown on the user's feedback
+     * posts until they set their own name in the feedback UI, and re-identifying
+     * with a new suggestion updates it - but never overwrites a name the user
+     * has already set themselves.
+     */
     public fun identify(
         userId: String,
+        displayName: String? = null,
     ) {
-        WandKitSdkContainer.get().setUserId(userId)
+        WandKitSdkContainer.get().setUserId(userId, displayName)
     }
 
     public fun clearUser() {
