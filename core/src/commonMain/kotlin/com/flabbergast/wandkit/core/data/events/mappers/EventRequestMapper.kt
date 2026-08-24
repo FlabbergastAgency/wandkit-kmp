@@ -1,6 +1,7 @@
 package com.flabbergast.wandkit.core.data.events.mappers
 
 import com.flabbergast.wandkit.core.config.AppConfiguration
+import com.flabbergast.wandkit.core.data.events.dto.EVENT_REQUEST_SUPPORTED_PAGE_TYPES
 import com.flabbergast.wandkit.core.data.events.dto.EventRequestDeviceDto
 import com.flabbergast.wandkit.core.data.events.dto.EventRequestSdkDto
 import com.flabbergast.wandkit.core.data.events.dto.EventRequestUserDto
@@ -10,11 +11,13 @@ import com.flabbergast.wandkit.core.platform.DeviceContext
 internal fun IdentifyInfo.toEventRequestUser() = EventRequestUserDto(
     externalUserId = userId,
     deviceId = deviceId,
+    displayName = displayName,
 )
 
 internal fun AppConfiguration.toEventRequestSdk() = EventRequestSdkDto(
     platform = platformName,
     version = libraryVersion,
+    supportedPageTypes = EVENT_REQUEST_SUPPORTED_PAGE_TYPES,
 )
 
 /**

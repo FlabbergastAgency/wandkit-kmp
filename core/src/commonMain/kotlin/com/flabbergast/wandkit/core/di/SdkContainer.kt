@@ -99,7 +99,11 @@ internal class WandKitSdkContainer private constructor(
     }
 
     internal val identityInfo: IdentifyInfo
-        get() = IdentifyInfo(externalUserId ?: Uuid.generateV4().toString(), deviceId)
+        get() = IdentifyInfo(
+            userId = externalUserId ?: Uuid.generateV4().toString(),
+            deviceId = deviceId,
+            displayName = externalUserId?.let { displayName?.trim()?.takeIf { name -> name.isNotBlank() } },
+        )
 
     internal val json: Json by lazy { createJson() }
 

@@ -35,7 +35,18 @@ internal class DefaultFormPageComponent(
     componentContext: ComponentContext,
 ) : FormPageComponent, ComponentContext by componentContext {
 
-    private val input = MutableStateFlow(PageInput())
+    /**
+     * Starts prefilled with `suggested_display_name` on a `display_name`
+     * page, so a Continue tap before the user types anything still submits
+     * the suggestion - not just what's shown on screen. `formController.form`
+     * is a `StateFlow`, so `.value` is safe to read synchronously here.
+     */
+    private val input = MutableStateFlow(
+        PageInput(
+            text = (formController.form.value?.pages?.get(pageId)?.content as? FeedbackFormPage.Content.DisplayName)
+                ?.suggestedName,
+        )
+    )
 
     private val page = formController.form
         .map { form -> form?.pages[pageId] }

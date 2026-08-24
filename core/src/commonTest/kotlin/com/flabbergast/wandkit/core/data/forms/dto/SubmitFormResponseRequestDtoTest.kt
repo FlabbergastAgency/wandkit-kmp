@@ -53,4 +53,36 @@ class SubmitFormResponseRequestDtoTest {
 
         assertEquals("""{"platform":"ios"}""", encoded)
     }
+
+    /**
+     * The confirmed name from a `display_name` page travels as this
+     * top-level field, never as an `answers[]` entry - the server rejects
+     * any answer keyed to that page's id.
+     */
+    @Test
+    fun displayNameIsIncludedWhenSet() {
+        val json = createJson()
+        val request = SubmitFormResponseRequestDto(
+            answers = emptyList(),
+            completedAt = "2026-08-20T00:00:00Z",
+            displayName = "Alex",
+        )
+
+        val encoded = json.encodeToString(SubmitFormResponseRequestDto.serializer(), request)
+
+        assertTrue(encoded.contains("\"display_name\":\"Alex\""))
+    }
+
+    @Test
+    fun displayNameIsOmittedWhenNull() {
+        val json = createJson()
+        val request = SubmitFormResponseRequestDto(
+            answers = emptyList(),
+            completedAt = "2026-08-20T00:00:00Z",
+        )
+
+        val encoded = json.encodeToString(SubmitFormResponseRequestDto.serializer(), request)
+
+        assertFalse(encoded.contains("\"display_name\""))
+    }
 }

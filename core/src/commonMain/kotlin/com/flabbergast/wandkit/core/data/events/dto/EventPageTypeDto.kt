@@ -19,4 +19,7 @@ internal enum class EventPageTypeDto {
 
     @SerialName("end")
     END,
+
+    @SerialName("display_name")
+    DISPLAY_NAME,
 }

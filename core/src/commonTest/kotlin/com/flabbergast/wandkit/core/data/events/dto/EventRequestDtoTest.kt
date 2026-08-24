@@ -63,4 +63,68 @@ class EventRequestDtoTest {
 
         assertEquals("""{"platform":"ios"}""", encoded)
     }
+
+    /**
+     * The server assumes a client that omits `supported_page_types` entirely
+     * only supports the legacy five types, and never splices `display_name`
+     * pages in for it. This SDK must always report exactly the six types it
+     * can render - deliberately excluding `push_permission`, which it has no
+     * UI for - so the backend contract in `EVENT_REQUEST_SUPPORTED_PAGE_TYPES`
+     * doesn't silently drift.
+     */
+    @Test
+    fun supportedPageTypesConstantListsExactlyTheSixSupportedTypes() {
+        assertEquals(
+            listOf("thumbs", "stars", "multi_choice", "text", "end", "display_name"),
+            EVENT_REQUEST_SUPPORTED_PAGE_TYPES,
+        )
+    }
+
+    @Test
+    fun userDisplayNameIsEncodedWhenPresent() {
+        val json = createJson()
+        val request = EventRequestDto(
+            eventName = "screen_viewed",
+            user = EventRequestUserDto(externalUserId = "user-1", deviceId = "device-1", displayName = "Jane"),
+            occurredAt = "2026-08-20T00:00:00Z",
+            sdk = EventRequestSdkDto(platform = "Android", version = "1.0.0"),
+        )
+
+        val encoded = json.encodeToString(EventRequestDto.serializer(), request)
+
+        assertTrue(encoded.contains("\"display_name\":\"Jane\""))
+    }
+
+    @Test
+    fun userDisplayNameIsOmittedNotSentAsNull() {
+        val json = createJson()
+        val user = EventRequestUserDto(externalUserId = "user-1", deviceId = "device-1")
+
+        val encoded = json.encodeToString(EventRequestUserDto.serializer(), user)
+
+        assertFalse(encoded.contains("\"display_name\""))
+    }
+
+    @Test
+    fun sdkEncodesSupportedPageTypes() {
+        val json = createJson()
+        val request = EventRequestDto(
+            eventName = "screen_viewed",
+            user = EventRequestUserDto(externalUserId = "user-1", deviceId = "device-1"),
+            occurredAt = "2026-08-20T00:00:00Z",
+            sdk = EventRequestSdkDto(
+                platform = "Android",
+                version = "1.0.0",
+                supportedPageTypes = EVENT_REQUEST_SUPPORTED_PAGE_TYPES,
+            ),
+        )
+
+        val encoded = json.encodeToString(EventRequestDto.serializer(), request)
+
+        assertTrue(
+            encoded.contains(
+                "\"supported_page_types\":[\"thumbs\",\"stars\",\"multi_choice\",\"text\",\"end\",\"display_name\"]"
+            )
+        )
+    }
 }

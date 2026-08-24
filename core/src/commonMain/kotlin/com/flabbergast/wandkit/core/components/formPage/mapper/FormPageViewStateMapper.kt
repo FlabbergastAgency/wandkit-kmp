@@ -38,6 +38,10 @@ internal fun formPageViewStateMapper(
                 text = input.text.orEmpty(),
             )
 
+            is FeedbackFormPage.Content.DisplayName -> FormPageUiState.Content.DisplayName(
+                name = input.text ?: content.suggestedName.orEmpty(),
+            )
+
             is FeedbackFormPage.Content.Thumbs -> FormPageUiState.Content.Thumbs(
                 isThumbsUp = input.isThumbsUp,
             )
@@ -47,13 +51,22 @@ internal fun formPageViewStateMapper(
     )
 }
 
+/** Default primary-button label for content types with no server-set copy of their own. */
+private const val DEFAULT_CONTINUE_BUTTON_LABEL = "Continue"
+
 private fun mapButtons(page: FeedbackFormPage?) = buildList {
     if (page?.content is FeedbackFormPage.Content.End) return@buildList
 
-    page?.nextButtonLabel?.let { nextButtonLabel ->
+    // `display_name` pages always show a primary button - "Continue" unless
+    // the server overrides it - since (unlike thumbs/stars) picking a value
+    // doesn't auto-advance the page.
+    val primaryButtonLabel = page?.nextButtonLabel
+        ?: DEFAULT_CONTINUE_BUTTON_LABEL.takeIf { page?.content is FeedbackFormPage.Content.DisplayName }
+
+    primaryButtonLabel?.let { label ->
         add(
             FormPageButton(
-                label = nextButtonLabel,
+                label = label,
                 type = FormPageButton.Type.PRIMARY,
                 action = FormPageButton.Action.CONTINUE,
             )
@@ -65,7 +78,16 @@ private fun mapButtons(page: FeedbackFormPage?) = buildList {
             FormPageButton(
                 label = page.skipButtonLabel,
                 type = FormPageButton.Type.SECONDARY,
-                action = FormPageButton.Action.CONTINUE,
+                // Every other page type's secondary button intentionally
+                // still routes through CONTINUE (an existing, unrelated
+                // quirk left as-is). `display_name` is the one page that
+                // must not silently confirm a prefilled suggestion when the
+                // user taps "Skip", so it alone gets a real SKIP action.
+                action = if (page.content is FeedbackFormPage.Content.DisplayName) {
+                    FormPageButton.Action.SKIP
+                } else {
+                    FormPageButton.Action.CONTINUE
+                },
             )
         )
     }

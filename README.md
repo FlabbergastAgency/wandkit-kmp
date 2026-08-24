@@ -418,6 +418,18 @@ When you call `WandKit.event(...)`, the backend may return a form for that event
 
 There is no separate public API for manually opening a form.
 
+A form can include a server-controlled display-name confirmation page: when a
+response is about to create a post and the responder doesn't have a display
+name set yet, the backend splices in a page asking them to confirm or set the
+name shown on that post (prefilled with any host-app suggestion). It's
+skippable like any other optional page, and disappears automatically if the
+page that would create the post was left blank.
+
+The `displayName` suggested via `identify(...)` rides along on every event for
+an identified user, not just the posts session mint, so this prefill is
+available even if the user never opened the feedback UI before triggering the
+form.
+
 ## Compose Host Setup
 
 To render forms, add `WandKitHost()` to your Compose UI tree.

@@ -34,6 +34,10 @@ public data class FormPageUiState(
             val text: String,
         ): Content
 
+        public data class DisplayName(
+            val name: String,
+        ): Content
+
         public data object End: Content
     }
 }

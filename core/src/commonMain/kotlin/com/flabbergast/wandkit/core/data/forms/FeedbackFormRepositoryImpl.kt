@@ -36,7 +36,8 @@ private class FeedbackFormRepositoryImpl(
 ) : FeedbackFormRepository {
     override suspend fun submit(
         impressionId: String,
-        results: Map<FeedbackFormPageId, PageInput>
+        results: Map<FeedbackFormPageId, PageInput>,
+        displayName: String?,
     ) {
         formsApi {
             submitFormResponse(
@@ -53,6 +54,7 @@ private class FeedbackFormRepositoryImpl(
                     },
                     completedAt = Clock.System.now().toString(),
                     device = appConfiguration.toSubmitFormDeviceDto(readDeviceContext(platformContext)),
+                    displayName = displayName,
                 )
             )
         }.onSuccess {

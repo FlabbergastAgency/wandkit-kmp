@@ -38,6 +38,7 @@ import com.flabbergast.wandkit.ui.compose.Res
 import com.flabbergast.wandkit.ui.compose.WandKitColors
 import com.flabbergast.wandkit.ui.compose.WandKitThemeProvider
 import com.flabbergast.wandkit.ui.compose.WandKitTypography
+import com.flabbergast.wandkit.ui.compose.feedbackForm.content.DisplayNameContentView
 import com.flabbergast.wandkit.ui.compose.feedbackForm.content.FormPagePreview
 import com.flabbergast.wandkit.ui.compose.feedbackForm.content.MultiChoiceContentView
 import com.flabbergast.wandkit.ui.compose.feedbackForm.content.StarsContentView
@@ -56,7 +57,9 @@ internal fun FormPageView(
 
     val page = state.page ?: return
     val focusManager = LocalFocusManager.current
-    val clearFocusOnBackgroundTapModifier = if (page.content is FormPageUiState.Content.Text) {
+    val clearFocusOnBackgroundTapModifier = if (
+        page.content is FormPageUiState.Content.Text || page.content is FormPageUiState.Content.DisplayName
+    ) {
         Modifier.pointerInput(page.id) {
             detectTapGestures(onTap = {
                 focusManager.clearFocus()
@@ -170,6 +173,7 @@ private fun FormPageContent(
 
         is FormPageUiState.Content.Stars -> StarsContentView(content, component::updateStars)
         is FormPageUiState.Content.Text -> TextContentView(content, component::updateText)
+        is FormPageUiState.Content.DisplayName -> DisplayNameContentView(content, component::updateText)
         is FormPageUiState.Content.Thumbs -> ThumbsContentView(content, component::updateThumbs)
     }
 }
