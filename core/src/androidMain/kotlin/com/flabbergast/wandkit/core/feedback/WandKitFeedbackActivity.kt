@@ -1,7 +1,6 @@
 package com.flabbergast.wandkit.core.feedback
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Bitmap
@@ -29,6 +28,8 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.window.OnBackInvokedCallback
 import android.window.OnBackInvokedDispatcher
+import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -51,7 +52,6 @@ import java.util.Locale
 import kotlin.math.max
 
 private const val TAG = "[WandKitFeedbackActivity]"
-private const val REQUEST_FILE_CHOOSER = 4201
 private val HEX_RGB_REGEX = Regex("^#[0-9A-Fa-f]{6}$")
 private val HEX_RGBA_REGEX = Regex("^#[0-9A-Fa-f]{8}$")
 
@@ -68,7 +68,7 @@ private val HEX_RGBA_REGEX = Regex("^#[0-9A-Fa-f]{8}$")
  * or [feedbackIntent], not by constructing it directly; everything else here
  * is `private`.
  */
-public class WandKitFeedbackActivity : Activity() {
+public class WandKitFeedbackActivity : ComponentActivity() {
     private enum class State { LOADING, CONTENT, FAILED }
 
     private lateinit var container: WandKitSdkContainer
@@ -81,9 +81,18 @@ public class WandKitFeedbackActivity : Activity() {
     private var refreshJob: Job? = null
 
     private var scriptHandler: ScriptHandler? = null
+    private var uiPatchScriptHandler: ScriptHandler? = null
     private var pendingFallbackScript: String? = null
+    private var pendingFallbackUiPatchScript: String? = null
     private var pendingFileChooserCallback: ValueCallback<Array<Uri>>? = null
     private var backInvokedCallback: OnBackInvokedCallback? = null
+
+    private val fileChooserLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val callback = pendingFileChooserCallback ?: return@registerForActivityResult
+            pendingFileChooserCallback = null
+            callback.onReceiveValue(FileChooserResultParser.parse(result.resultCode, result.data))
+        }
 
     private var state: State = State.LOADING
     private var isDark: Boolean = false
@@ -147,14 +156,6 @@ public class WandKitFeedbackActivity : Activity() {
         visibleCount = max(0, visibleCount - 1)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode != REQUEST_FILE_CHOOSER) return
-        val callback = pendingFileChooserCallback ?: return
-        pendingFileChooserCallback = null
-        callback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data))
-    }
-
     @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
     override fun onBackPressed() {
         // On API 33+ this is normally never invoked - the callback registered
@@ -168,11 +169,18 @@ public class WandKitFeedbackActivity : Activity() {
     }
 
     override fun onDestroy() {
+        pendingFileChooserCallback?.onReceiveValue(null)
+        pendingFileChooserCallback = null
         if (Build.VERSION.SDK_INT >= 33) {
             backInvokedCallback?.let { onBackInvokedDispatcher.unregisterOnBackInvokedCallback(it) }
         }
         scope.cancel()
         scriptHandler?.remove()
+        scriptHandler = null
+        uiPatchScriptHandler?.remove()
+        uiPatchScriptHandler = null
+        pendingFallbackScript = null
+        pendingFallbackUiPatchScript = null
         if (::webView.isInitialized) {
             webView.destroy()
         }
@@ -377,13 +385,19 @@ public class WandKitFeedbackActivity : Activity() {
         // previous attempt's script (and its stale token) is still installed.
         scriptHandler?.remove()
         scriptHandler = null
+        uiPatchScriptHandler?.remove()
+        uiPatchScriptHandler = null
         pendingFallbackScript = null
+        pendingFallbackUiPatchScript = null
 
+        val uiPatchScript = FeedbackWebUiPatches.documentStartScript()
         if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
             scriptHandler = WebViewCompat.addDocumentStartJavaScript(webView, script, setOf(webOrigin))
+            uiPatchScriptHandler = WebViewCompat.addDocumentStartJavaScript(webView, uiPatchScript, setOf(webOrigin))
         } else {
             container.logger.debug(TAG, "DOCUMENT_START_SCRIPT unsupported on this WebView; falling back to onPageStarted injection")
             pendingFallbackScript = script
+            pendingFallbackUiPatchScript = uiPatchScript
         }
 
         webView.loadUrl(initialUrl(screen))
@@ -442,6 +456,7 @@ public class WandKitFeedbackActivity : Activity() {
 
         override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
             pendingFallbackScript?.let { view.evaluateJavascript(it, null) }
+            pendingFallbackUiPatchScript?.let { view.evaluateJavascript(it, null) }
         }
 
         override fun onPageFinished(view: WebView, url: String?) {
@@ -477,7 +492,7 @@ public class WandKitFeedbackActivity : Activity() {
             pendingFileChooserCallback = filePathCallback
 
             val started = runCatching {
-                startActivityForResult(fileChooserParams.createIntent(), REQUEST_FILE_CHOOSER)
+                fileChooserLauncher.launch(FileChooserResultParser.chooserIntent(fileChooserParams.createIntent()))
             }.isSuccess
             if (!started) {
                 pendingFileChooserCallback = null

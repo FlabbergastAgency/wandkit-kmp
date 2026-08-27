@@ -87,6 +87,7 @@ kotlin {
             // Dispatchers.Main for hosts that use core without Compose.
             implementation(libs.androidx.webkit)
             implementation(libs.androidx.core)
+            implementation(libs.androidx.activity)
             implementation(libs.kotlinx.coroutines.android)
         }
     }
