@@ -9,4 +9,6 @@ internal data class EventRequestUserDto(
     val externalUserId: String,
     @SerialName("device_id")
     val deviceId: String,
+    @SerialName("display_name")
+    val displayName: String? = null,
 )

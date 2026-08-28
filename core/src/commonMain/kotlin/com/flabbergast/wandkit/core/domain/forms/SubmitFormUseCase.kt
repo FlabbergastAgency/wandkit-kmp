@@ -6,7 +6,11 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withTimeoutOrNull
 
 internal interface SubmitFormUseCase {
-    suspend operator fun invoke(results: Map<FeedbackFormPageId, PageInput>, dismissForm: Boolean)
+    suspend operator fun invoke(
+        results: Map<FeedbackFormPageId, PageInput>,
+        dismissForm: Boolean,
+        displayName: String?,
+    )
 }
 
 internal fun createSubmitFormUseCase(
@@ -21,11 +25,15 @@ private class DefaultSubmitFormUseCase(
     private val formRepository: FeedbackFormRepository,
     private val formController: FeedbackFormController,
 ): SubmitFormUseCase {
-    override suspend fun invoke(results: Map<FeedbackFormPageId, PageInput>, dismissForm: Boolean) {
+    override suspend fun invoke(
+        results: Map<FeedbackFormPageId, PageInput>,
+        dismissForm: Boolean,
+        displayName: String?,
+    ) {
         val impressionId = if (dismissForm) formController.dismiss() else getImpressionId()
         formController.submit()
         impressionId?.let {
-            formRepository.submit(it, results)
+            formRepository.submit(it, results, displayName)
         }
     }
 

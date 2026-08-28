@@ -18,6 +18,25 @@ internal class WandKitApi<ApiType>(
         }
 
     /**
+     * Like [invoke], but only checks the status code rather than deserializing
+     * a body - for calls whose response isn't ours to parse (a presigned
+     * upload PUT may answer with the storage provider's own XML, or nothing
+     * at all).
+     */
+    suspend inline fun status(
+        crossinline apiCall: suspend ApiType.() -> WandKitHttpResponse<*>,
+    ): Result<Unit> =
+        runCatching {
+            apiCall(api)
+        }.mapCatching { response ->
+            if (response.response.status.value !in 200..299) {
+                throw WandKitHttpException(response.response.status.value)
+            }
+        }.onFailure {
+            logger.warn(LOGGER_TAG, "Network call failed.", it)
+        }
+
+    /**
      * Like [invoke], but reads [absentStatus] as "nothing here" rather than a
      * failure - the ordinary case of an install with no referral yet, which must
      * not surface as an error to the app or be logged as one.

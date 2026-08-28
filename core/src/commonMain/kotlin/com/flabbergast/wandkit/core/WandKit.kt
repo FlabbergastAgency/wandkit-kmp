@@ -8,6 +8,8 @@ import com.flabbergast.wandkit.core.domain.referrals.ReferralDetection
 import com.flabbergast.wandkit.core.domain.referrals.ReferralInfo
 import com.flabbergast.wandkit.core.domain.referrals.ReferralMatch
 import com.flabbergast.wandkit.core.domain.referrals.ReferralProgress
+import com.flabbergast.wandkit.core.feedback.WandKitFeedbackScreen
+import com.flabbergast.wandkit.core.feedback.presentFeedbackScreen
 import kotlin.time.Instant
 
 public object WandKit {
@@ -28,10 +30,20 @@ public object WandKit {
     public val installId: String
         get() = WandKitSdkContainer.get().installIdentity.installId
 
+    /**
+     * Identifies the current user, optionally suggesting a display name for
+     * them.
+     *
+     * [displayName] is only a suggestion: it is shown on the user's feedback
+     * posts until they set their own name in the feedback UI, and re-identifying
+     * with a new suggestion updates it - but never overwrites a name the user
+     * has already set themselves.
+     */
     public fun identify(
         userId: String,
+        displayName: String? = null,
     ) {
-        WandKitSdkContainer.get().setUserId(userId)
+        WandKitSdkContainer.get().setUserId(userId, displayName)
     }
 
     public fun clearUser() {
@@ -48,6 +60,33 @@ public object WandKit {
             properties = properties,
             occurredAt = occurredAt,
         )
+    }
+
+    /**
+     * Presents the feedback UI - the feed, the composer, the roadmap - full
+     * screen on top of whatever is currently on screen.
+     *
+     * A one-liner: `WandKit.presentFeedback()`. On Android the SDK launches its
+     * own Activity from the one currently in the foreground, so there is nothing
+     * to thread through from your navigation. The UI is a WandKit-hosted web
+     * app in a WebView, so it changes when WandKit ships, not when your app
+     * does; it closes itself through its own UI and the back gesture.
+     *
+     * It uses whichever user [identify] last named. Without one the session is
+     * anonymous, which the backend makes read-only: the user can read the feed
+     * and the roadmap but not post or vote.
+     *
+     * `startAt = WandKitFeedbackScreen.Composer(prefill)` opens straight on the
+     * new-post composer, optionally seeded with a title, description, type and
+     * image attachments. Read-only sessions land on the feed instead.
+     *
+     * Android only. The iOS targets of this library log a warning; use the
+     * native WandKit iOS SDK there.
+     */
+    public fun presentFeedback(
+        startAt: WandKitFeedbackScreen = WandKitFeedbackScreen.Feed,
+    ) {
+        presentFeedbackScreen(WandKitSdkContainer.get(), startAt)
     }
 
     public suspend fun getInstallReferralCode(): String? = WandKitSdkContainer.get().installReferralCodeProvider.getReferralCode()

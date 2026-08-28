@@ -18,8 +18,14 @@ class MainActivity : ComponentActivity() {
 
         WandKit.configure(
             config = WandKitConfig(
-                apiKey = "wk_3H6I5RYCcP1_sTONVQodC7sp6mioBzjNFwd3p6zdAg8",
+                // The local dev stack (the production API has no posts
+                // endpoints yet) - same project and hosts as the iOS example.
+                // Plain http, so the sample manifest allows cleartext traffic.
+                apiKey = "wk_ZcesAUIcwicpEB1SL28PKKVcRgKY3JNLsNPAF840Cps",
                 isDebugLoggingEnabled = true,
+                apiBaseUrl = "http://192.168.1.79:8081",
+                feedbackWebUrl = "http://192.168.1.79:3002",
+                screenshotReporting = true,
             ),
             context = applicationContext,
         )

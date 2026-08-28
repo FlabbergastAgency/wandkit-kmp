@@ -3,13 +3,14 @@ package com.flabbergast.wandkit.core.domain.forms
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackForm
 import com.flabbergast.wandkit.core.domain.forms.models.ImpressionId
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 
 internal interface FeedbackFormController {
-    val form: Flow<FeedbackForm?>
-    val isSubmitted: Flow<Boolean?>
+    /** A state flow so the screenshot gate can read "is a form up" synchronously. */
+    val form: StateFlow<FeedbackForm?>
+    val isSubmitted: StateFlow<Boolean?>
 
     fun publish(form: FeedbackForm)
     fun dismiss(): ImpressionId?
@@ -25,10 +26,10 @@ private class FeedbackFormControllerImpl(
     private val logger: Logger,
 ) : FeedbackFormController {
     private val _form = MutableStateFlow<FeedbackForm?>(null)
-    override val form: Flow<FeedbackForm?> = _form
+    override val form: StateFlow<FeedbackForm?> = _form
 
     private val _isSubmitted = MutableStateFlow<Boolean?>(null)
-    override val isSubmitted: Flow<Boolean?> = _isSubmitted
+    override val isSubmitted: StateFlow<Boolean?> = _isSubmitted
 
     override fun publish(form: FeedbackForm) {
         _form.update { current ->

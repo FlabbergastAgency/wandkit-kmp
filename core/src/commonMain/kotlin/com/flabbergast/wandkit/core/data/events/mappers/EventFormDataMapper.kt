@@ -26,7 +26,8 @@ private fun EventPageDto.mapFormPage(): FeedbackFormPage {
         promoLabel = "Powered by WandKit", // todo matko: put backend value
         isRequired = required,
         content = mapContent(),
-        next = next.map(::mapNextPageRule)
+        next = next.map(::mapNextPageRule),
+        hasPostCreation = postCreation != null,
     )
 }
 
@@ -42,6 +43,9 @@ private fun EventPageDto.mapContent() = when (type) {
     EventPageTypeDto.TEXT -> FeedbackFormPage.Content.Text(
         placeholder = placeholder.orEmpty(),
         maxLength = maxLength ?: Int.MAX_VALUE,
+    )
+    EventPageTypeDto.DISPLAY_NAME -> FeedbackFormPage.Content.DisplayName(
+        suggestedName = suggestedDisplayName,
     )
     EventPageTypeDto.END -> FeedbackFormPage.Content.End
 }

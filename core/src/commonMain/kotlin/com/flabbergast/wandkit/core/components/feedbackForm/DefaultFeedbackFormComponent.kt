@@ -41,6 +41,13 @@ internal class DefaultFeedbackFormComponent(
 
     private val pageResults = MutableStateFlow<Map<FeedbackFormPageId, PageInput>>(mapOf())
 
+    /**
+     * The user-confirmed name from a `display_name` page, if one was shown
+     * and answered. Kept separate from [pageResults] because it is never an
+     * `answers[]` entry - it travels as its own top-level field on submit.
+     */
+    private val displayName = MutableStateFlow<String?>(null)
+
     override val stack: Value<ChildStack<*, FeedbackFormComponent.Child>> =
         childStack(
             source = navigation,
@@ -52,7 +59,9 @@ internal class DefaultFeedbackFormComponent(
     init {
         componentScope.launch {
             formController.form.filterNotNull().collect { form ->
-                navigation.replaceAll(Config.FormPage(form.entryPage.id))
+                val visibleEntryPageId = resolveVisiblePageId(form, pageResults.value, form.entryPage.id)
+                    ?: form.entryPage.id
+                navigation.replaceAll(Config.FormPage(visibleEntryPageId))
             }
         }
     }
@@ -65,7 +74,7 @@ internal class DefaultFeedbackFormComponent(
 
     private fun submitForm(dismissForm: Boolean = true) {
         fireAndForgetTask {
-            submitFormUseCase(pageResults.value, dismissForm)
+            submitFormUseCase(pageResults.value, dismissForm, displayName.value)
         }
     }
 
@@ -79,7 +88,11 @@ internal class DefaultFeedbackFormComponent(
                 submitForm()
                 return@launch
             }
-            val nextPageId = resolveNextPage(currentPage, result) ?: run {
+            val resolvedPageId = resolveNextPageId(currentPage, result) ?: run {
+                submitForm()
+                return@launch
+            }
+            val nextPageId = resolveVisiblePageId(form, pageResults.value, resolvedPageId) ?: run {
                 submitForm()
                 return@launch
             }
@@ -93,10 +106,33 @@ internal class DefaultFeedbackFormComponent(
     }
 
     private fun submitPage(pageId: FeedbackFormPageId, result: PageInput) {
-        pageResults.update {
-            it + (pageId to result)
+        val page = formController.form.value?.pages?.get(pageId)
+        if (page?.content is FeedbackFormPage.Content.DisplayName) {
+            // Never an `answers[]` entry - travels as its own submit field.
+            displayName.update { current ->
+                resolveDisplayNameAfterAdvance(current, page.content, PageAdvanceAction.CONTINUE, result.text)
+            }
+        } else {
+            pageResults.update {
+                it + (pageId to result)
+            }
         }
         goToNextPage(pageId, result)
+    }
+
+    /**
+     * Explicit skip via the secondary button. Never routes through
+     * [submitPage]: a `display_name` page exists to get consent for the
+     * name, so a skip must clear any pending confirmation rather than
+     * silently committing a prefilled suggestion the user never confirmed.
+     */
+    private fun skipPage(pageId: FeedbackFormPageId) {
+        formController.form.value?.pages?.get(pageId)?.content?.let { content ->
+            displayName.update { current ->
+                resolveDisplayNameAfterAdvance(current, content, PageAdvanceAction.SKIP, rawText = null)
+            }
+        }
+        goToNextPage(pageId, null)
     }
 
     private fun child(
@@ -109,7 +145,7 @@ internal class DefaultFeedbackFormComponent(
                 pageId = config.pageId,
                 onDismissForm = ::dismissForm,
                 onSubmitPage = ::submitPage,
-                onSkipPage = { goToNextPage(it, null) }
+                onSkipPage = ::skipPage,
             )
         )
     }
@@ -119,17 +155,4 @@ internal class DefaultFeedbackFormComponent(
         @Serializable
         data class FormPage(val pageId: FeedbackFormPageId): Config
     }
-
-    private fun resolveNextPage(
-        current: FeedbackFormPage,
-        result: PageInput?,
-    ): FeedbackFormPageId? =
-        current.next.firstNotNullOfOrNull { rule ->
-            when (rule) {
-                is FeedbackFormPage.NextPageRule.None -> rule.nextPageId
-                is FeedbackFormPage.NextPageRule.Option -> rule.takeIf { result?.optionIds?.contains(it.optionId) ?: false }?.nextPageId
-                is FeedbackFormPage.NextPageRule.Stars -> rule.takeIf { result?.stars == it.starRating }?.nextPageId
-                is FeedbackFormPage.NextPageRule.Thumbs -> rule.takeIf { result?.isThumbsUp == it.isThumbsUp }?.nextPageId
-            }
-        }
 }

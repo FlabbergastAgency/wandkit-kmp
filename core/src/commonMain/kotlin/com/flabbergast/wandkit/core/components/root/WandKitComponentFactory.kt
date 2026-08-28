@@ -18,6 +18,7 @@ private class WandKitComponentFactoryImpl(
     override fun create(context: ComponentContext) = DefaultWandKitComponent(
         componentContext = context,
         formController = container.feedbackFormController,
+        screenshotPromptController = container.screenshotPromptController,
     )
 }
 

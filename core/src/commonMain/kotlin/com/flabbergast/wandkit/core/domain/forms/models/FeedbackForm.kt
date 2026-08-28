@@ -23,6 +23,13 @@ internal data class FeedbackFormPage(
     val isRequired: Boolean,
     val next: List<NextPageRule>,
     val content: Content,
+    /**
+     * True when this is the form's `post_creation` page (the backend sends
+     * at most one). Used purely as a client-side visibility gate for a
+     * server-spliced [Content.DisplayName] page later in the graph - the
+     * SDK never models what `post_creation` itself would do.
+     */
+    val hasPostCreation: Boolean = false,
 ) {
     sealed interface Content {
         data object Thumbs: Content
@@ -44,6 +51,17 @@ internal data class FeedbackFormPage(
         data class Text(
             val placeholder: String,
             val maxLength: Int,
+        ): Content
+
+        /**
+         * Server-spliced name-confirmation page. Never authored in a form
+         * definition; the server inserts it right after the `post_creation`
+         * page when the response will create a post and the responder has no
+         * display name set yet. Carries no answer - the confirmed name
+         * travels as a top-level `display_name` field on the submit request.
+         */
+        data class DisplayName(
+            val suggestedName: String?,
         ): Content
 
         data object End: Content
