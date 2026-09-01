@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.view.PixelCopy
+import androidx.annotation.RequiresApi
 import com.flabbergast.wandkit.core.di.WandKitSdkContainer
 import com.flabbergast.wandkit.core.domain.screenshot.ScreenshotGate
 import com.flabbergast.wandkit.core.domain.screenshot.ScreenshotPrompt
@@ -30,33 +31,26 @@ private const val CAPTURE_MAX_LONG_EDGE = 2000
  * Activity (never [WandKitFeedbackActivity] itself - a screenshot of the
  * feedback UI is not a bug report about the host app) and torn down on
  * pause or destroy, since the callback is scoped to a live window.
+ *
+ * All `Activity.ScreenCaptureCallback` references live in
+ * [Api34ScreenCaptureCallbacks] so ART never tries to resolve that API-34
+ * type when loading this class on older devices.
  */
 internal object ScreenshotDetector {
     private var enabled = false
-    private val callbacks = mutableMapOf<Activity, Activity.ScreenCaptureCallback>()
     private var lastPromptAt: Instant? = null
 
     internal fun setEnabled(value: Boolean) {
         enabled = value
         if (!value) {
-            callbacks.keys.toList().forEach { unregister(it) }
+            unregisterAll()
         }
     }
 
     internal fun onActivityResumed(activity: Activity) {
-        if (Build.VERSION.SDK_INT < 34 || !enabled) return
+        if (!supportsScreenCaptureCallback() || !enabled) return
         if (activity is WandKitFeedbackActivity) return
-        if (callbacks.containsKey(activity)) return
-
-        val callback = Activity.ScreenCaptureCallback { onScreenCaptured(activity) }
-        // SecurityException when the host app stripped DETECT_SCREEN_CAPTURE
-        // from its merged manifest; a missing surface can also throw here.
-        val registered = runCatching {
-            activity.registerScreenCaptureCallback(activity.mainExecutor, callback)
-        }.isSuccess
-        if (registered) {
-            callbacks[activity] = callback
-        }
+        Api34ScreenCaptureCallbacks.register(activity) { onScreenCaptured(activity) }
     }
 
     internal fun onActivityPaused(activity: Activity) {
@@ -68,12 +62,17 @@ internal object ScreenshotDetector {
     }
 
     private fun unregister(activity: Activity) {
-        val callback = callbacks.remove(activity) ?: return
-        if (Build.VERSION.SDK_INT >= 34) {
-            // Throws if the Activity's window is already gone; either way the entry is already removed above.
-            runCatching { activity.unregisterScreenCaptureCallback(callback) }
-        }
+        if (!supportsScreenCaptureCallback()) return
+        Api34ScreenCaptureCallbacks.unregister(activity)
     }
+
+    private fun unregisterAll() {
+        if (!supportsScreenCaptureCallback()) return
+        Api34ScreenCaptureCallbacks.unregisterAll()
+    }
+
+    private fun supportsScreenCaptureCallback(): Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 
     private fun onScreenCaptured(activity: Activity) {
         val container = runCatching { WandKitSdkContainer.get() }.getOrNull() ?: return
@@ -157,5 +156,40 @@ internal object ScreenshotDetector {
 
         val scale = CAPTURE_MAX_LONG_EDGE.toDouble() / longEdge
         return max(1, (width * scale).toInt()) to max(1, (height * scale).toInt())
+    }
+}
+
+/**
+ * Isolated so [Activity.ScreenCaptureCallback] is never a constant-pool
+ * reference of [ScreenshotDetector]. ART resolves field/signature types when
+ * a class loads; without this split, pausing any Activity on API &lt; 34
+ * crashed with NoClassDefFoundError even though registration was gated.
+ */
+@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+private object Api34ScreenCaptureCallbacks {
+    private val callbacks = mutableMapOf<Activity, Activity.ScreenCaptureCallback>()
+
+    fun register(activity: Activity, onCaptured: () -> Unit) {
+        if (callbacks.containsKey(activity)) return
+
+        val callback = Activity.ScreenCaptureCallback(onCaptured)
+        // SecurityException when the host app stripped DETECT_SCREEN_CAPTURE
+        // from its merged manifest; a missing surface can also throw here.
+        val registered = runCatching {
+            activity.registerScreenCaptureCallback(activity.mainExecutor, callback)
+        }.isSuccess
+        if (registered) {
+            callbacks[activity] = callback
+        }
+    }
+
+    fun unregister(activity: Activity) {
+        val callback = callbacks.remove(activity) ?: return
+        // Throws if the Activity's window is already gone; either way the entry is already removed above.
+        runCatching { activity.unregisterScreenCaptureCallback(callback) }
+    }
+
+    fun unregisterAll() {
+        callbacks.keys.toList().forEach { unregister(it) }
     }
 }
