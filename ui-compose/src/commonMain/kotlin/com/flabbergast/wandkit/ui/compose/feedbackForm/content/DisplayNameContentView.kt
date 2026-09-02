@@ -1,12 +1,13 @@
 package com.flabbergast.wandkit.ui.compose.feedbackForm.content
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageButton
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageUiState
 
@@ -19,15 +20,16 @@ internal fun DisplayNameContentView(
     content: FormPageUiState.Content.DisplayName,
     onUpdateText: (String) -> Unit,
 ) {
-    WandKitOutlinedTextField(
+    WandKitFilledTextField(
         value = content.name,
         onValueChange = { onUpdateText(it.take(DISPLAY_NAME_MAX_LENGTH)) },
-        modifier = Modifier.fillMaxWidth(),
-        minLines = 1,
-        maxLines = 1,
-        placeholder = { Text(DISPLAY_NAME_PLACEHOLDER) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp, bottom = 24.dp),
+        placeholder = DISPLAY_NAME_PLACEHOLDER,
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
         autoFocus = true,
+        singleLine = true,
     )
 }
 

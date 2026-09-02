@@ -10,13 +10,14 @@ class FormPageViewStateMapperTest {
     private fun page(
         content: FeedbackFormPage.Content,
         isRequired: Boolean = false,
+        nextButtonLabel: String? = null,
         skipButtonLabel: String? = "Skip",
     ) = FeedbackFormPage(
         id = "page-1",
         title = "title",
         subtitle = null,
         imageUrl = null,
-        nextButtonLabel = null,
+        nextButtonLabel = nextButtonLabel,
         skipButtonLabel = skipButtonLabel,
         promoLabel = null,
         isRequired = isRequired,
@@ -24,10 +25,65 @@ class FormPageViewStateMapperTest {
         content = content,
     )
 
+    private fun buttons(page: FeedbackFormPage) =
+        formPageViewStateMapper(PageInput(), page)?.buttons.orEmpty()
+
     private fun secondaryButton(page: FeedbackFormPage) =
-        formPageViewStateMapper(PageInput(), page)
-            ?.buttons
-            ?.single { it.type == FormPageButton.Type.SECONDARY }
+        buttons(page).single { it.type == FormPageButton.Type.SECONDARY }
+
+    @Test
+    fun textPageDefaultsToContinueWhenNextLabelIsMissing() {
+        val mapped = buttons(page(FeedbackFormPage.Content.Text(placeholder = "", maxLength = 100)))
+
+        assertEquals(
+            listOf("Continue", "Skip"),
+            mapped.map { it.label },
+        )
+        assertEquals(FormPageButton.Type.PRIMARY, mapped.first().type)
+        assertEquals(FormPageButton.Type.SECONDARY, mapped.last().type)
+    }
+
+    @Test
+    fun multiSelectDefaultsToContinueWhenNextLabelIsMissing() {
+        val mapped = buttons(
+            page(
+                FeedbackFormPage.Content.MultiChoice(
+                    options = emptyList(),
+                    allowMultiple = true,
+                ),
+            ),
+        )
+
+        assertEquals("Continue", mapped.first().label)
+        assertEquals(FormPageButton.Type.PRIMARY, mapped.first().type)
+    }
+
+    @Test
+    fun singleChoiceWithoutNextLabelHasNoPrimaryButton() {
+        val mapped = buttons(
+            page(
+                FeedbackFormPage.Content.MultiChoice(
+                    options = emptyList(),
+                    allowMultiple = false,
+                ),
+                skipButtonLabel = null,
+            ),
+        )
+
+        assertEquals(emptyList(), mapped)
+    }
+
+    @Test
+    fun usesServerNextButtonLabelWhenProvided() {
+        val mapped = buttons(
+            page(
+                FeedbackFormPage.Content.Text(placeholder = "", maxLength = 100),
+                nextButtonLabel = "Send feedback",
+            ),
+        )
+
+        assertEquals("Send feedback", mapped.first().label)
+    }
 
     /**
      * A `display_name` page exists to get consent for the name - its Skip
@@ -39,7 +95,7 @@ class FormPageViewStateMapperTest {
     fun displayNamePageSecondaryButtonUsesARealSkipAction() {
         val button = secondaryButton(page(FeedbackFormPage.Content.DisplayName(suggestedName = "Alex")))
 
-        assertEquals(FormPageButton.Action.SKIP, button?.action)
+        assertEquals(FormPageButton.Action.SKIP, button.action)
     }
 
     /**
@@ -56,9 +112,9 @@ class FormPageViewStateMapperTest {
             page(FeedbackFormPage.Content.MultiChoice(options = emptyList(), allowMultiple = false))
         )
 
-        assertEquals(FormPageButton.Action.CONTINUE, textButton?.action)
-        assertEquals(FormPageButton.Action.CONTINUE, thumbsButton?.action)
-        assertEquals(FormPageButton.Action.CONTINUE, starsButton?.action)
-        assertEquals(FormPageButton.Action.CONTINUE, multiChoiceButton?.action)
+        assertEquals(FormPageButton.Action.CONTINUE, textButton.action)
+        assertEquals(FormPageButton.Action.CONTINUE, thumbsButton.action)
+        assertEquals(FormPageButton.Action.CONTINUE, starsButton.action)
+        assertEquals(FormPageButton.Action.CONTINUE, multiChoiceButton.action)
     }
 }

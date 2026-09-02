@@ -1,18 +1,22 @@
 package com.flabbergast.wandkit.ui.compose.feedbackForm.content
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -21,31 +25,25 @@ import com.flabbergast.wandkit.core.components.formPage.model.FormPageButton
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageUiState
 import com.flabbergast.wandkit.ui.compose.WandKitColors
 import com.flabbergast.wandkit.ui.compose.WandKitTypography
+import com.flabbergast.wandkit.ui.compose.shared.WandKitModalContentFillShape
 
 @Composable
 internal fun TextContentView(
     content: FormPageUiState.Content.Text,
     onUpdateText: (String) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        WandKitOutlinedTextField(
-            value = content.text,
-            onValueChange = { onUpdateText(it.take(content.maxLength)) },
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 4,
-            maxLines = 8,
-            placeholder = { Text(content.placeholder) },
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-            autoFocus = true,
-        )
-        Text(
-            text = "${content.text.length}/${content.maxLength}",
-            modifier = Modifier.fillMaxWidth(),
-            style = WandKitTypography.bodySmall,
-            color = WandKitColors.secondaryLabel,
-            textAlign = TextAlign.End,
-        )
-    }
+    WandKitFilledTextField(
+        value = content.text,
+        onValueChange = { onUpdateText(it.take(content.maxLength)) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp, bottom = 24.dp)
+            .heightIn(min = 240.dp),
+        placeholder = content.placeholder,
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+        autoFocus = true,
+        singleLine = false,
+    )
 }
 
 /**
@@ -54,42 +52,50 @@ internal fun TextContentView(
  * the user doesn't have to tap the box first.
  */
 @Composable
-internal fun WandKitOutlinedTextField(
+internal fun WandKitFilledTextField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    minLines: Int = 1,
-    maxLines: Int = Int.MAX_VALUE,
-    placeholder: @Composable (() -> Unit)? = null,
+    placeholder: String? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     autoFocus: Boolean = false,
+    singleLine: Boolean = false,
 ) {
     val focusRequester = remember { FocusRequester() }
 
     if (autoFocus) {
-        // Runs once the field is attached, which is what requestFocus() needs.
         LaunchedEffect(Unit) {
             focusRequester.requestFocus()
         }
     }
 
-    OutlinedTextField(
+    val textStyle = WandKitTypography.modalFieldLabel.copy(
+        color = WandKitColors.label,
+    )
+
+    BasicTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier.focusRequester(focusRequester),
-        minLines = minLines,
-        maxLines = maxLines,
-        placeholder = placeholder,
+        modifier = modifier
+            .clip(WandKitModalContentFillShape)
+            .background(WandKitColors.modalContentFill, WandKitModalContentFillShape)
+            .padding(16.dp)
+            .focusRequester(focusRequester),
+        textStyle = textStyle,
+        cursorBrush = SolidColor(WandKitColors.label),
         keyboardOptions = keyboardOptions,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = WandKitColors.tintColor,
-            unfocusedBorderColor = WandKitColors.separator,
-            focusedTextColor = WandKitColors.label,
-            unfocusedTextColor = WandKitColors.label,
-            cursorColor = WandKitColors.tintColor,
-            focusedPlaceholderColor = WandKitColors.placeholderText,
-            unfocusedPlaceholderColor = WandKitColors.placeholderText,
-        ),
+        singleLine = singleLine,
+        decorationBox = { innerTextField ->
+            Box {
+                if (value.isEmpty() && placeholder != null) {
+                    Text(
+                        text = placeholder,
+                        style = textStyle.copy(color = WandKitColors.placeholderText),
+                    )
+                }
+                innerTextField()
+            }
+        },
     )
 }
 

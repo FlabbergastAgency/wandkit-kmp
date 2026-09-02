@@ -55,13 +55,12 @@ internal fun formPageViewStateMapper(
 private const val DEFAULT_CONTINUE_BUTTON_LABEL = "Continue"
 
 private fun mapButtons(page: FeedbackFormPage?) = buildList {
-    if (page?.content is FeedbackFormPage.Content.End) return@buildList
+    if (page == null || page.content is FeedbackFormPage.Content.End) return@buildList
 
-    // `display_name` pages always show a primary button - "Continue" unless
-    // the server overrides it - since (unlike thumbs/stars) picking a value
-    // doesn't auto-advance the page.
-    val primaryButtonLabel = page?.nextButtonLabel
-        ?: DEFAULT_CONTINUE_BUTTON_LABEL.takeIf { page?.content is FeedbackFormPage.Content.DisplayName }
+    // Thumbs / stars / single-choice auto-advance when there's no next label.
+    // Text, display-name, and multi-select need an explicit primary action.
+    val primaryButtonLabel = page.nextButtonLabel
+        ?: DEFAULT_CONTINUE_BUTTON_LABEL.takeIf { page.requiresExplicitPrimaryButton() }
 
     primaryButtonLabel?.let { label ->
         add(
@@ -73,7 +72,7 @@ private fun mapButtons(page: FeedbackFormPage?) = buildList {
         )
     }
 
-    if (page?.isRequired == false && page.skipButtonLabel != null) {
+    if (!page.isRequired && page.skipButtonLabel != null) {
         add(
             FormPageButton(
                 label = page.skipButtonLabel,
@@ -91,4 +90,17 @@ private fun mapButtons(page: FeedbackFormPage?) = buildList {
             )
         )
     }
+}
+
+private fun FeedbackFormPage.requiresExplicitPrimaryButton(): Boolean = when (val content = content) {
+    is FeedbackFormPage.Content.Text,
+    is FeedbackFormPage.Content.DisplayName,
+    -> true
+
+    is FeedbackFormPage.Content.MultiChoice -> content.allowMultiple
+
+    is FeedbackFormPage.Content.Thumbs,
+    is FeedbackFormPage.Content.Stars,
+    is FeedbackFormPage.Content.End,
+    -> false
 }

@@ -1,12 +1,9 @@
 package com.flabbergast.wandkit.ui.compose.screenshotPrompt
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -16,7 +13,6 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
@@ -40,9 +35,12 @@ import com.flabbergast.wandkit.ui.compose.WandKitColors
 import com.flabbergast.wandkit.ui.compose.WandKitThemeDefaults
 import com.flabbergast.wandkit.ui.compose.WandKitThemeProvider
 import com.flabbergast.wandkit.ui.compose.WandKitTypography
-import com.flabbergast.wandkit.ui.compose.feedbackForm.content.WandKitOutlinedTextField
+import com.flabbergast.wandkit.ui.compose.feedbackForm.content.WandKitFilledTextField
 import com.flabbergast.wandkit.ui.compose.shared.WandKitButton
 import com.flabbergast.wandkit.ui.compose.shared.WandKitButtonColors
+import com.flabbergast.wandkit.ui.compose.shared.WandKitModalCard
+import com.flabbergast.wandkit.ui.compose.shared.WandKitModalCloseButton
+import com.flabbergast.wandkit.ui.compose.shared.WandKitModalScrim
 import org.jetbrains.compose.resources.decodeToImageBitmap
 
 /** iOS system red - there's no dedicated error token in [WandKitColors] yet. */
@@ -62,60 +60,92 @@ internal fun ScreenshotPromptView(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .systemBarsPadding(),
+        modifier = Modifier.fillMaxSize(),
         contentAlignment = contentAlignment,
     ) {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .pointerInput(component) {
-                    detectTapGestures(onTap = {
-                        component.onDismiss()
-                    })
-                }
-        )
+        WandKitModalScrim(onDismiss = component::onDismiss)
 
-        Surface(
-            modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .imePadding()
-                .border(1.dp, WandKitColors.quaternaryLabel, RoundedCornerShape(24.dp))
-                .clip(RoundedCornerShape(24.dp))
-                .widthIn(max = 560.dp),
-            color = WandKitColors.systemBackground,
-            contentColor = WandKitColors.label,
-        ) {
+        WandKitModalCard {
             Column(
-                modifier = Modifier.padding(20.dp),
+                modifier = Modifier
+                    .padding(horizontal = 12.dp, vertical = 24.dp)
+                    .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
-                image?.let {
-                    Image(
-                        bitmap = it,
-                        contentDescription = "Your screenshot",
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .heightIn(max = 200.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .border(1.dp, WandKitColors.quaternaryLabel, RoundedCornerShape(12.dp)),
-                    )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        WandKitModalCloseButton(
+                            onClick = component::onDismiss,
+                            modifier = Modifier.align(Alignment.CenterEnd),
+                        )
+                    }
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        when (phase) {
+                            is ScreenshotPromptComponent.ViewState.Phase.Prompt -> {
+                                ScreenshotPromptCardContent()
+                                image?.let {
+                                    Image(
+                                        bitmap = it,
+                                        contentDescription = "Your screenshot",
+                                        contentScale = ContentScale.Fit,
+                                        modifier = Modifier
+                                            .widthIn(max = 94.dp)
+                                            .heightIn(max = 204.dp)
+                                            .clip(RoundedCornerShape(10.dp)),
+                                    )
+                                }
+                            }
+
+                            is ScreenshotPromptComponent.ViewState.Phase.Composing -> ScreenshotComposingContent(
+                                phase = phase,
+                                component = component,
+                            )
+
+                            is ScreenshotPromptComponent.ViewState.Phase.Sent -> ScreenshotSentContent()
+                        }
+                    }
                 }
 
                 when (phase) {
-                    is ScreenshotPromptComponent.ViewState.Phase.Prompt -> ScreenshotPromptCardContent(
-                        onDismiss = component::onDismiss,
-                        onReport = component::onReport,
-                    )
+                    is ScreenshotPromptComponent.ViewState.Phase.Prompt -> {
+                        ScreenshotActions(
+                            primaryLabel = "Continue",
+                            onPrimary = component::onReport,
+                            secondaryLabel = "Not now",
+                            onSecondary = component::onDismiss,
+                        )
+                    }
 
-                    is ScreenshotPromptComponent.ViewState.Phase.Composing -> ScreenshotComposingContent(
-                        phase = phase,
-                        component = component,
-                    )
+                    is ScreenshotPromptComponent.ViewState.Phase.Composing -> {
+                        ScreenshotActions(
+                            primaryLabel = if (phase.error != null) "Try again" else "Send",
+                            onPrimary = component::onSend,
+                            secondaryLabel = "Not now",
+                            onSecondary = component::onDismiss,
+                            primaryEnabled = phase.text.isNotBlank() && !phase.isSending,
+                            secondaryEnabled = !phase.isSending,
+                            isLoading = phase.isSending,
+                        )
+                    }
 
-                    is ScreenshotPromptComponent.ViewState.Phase.Sent -> ScreenshotSentContent()
+                    is ScreenshotPromptComponent.ViewState.Phase.Sent -> {
+                        Text(
+                            text = "Powered by WandKit",
+                            style = WandKitTypography.modalPromoLabel,
+                            textAlign = TextAlign.Center,
+                            color = WandKitColors.label,
+                        )
+                    }
                 }
             }
         }
@@ -123,34 +153,26 @@ internal fun ScreenshotPromptView(
 }
 
 @Composable
-private fun ScreenshotPromptCardContent(
-    onDismiss: () -> Unit,
-    onReport: () -> Unit,
-) {
-    Text(
-        text = "Report a problem?",
-        style = WandKitTypography.titleMedium,
-        textAlign = TextAlign.Center,
-    )
-
-    Text(
-        text = "Attach this screenshot to a report so we can take a look.",
-        style = WandKitTypography.bodyMedium,
-        color = WandKitColors.secondaryLabel,
-        textAlign = TextAlign.Center,
-    )
-
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        WandKitButton(
-            text = "Not now",
-            onClick = onDismiss,
-            colors = WandKitButtonColors.Secondary,
-            modifier = Modifier.weight(1f),
+private fun ScreenshotPromptCardContent() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp),
+    ) {
+        Text(
+            text = "Report a problem?",
+            style = WandKitTypography.modalTitle,
+            textAlign = TextAlign.Center,
+            color = WandKitColors.label,
         )
-        WandKitButton(
-            text = "Report a problem",
-            onClick = onReport,
-            modifier = Modifier.weight(1f),
+
+        Text(
+            text = "Attach this screenshot to report so we can take a look.",
+            style = WandKitTypography.modalSubtitle,
+            color = WandKitColors.label,
+            textAlign = TextAlign.Center,
         )
     }
 }
@@ -160,64 +182,108 @@ private fun ScreenshotComposingContent(
     phase: ScreenshotPromptComponent.ViewState.Phase.Composing,
     component: ScreenshotPromptComponent,
 ) {
-    Text(
-        text = "Report a problem?",
-        style = WandKitTypography.titleMedium,
-        textAlign = TextAlign.Center,
-    )
-
-    WandKitOutlinedTextField(
-        value = phase.text,
-        onValueChange = component::onTextChanged,
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.fillMaxWidth(),
-        minLines = 3,
-        maxLines = 6,
-        placeholder = { Text("What went wrong?") },
-        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-        autoFocus = true,
-    )
-
-    phase.error?.let { error ->
+    ) {
         Text(
-            text = error,
-            style = WandKitTypography.bodySmall,
-            color = ScreenshotReportErrorColor,
+            text = "Report a problem?",
+            style = WandKitTypography.modalTitle,
             textAlign = TextAlign.Center,
+            color = WandKitColors.label,
+            modifier = Modifier.padding(horizontal = 20.dp),
         )
-    }
 
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        WandKitButton(
-            text = "Not now",
-            onClick = component::onDismiss,
-            colors = WandKitButtonColors.Secondary,
-            modifier = Modifier.weight(1f),
-            enabled = !phase.isSending,
+        WandKitFilledTextField(
+            value = phase.text,
+            onValueChange = component::onTextChanged,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 120.dp),
+            placeholder = "What went wrong?",
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            autoFocus = true,
         )
-        WandKitButton(
-            text = if (phase.error != null) "Try again" else "Send",
-            onClick = component::onSend,
-            modifier = Modifier.weight(1f),
-            enabled = phase.text.isNotBlank() && !phase.isSending,
-            isLoading = phase.isSending,
-        )
+
+        phase.error?.let { error ->
+            Text(
+                text = error,
+                style = WandKitTypography.bodySmall,
+                color = ScreenshotReportErrorColor,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
 
 @Composable
 private fun ScreenshotSentContent() {
-    Text(
-        text = "Thanks — we got it",
-        style = WandKitTypography.titleMedium,
-        textAlign = TextAlign.Center,
-    )
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp),
+    ) {
+        Text(
+            text = "Thanks — we got it",
+            style = WandKitTypography.modalTitle,
+            textAlign = TextAlign.Center,
+            color = WandKitColors.label,
+        )
 
-    Text(
-        text = "The team will take a look.",
-        style = WandKitTypography.bodyMedium,
-        color = WandKitColors.secondaryLabel,
-        textAlign = TextAlign.Center,
-    )
+        Text(
+            text = "The team will take a look.",
+            style = WandKitTypography.modalSubtitle,
+            color = WandKitColors.label,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun ScreenshotActions(
+    primaryLabel: String,
+    onPrimary: () -> Unit,
+    secondaryLabel: String,
+    onSecondary: () -> Unit,
+    primaryEnabled: Boolean = true,
+    secondaryEnabled: Boolean = true,
+    isLoading: Boolean = false,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            WandKitButton(
+                text = primaryLabel,
+                onClick = onPrimary,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = primaryEnabled,
+                isLoading = isLoading,
+            )
+            WandKitButton(
+                text = secondaryLabel,
+                onClick = onSecondary,
+                colors = WandKitButtonColors.Secondary,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = secondaryEnabled,
+            )
+        }
+
+        Text(
+            text = "Powered by WandKit",
+            style = WandKitTypography.modalPromoLabel,
+            textAlign = TextAlign.Center,
+            color = WandKitColors.label,
+        )
+    }
 }
 
 @Preview

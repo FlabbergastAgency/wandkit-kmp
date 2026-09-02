@@ -10,6 +10,8 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 
 @Immutable
 public data class WandKitColorScheme(
@@ -34,6 +36,15 @@ public data class WandKitColorScheme(
     val tintColor: Color,
     val systemGray: Color,
     val gold: Color,
+    val modalScrim: Color,
+    val modalBackground: Color,
+    val modalContentFill: Color,
+    val modalCloseButtonBackground: Color,
+    val modalPrimaryButtonBackground: Color,
+    val modalPrimaryButtonContent: Color,
+    val modalSecondaryButtonBackground: Color,
+    val modalCheckboxBorder: Color,
+    val modalCheckboxFill: Color,
 )
 
 @Immutable
@@ -53,6 +64,14 @@ public data class WandKitTypographyScheme(
     val labelLarge: TextStyle,
     val labelMedium: TextStyle,
     val labelSmall: TextStyle,
+    /** Mobile/H3 — modal title (display-xs / semibold). */
+    val modalTitle: TextStyle,
+    /** Mobile/B0 — modal subtitle (text-md / medium). */
+    val modalSubtitle: TextStyle,
+    /** Mobile/B2 — field / choice labels (text-sm / semibold). */
+    val modalFieldLabel: TextStyle,
+    /** Mobile/Label — "Powered by WandKit" (text-xs / semibold). */
+    val modalPromoLabel: TextStyle,
 )
 
 @Immutable
@@ -126,11 +145,35 @@ private fun Typography.toWandKitTypography(): WandKitTypographyScheme = WandKitT
     labelLarge = labelLarge,
     labelMedium = labelMedium,
     labelSmall = labelSmall,
+    // Mobile/H3
+    modalTitle = TextStyle(
+        fontSize = 24.sp,
+        lineHeight = 32.sp,
+        fontWeight = FontWeight.SemiBold,
+    ),
+    // Mobile/B0 (text-md / medium) — used for subtitles
+    modalSubtitle = TextStyle(
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+        fontWeight = FontWeight.Medium,
+    ),
+    // Mobile/B2 (text-sm / semibold) — field & choice labels
+    modalFieldLabel = TextStyle(
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        fontWeight = FontWeight.SemiBold,
+    ),
+    // Mobile/Label (text-xs / semibold) — "Powered by WandKit"
+    modalPromoLabel = TextStyle(
+        fontSize = 12.sp,
+        lineHeight = 18.sp,
+        fontWeight = FontWeight.SemiBold,
+    ),
 )
 
 private fun lightWandKitColors(): WandKitColorScheme = WandKitColorScheme(
-    label = Color(0xFF000000),
-    secondaryLabel = Color(0x993C3C43),
+    label = Color(0xFF181D27),
+    secondaryLabel = Color(0xFF535862),
     tertiaryLabel = Color(0x4C3C3C43),
     quaternaryLabel = Color(0x2E3C3C43),
     systemBackground = Color(0xFFFFFFFF),
@@ -143,13 +186,22 @@ private fun lightWandKitColors(): WandKitColorScheme = WandKitColorScheme(
     secondarySystemFill = Color(0x29787880),
     tertiarySystemFill = Color(0x1F767680),
     quaternarySystemFill = Color(0x14747480),
-    placeholderText = Color(0x4C3C3C43),
+    placeholderText = Color(0xFF535862),
     separator = Color(0x493C3C43),
     opaqueSeparator = Color(0xFFC6C6C8),
     link = Color(0xFF007AFF),
     tintColor = Color(0xFF007AFF),
     systemGray = Color(0xFFF2F2F7),
     gold = Color(0xFFFFC300),
+    modalScrim = Color(0x4D000000),
+    modalBackground = Color(0xFFB8BECE),
+    modalContentFill = Color(0xFFDBDFE7),
+    modalCloseButtonBackground = Color(0xFF9AA0B0),
+    modalPrimaryButtonBackground = Color(0xFFFFFFFF),
+    modalPrimaryButtonContent = Color(0xFF181D27),
+    modalSecondaryButtonBackground = Color(0xFFCDD2DD),
+    modalCheckboxBorder = Color(0x33000000),
+    modalCheckboxFill = Color(0xFFFFFFFF),
 )
 
 private fun darkWandKitColors(): WandKitColorScheme = WandKitColorScheme(
@@ -174,4 +226,13 @@ private fun darkWandKitColors(): WandKitColorScheme = WandKitColorScheme(
     tintColor = Color(0xFF0A84FF),
     systemGray = Color(0xFFF2F2F7),
     gold = Color(0xFFFFC300),
+    modalScrim = Color(0x80000000),
+    modalBackground = Color(0xFF212734),
+    modalContentFill = Color(0xFF373D48),
+    modalCloseButtonBackground = Color(0xFF3A4252),
+    modalPrimaryButtonBackground = Color(0xFFFFFFFF),
+    modalPrimaryButtonContent = Color(0xFF181D27),
+    modalSecondaryButtonBackground = Color(0xFF373D48),
+    modalCheckboxBorder = Color(0x66FFFFFF),
+    modalCheckboxFill = Color(0xFFFFFFFF),
 )

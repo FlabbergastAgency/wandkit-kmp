@@ -22,7 +22,7 @@ private fun EventPageDto.mapFormPage(): FeedbackFormPage {
         subtitle = subtitle,
         imageUrl = imageUrl,
         nextButtonLabel = nextButtonLabel,
-        skipButtonLabel = "Skip", // todo matko: put backend value
+        skipButtonLabel = skipButtonLabel,
         promoLabel = "Powered by WandKit", // todo matko: put backend value
         isRequired = required,
         content = mapContent(),

@@ -18,6 +18,8 @@ internal data class EventPageDto(
     val imageUrl: String? = null,
     @SerialName("next_button_label")
     val nextButtonLabel: String? = null,
+    @SerialName("skip_button_label")
+    val skipButtonLabel: String? = null,
     @SerialName("required")
     val required: Boolean = false,
     @SerialName("options")

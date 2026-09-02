@@ -8,11 +8,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,21 +22,28 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageButton
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageUiState
+import com.flabbergast.wandkit.ui.compose.Res
 import com.flabbergast.wandkit.ui.compose.WandKitColors
 import com.flabbergast.wandkit.ui.compose.WandKitTypography
+import com.flabbergast.wandkit.ui.compose.ic_check
+import com.flabbergast.wandkit.ui.compose.shared.WandKitModalContentFillShape
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 internal fun MultiChoiceContentView(
     content: FormPageUiState.Content.MultiChoice,
     onUpdateMultiChoice: (String) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(
+        modifier = Modifier.padding(vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         content.choices.forEach { choice ->
             ChoiceCard(
                 label = choice.label,
                 selected = choice.isSelected,
+                showCheckbox = content.allowMultiple,
                 onClick = { onUpdateMultiChoice(choice.id) },
-                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -46,30 +53,55 @@ internal fun MultiChoiceContentView(
 private fun ChoiceCard(
     label: String,
     selected: Boolean,
-    modifier: Modifier = Modifier,
+    showCheckbox: Boolean,
     onClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(CircleShape)
+            .height(48.dp)
+            .clip(WandKitModalContentFillShape)
+            .background(WandKitColors.modalContentFill, WandKitModalContentFillShape)
             .clickable(onClick = onClick)
-            .padding(vertical = 6.dp, horizontal = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier = Modifier
-                .size(16.dp)
-                .clip(CircleShape)
-                .border(2.dp, WandKitColors.link, CircleShape)
-                .background(WandKitColors.link.copy(alpha = if (selected) 1f else 0f)),
-        )
+        if (showCheckbox) {
+            ChoiceCheckbox(selected = selected)
+        }
         Text(
             text = label,
-            style = WandKitTypography.bodyLarge,
+            style = WandKitTypography.modalFieldLabel,
             color = WandKitColors.label,
         )
+    }
+}
+
+@Composable
+private fun ChoiceCheckbox(selected: Boolean) {
+    val shape = RoundedCornerShape(6.dp)
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(21.dp)
+            .clip(shape)
+            .then(
+                if (selected) {
+                    Modifier.background(WandKitColors.modalCheckboxFill, shape)
+                } else {
+                    Modifier.border(1.5.dp, WandKitColors.modalCheckboxBorder, shape)
+                }
+            ),
+    ) {
+        if (selected) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_check),
+                contentDescription = null,
+                tint = WandKitColors.modalPrimaryButtonContent,
+                modifier = Modifier.size(14.dp),
+            )
+        }
     }
 }
 

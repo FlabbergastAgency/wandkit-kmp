@@ -8,12 +8,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,7 +20,6 @@ import com.flabbergast.wandkit.core.components.formPage.model.FormPageButton
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageUiState
 import com.flabbergast.wandkit.ui.compose.Res
 import com.flabbergast.wandkit.ui.compose.WandKitColors
-import com.flabbergast.wandkit.ui.compose.WandKitTypography
 import com.flabbergast.wandkit.ui.compose.ic_thumbs_down_filled
 import com.flabbergast.wandkit.ui.compose.ic_thumbs_up_filled
 import org.jetbrains.compose.resources.DrawableResource
@@ -36,7 +31,9 @@ internal fun ThumbsContentView(
     onUpdateThumbs: (Boolean) -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 40.dp, bottom = 24.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
     ) {
         ThumbsChoiceCard(
@@ -59,15 +56,24 @@ private fun ThumbsChoiceCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    val containerColor = if (selected) WandKitColors.link else WandKitColors.secondarySystemFill
-    val contentColor = if (selected) WandKitColors.label else WandKitColors.tintColor
+    val shape = RoundedCornerShape(24.dp)
+    val containerColor = if (selected) {
+        WandKitColors.modalPrimaryButtonBackground
+    } else {
+        WandKitColors.modalContentFill
+    }
+    val contentColor = if (selected) {
+        WandKitColors.modalPrimaryButtonContent
+    } else {
+        WandKitColors.label
+    }
 
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .size(64.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(containerColor, RoundedCornerShape(16.dp))
+            .clip(shape)
+            .background(containerColor, shape)
             .clickable(onClick = onClick),
     ) {
         Icon(
