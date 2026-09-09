@@ -13,15 +13,16 @@ import kotlinx.coroutines.flow.stateIn
 internal class DefaultScreenshotPromptComponent(
     componentContext: ComponentContext,
     private val controller: ScreenshotPromptController,
+    private val includesDebugAttachments: Boolean,
 ) : ScreenshotPromptComponent, ComponentContext by componentContext {
 
     override val viewState: Value<ScreenshotPromptComponent.ViewState> =
         controller.prompt
-            .map { it.toViewState() }
+            .map { it.toViewState(includesDebugAttachments) }
             .stateIn(
                 scope = componentScope,
                 started = SharingStarted.WhileSubscribed(5000),
-                initialValue = controller.prompt.value.toViewState(),
+                initialValue = controller.prompt.value.toViewState(includesDebugAttachments),
             )
             .toValue(componentScope)
 
@@ -34,7 +35,7 @@ internal class DefaultScreenshotPromptComponent(
     override fun onDismiss() = controller.dismiss()
 }
 
-private fun ScreenshotPrompt?.toViewState(): ScreenshotPromptComponent.ViewState =
+private fun ScreenshotPrompt?.toViewState(includesDebugAttachments: Boolean): ScreenshotPromptComponent.ViewState =
     ScreenshotPromptComponent.ViewState(
         attachment = this?.attachment,
         phase = when (val phase = this?.phase) {
@@ -46,4 +47,5 @@ private fun ScreenshotPrompt?.toViewState(): ScreenshotPromptComponent.ViewState
             )
             is ScreenshotPrompt.Phase.Sent -> ScreenshotPromptComponent.ViewState.Phase.Sent
         },
+        includesDebugAttachments = includesDebugAttachments,
     )

@@ -12,6 +12,8 @@ internal data class SdkCreateAttachmentRequestDto(
     val contentType: String,
     @SerialName("size_bytes")
     val sizeBytes: Long,
+    @SerialName("file_name")
+    val fileName: String? = null,
 )
 
 @Serializable

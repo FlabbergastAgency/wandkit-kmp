@@ -109,6 +109,7 @@ internal fun ScreenshotPromptView(
                             is ScreenshotPromptComponent.ViewState.Phase.Composing -> ScreenshotComposingContent(
                                 phase = phase,
                                 component = component,
+                                includesDebugAttachments = state.includesDebugAttachments,
                             )
 
                             is ScreenshotPromptComponent.ViewState.Phase.Sent -> ScreenshotSentContent()
@@ -181,6 +182,7 @@ private fun ScreenshotPromptCardContent() {
 private fun ScreenshotComposingContent(
     phase: ScreenshotPromptComponent.ViewState.Phase.Composing,
     component: ScreenshotPromptComponent,
+    includesDebugAttachments: Boolean,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -205,6 +207,16 @@ private fun ScreenshotComposingContent(
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             autoFocus = true,
         )
+
+        if (includesDebugAttachments) {
+            Text(
+                text = "Diagnostic logs will be included to help us fix this.",
+                style = WandKitTypography.bodySmall,
+                color = WandKitColors.secondaryLabel,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
 
         phase.error?.let { error ->
             Text(
@@ -321,6 +333,24 @@ private fun ScreenshotPromptViewPreviewComposing() {
 
 @Preview
 @Composable
+private fun ScreenshotPromptViewPreviewComposingWithDebugAttachments() {
+    WandKitThemeProvider(theme = WandKitThemeDefaults.light()) {
+        ScreenshotPromptView(
+            PreviewScreenshotPromptComponent(
+                phase = ScreenshotPromptComponent.ViewState.Phase.Composing(
+                    text = "It crashes when I tap Save.",
+                    isSending = false,
+                    error = null,
+                ),
+                includesDebugAttachments = true,
+            ),
+            contentAlignment = Alignment.Center,
+        )
+    }
+}
+
+@Preview
+@Composable
 private fun ScreenshotPromptViewPreviewComposingError() {
     WandKitThemeProvider(theme = WandKitThemeDefaults.light()) {
         ScreenshotPromptView(
@@ -349,6 +379,7 @@ private fun ScreenshotPromptViewPreviewSent() {
 
 private class PreviewScreenshotPromptComponent(
     phase: ScreenshotPromptComponent.ViewState.Phase = ScreenshotPromptComponent.ViewState.Phase.Prompt,
+    includesDebugAttachments: Boolean = false,
 ) : ScreenshotPromptComponent {
     // Preview data only: decoding is wrapped in runCatching, so a non-image
     // payload just skips the thumbnail instead of crashing.
@@ -361,6 +392,7 @@ private class PreviewScreenshotPromptComponent(
                     fileName = "preview.png",
                 ),
                 phase = phase,
+                includesDebugAttachments = includesDebugAttachments,
             )
 
             override val value: ScreenshotPromptComponent.ViewState get() = state

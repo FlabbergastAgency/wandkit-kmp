@@ -198,6 +198,7 @@ internal class WandKitSdkContainer private constructor(
         createSubmitScreenshotReportUseCase(
             postsApi = postsApi,
             postsSessionRepository = postsSessionRepository,
+            debugAttachmentsProvider = { config.debugAttachmentsProvider },
             logger = logger,
         )
     }

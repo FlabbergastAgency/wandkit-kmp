@@ -1,8 +1,8 @@
 package com.flabbergast.wandkit.core.domain.screenshot
 
 import com.flabbergast.wandkit.core.domain.infrastructure.concurrency.FireAndForgetTask
-import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import com.flabbergast.wandkit.core.feedback.WandKitComposerAttachment
+import com.flabbergast.wandkit.core.testutil.NoOpLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -261,13 +261,4 @@ class ScreenshotPromptControllerTest {
 
         assertNull(controller.prompt.value)
     }
-}
-
-private object NoOpLogger : Logger {
-    override fun verbose(tag: String?, message: String, throwable: Throwable?) = Unit
-    override fun debug(tag: String?, message: String, throwable: Throwable?) = Unit
-    override fun info(tag: String?, message: String, throwable: Throwable?) = Unit
-    override fun warn(tag: String?, message: String, throwable: Throwable?) = Unit
-    override fun error(tag: String?, message: String, throwable: Throwable?) = Unit
-    override fun assert(tag: String?, message: String, throwable: Throwable?) = Unit
 }

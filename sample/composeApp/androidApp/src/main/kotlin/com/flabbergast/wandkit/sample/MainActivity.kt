@@ -9,6 +9,8 @@ import androidx.lifecycle.lifecycleScope
 import com.flabbergast.wandkit.core.WandKit
 import com.flabbergast.wandkit.core.config.WandKitConfig
 import com.flabbergast.wandkit.core.configure
+import com.flabbergast.wandkit.core.feedback.WandKitDebugAttachment
+import com.flabbergast.wandkit.core.feedback.WandKitDebugAttachmentsProvider
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -26,6 +28,17 @@ class MainActivity : ComponentActivity() {
                 apiBaseUrl = "http://192.168.1.79:8081",
                 feedbackWebUrl = "http://192.168.1.79:3002",
                 screenshotReporting = true,
+                // Sample only: a couple of generated lines standing in for
+                // whatever your app's own log file/JSON dump would contain.
+                debugAttachmentsProvider = WandKitDebugAttachmentsProvider {
+                    val now = System.currentTimeMillis()
+                    listOf(
+                        WandKitDebugAttachment.text(
+                            text = "[$now] sample app log\n[$now] screenshot report triggered",
+                            fileName = "sample-app.log",
+                        ),
+                    )
+                },
             ),
             context = applicationContext,
         )
