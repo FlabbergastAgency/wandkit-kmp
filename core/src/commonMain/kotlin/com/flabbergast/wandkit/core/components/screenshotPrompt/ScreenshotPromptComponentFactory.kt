@@ -16,6 +16,7 @@ internal fun interface ScreenshotPromptComponentFactory {
         override fun create(context: ComponentContext) = DefaultScreenshotPromptComponent(
             componentContext = context,
             controller = sdkContainer.screenshotPromptController,
+            includesDebugAttachments = sdkContainer.config.debugAttachmentsProvider != null,
         )
     }
 }

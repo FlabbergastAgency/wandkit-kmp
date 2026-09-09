@@ -25,6 +25,7 @@ This README covers:
 - `feedbackWebUrl`: origin the feedback web app is served from, for pointing a build at a staging deployment (see [Feedback](#feedback))
 - `feedbackTheme`: styling for the feedback web app (see [Theming](#theming))
 - `screenshotReporting`: turns a screenshot into a "Report a problem?" prompt (see [Screenshot reporting](#screenshot-reporting))
+- `debugAttachmentsProvider`: supplies extra files (logs, JSON dumps) uploaded alongside a screenshot report, for your team's eyes only (see [Debug attachments](#debug-attachments))
 
 Example:
 
@@ -396,10 +397,33 @@ Requirements:
 - **`WandKitHost()` mounted** on the screen, the same as for survey forms.
 - **`configure` called in `Application.onCreate`**, so the SDK sees the first Activity and can register its capture callback as soon as it resumes.
 
+#### Debug attachments
+
+Supply a `debugAttachmentsProvider` and your own files - logs, JSON dumps, anything that helps triage - go up as attachments alongside the screenshot:
+
+```kotlin
+WandKitConfig(
+    apiKey = "your_api_key",
+    screenshotReporting = true,
+    debugAttachmentsProvider = WandKitDebugAttachmentsProvider {
+        listOf(WandKitDebugAttachment(File(logDir, "app.log").readBytes(), "app.log", "text/plain"))
+    },
+)
+```
+
+The provider runs when the user taps Send on the report card - and again if they tap "Try again", since a retry re-runs the whole submission. It has a 10 second budget; on timeout, or if it throws, the report still goes out, just without the files (logged, not surfaced to the user). Up to 5 files are kept, 10 MB each - extra or oversize files are dropped with a warning log rather than failing the report.
+
+These files are dashboard-only: visible to your team in the post detail, never to the end user. Mind PII in whatever you attach. When a provider is configured, the composer shows a static disclosure line under the text field ("Diagnostic logs will be included to help us fix this.") so the user knows more than the screenshot is going up; there's no per-file toggle.
+
+`WandKitDebugAttachment.text(text, fileName)` is a shortcut for a UTF-8 text file (`text/plain; charset=utf-8`) - handy for in-memory logs you don't want to write to disk first.
+
 What it does not do:
 
 - **Read the gallery.** The image is read back from your app's own window via `PixelCopy`, not from Photos, so there is no permission prompt for it. `SurfaceView` content comes out black, and a window flagged `FLAG_SECURE` never triggers a callback at all.
 - **Upload anything until Send.** The image stays in memory while the card or text box is open, and only leaves the device once the user taps Send.
+- **Compress or otherwise transform debug attachments.** Whatever bytes the provider returns are what get uploaded.
+- **Show debug attachments to the end user.** They never appear in the composer beyond the static disclosure line, and never in the end-user-facing parts of the product - only in the dashboard.
+- **Fail the report over a debug attachment problem.** A slow provider, a thrown exception, or a failed upload for one file is logged and skipped; the screenshot report itself still goes out.
 - **Prompt on Android 13 and below.** There is no capture callback to hook there. If you want a screenshot-report entry point on older devices, wire your own trigger to the (webview) composer directly - this deep-links to the simplified web composer, which still accepts a `type`:
 
   ```kotlin

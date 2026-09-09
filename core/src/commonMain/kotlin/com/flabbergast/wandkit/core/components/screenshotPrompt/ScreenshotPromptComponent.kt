@@ -25,6 +25,8 @@ public interface ScreenshotPromptComponent {
          */
         val attachment: WandKitComposerAttachment?,
         val phase: Phase,
+        /** True when a [com.flabbergast.wandkit.core.feedback.WandKitDebugAttachmentsProvider] is configured. */
+        val includesDebugAttachments: Boolean = false,
     ) {
         public sealed interface Phase {
             public data object Prompt : Phase
