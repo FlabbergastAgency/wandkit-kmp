@@ -39,6 +39,16 @@ internal data class SdkPostsConfigDto(
     val roadmapEnabled: Boolean = false,
     @SerialName("tags")
     val tags: List<SdkPostsTagDto> = emptyList(),
+    /**
+     * The project's Play Store listing, for the feature-preview "Update app"
+     * action. `null` until the backend's store integration (or a project
+     * setting) supplies one - the primary button hides itself in that case.
+     */
+    @SerialName("google_play_url")
+    val googlePlayUrl: String? = null,
+    /** Kept for parity with iOS/the store integration; unused on Android today. */
+    @SerialName("app_store_url")
+    val appStoreUrl: String? = null,
 )
 
 @Serializable

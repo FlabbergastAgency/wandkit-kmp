@@ -2,6 +2,7 @@ package com.flabbergast.wandkit.core.components.root
 
 import com.arkivanov.decompose.router.slot.ChildSlot
 import com.arkivanov.decompose.value.Value
+import com.flabbergast.wandkit.core.components.featurepreview.FeaturePreviewComponent
 import com.flabbergast.wandkit.core.components.feedbackForm.FeedbackFormComponent
 import com.flabbergast.wandkit.core.components.screenshotPrompt.ScreenshotPromptComponent
 
@@ -18,6 +19,11 @@ public interface WandKitComponent {
         /** The "Report a problem?" card shown after a screenshot (Android 14+). */
         public data class ScreenshotPrompt(
             val component: ScreenshotPromptComponent,
+        ): Child
+
+        /** The "coming soon / it's here" sheet from `WandKit.presentFeaturePreview`. */
+        public data class FeaturePreview(
+            val component: FeaturePreviewComponent,
         ): Child
     }
 }

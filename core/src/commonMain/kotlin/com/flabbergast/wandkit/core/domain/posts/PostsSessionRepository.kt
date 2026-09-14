@@ -23,6 +23,10 @@ internal data class PostsConfig(
     val enabledTypes: List<String>,
     val roadmapEnabled: Boolean,
     val tags: List<PostsTag>,
+    /** The project's Play Store listing, for the feature-preview "Update app" action. */
+    val googlePlayUrl: String? = null,
+    /** Kept for parity with iOS; unused on Android today. */
+    val appStoreUrl: String? = null,
 )
 
 internal data class PostsTag(

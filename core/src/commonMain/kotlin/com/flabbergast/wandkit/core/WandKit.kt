@@ -8,6 +8,8 @@ import com.flabbergast.wandkit.core.domain.referrals.ReferralDetection
 import com.flabbergast.wandkit.core.domain.referrals.ReferralInfo
 import com.flabbergast.wandkit.core.domain.referrals.ReferralMatch
 import com.flabbergast.wandkit.core.domain.referrals.ReferralProgress
+import com.flabbergast.wandkit.core.featurepreview.WandKitFeaturePreviewResult
+import com.flabbergast.wandkit.core.featurepreview.presentFeaturePreviewFlow
 import com.flabbergast.wandkit.core.feedback.WandKitFeedbackScreen
 import com.flabbergast.wandkit.core.feedback.presentFeedbackScreen
 import kotlin.time.Instant
@@ -87,6 +89,33 @@ public object WandKit {
         startAt: WandKitFeedbackScreen = WandKitFeedbackScreen.Feed,
     ) {
         presentFeedbackScreen(WandKitSdkContainer.get(), startAt)
+    }
+
+    /**
+     * Presents the native "coming soon / it's here" sheet for [postId] - a
+     * fake-door flow: the SDK checks the post's feature-preview state
+     * (dashboard-managed copy, via the post's "Feature preview" section) and
+     * shows a coming-soon sheet with a follow (vote) action, or an available
+     * sheet pointing at the store listing once the post is `done`.
+     *
+     * The coming-soon primary votes (auto-follows) the post if needed, then
+     * opens the feedback UI on it with a one-time confirmation notice.
+     *
+     * [onResult] fires exactly once, when the sheet is left one way or
+     * another - see [WandKitFeaturePreviewResult]. A generic "coming soon"
+     * fallback sheet is shown instead (its single primary action dismisses
+     * it, reporting [WandKitFeaturePreviewResult.Dismissed]) when the post
+     * has no preview configured, it is disabled, unpublished, or the fetch
+     * fails.
+     *
+     * Android only. The iOS targets of this library log a warning and do
+     * nothing; use the native WandKit iOS SDK there.
+     */
+    public fun presentFeaturePreview(
+        postId: String,
+        onResult: (WandKitFeaturePreviewResult) -> Unit = {},
+    ) {
+        presentFeaturePreviewFlow(WandKitSdkContainer.get(), postId, onResult)
     }
 
     public suspend fun getInstallReferralCode(): String? = WandKitSdkContainer.get().installReferralCodeProvider.getReferralCode()

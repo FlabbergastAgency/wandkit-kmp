@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.flabbergast.wandkit.core.components.root.WandKitComponent
+import com.flabbergast.wandkit.ui.compose.featurePreview.FeaturePreviewView
 import com.flabbergast.wandkit.ui.compose.feedbackForm.FeedbackFormView
 import com.flabbergast.wandkit.ui.compose.screenshotPrompt.ScreenshotPromptView
 
@@ -48,6 +49,7 @@ internal fun WandKitRootView(
         when (slot) {
             is WandKitComponent.Child.FeedbackForm -> FeedbackFormView(slot.component, contentAlignment)
             is WandKitComponent.Child.ScreenshotPrompt -> ScreenshotPromptView(slot.component, contentAlignment)
+            is WandKitComponent.Child.FeaturePreview -> FeaturePreviewView(slot.component)
             null -> Unit
         }
     }
