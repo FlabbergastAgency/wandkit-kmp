@@ -24,8 +24,9 @@ private const val TAG = "[FeedbackPresenter]"
 internal actual fun presentFeedbackScreen(
     container: WandKitSdkContainer,
     screen: WandKitFeedbackScreen,
+    query: String?,
 ) {
-    val launchId = FeedbackLaunchStore.put(screen)
+    val launchId = FeedbackLaunchStore.put(screen, query)
     val activityContext = CurrentActivityTracker.currentActivity
     val context: Context = activityContext
         ?: container.platformContext?.applicationContext
@@ -74,18 +75,24 @@ public fun WandKit.feedbackIntent(
  * - the same graceful degradation a cold deep link into the feed would give.
  */
 internal object FeedbackLaunchStore {
-    private val screens = mutableMapOf<String, WandKitFeedbackScreen>()
+    /** [query] is appended verbatim to the initial URL's query string when set - see [presentFeedbackScreen]. */
+    internal data class Entry(
+        val screen: WandKitFeedbackScreen,
+        val query: String? = null,
+    )
+
+    private val entries = mutableMapOf<String, Entry>()
 
     @OptIn(ExperimentalUuidApi::class)
-    internal fun put(screen: WandKitFeedbackScreen): String {
+    internal fun put(screen: WandKitFeedbackScreen, query: String? = null): String {
         val id = Uuid.generateV4().toString()
-        synchronized(screens) { screens[id] = screen }
+        synchronized(entries) { entries[id] = Entry(screen, query) }
         return id
     }
 
     /** Removes and returns the entry: it is only ever meant to be read once. */
-    internal fun take(id: String?): WandKitFeedbackScreen? {
+    internal fun take(id: String?): Entry? {
         if (id == null) return null
-        return synchronized(screens) { screens.remove(id) }
+        return synchronized(entries) { entries.remove(id) }
     }
 }

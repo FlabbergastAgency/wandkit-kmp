@@ -19,6 +19,7 @@ private class WandKitComponentFactoryImpl(
         componentContext = context,
         formController = container.feedbackFormController,
         screenshotPromptController = container.screenshotPromptController,
+        featurePreviewController = container.featurePreviewController,
     )
 }
 

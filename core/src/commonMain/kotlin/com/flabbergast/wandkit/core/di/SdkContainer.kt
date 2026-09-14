@@ -28,7 +28,15 @@ import com.flabbergast.wandkit.core.platform.createKeyValueStore
 import com.flabbergast.wandkit.core.domain.events.EventsRepository
 import com.flabbergast.wandkit.core.domain.events.IdentifyInfo
 import com.flabbergast.wandkit.core.domain.events.TrackEventUseCase
+import com.flabbergast.wandkit.core.domain.events.WandKitEvent
 import com.flabbergast.wandkit.core.domain.events.createTrackEventUseCase
+import com.flabbergast.wandkit.core.domain.featurepreview.FEATURE_PREVIEW_FOLLOWED_QUERY
+import com.flabbergast.wandkit.core.domain.featurepreview.FeaturePreviewController
+import com.flabbergast.wandkit.core.domain.featurepreview.ResolveFeaturePreviewUseCase
+import com.flabbergast.wandkit.core.domain.featurepreview.VoteFeaturePreviewPostUseCase
+import com.flabbergast.wandkit.core.domain.featurepreview.createFeaturePreviewController
+import com.flabbergast.wandkit.core.domain.featurepreview.createResolveFeaturePreviewUseCase
+import com.flabbergast.wandkit.core.domain.featurepreview.createVoteFeaturePreviewPostUseCase
 import com.flabbergast.wandkit.core.domain.forms.DismissFormUseCase
 import com.flabbergast.wandkit.core.domain.forms.FeedbackFormController
 import com.flabbergast.wandkit.core.domain.forms.FeedbackFormRepository
@@ -48,8 +56,11 @@ import com.flabbergast.wandkit.core.domain.screenshot.SubmitScreenshotReportUseC
 import com.flabbergast.wandkit.core.domain.screenshot.createScreenshotPromptController
 import com.flabbergast.wandkit.core.domain.screenshot.createSubmitScreenshotReportUseCase
 import com.flabbergast.wandkit.core.domain.infrastructure.threading.BackgroundDispatcher
+import com.flabbergast.wandkit.core.feedback.WandKitFeedbackScreen
+import com.flabbergast.wandkit.core.feedback.presentFeedbackScreen
 import com.flabbergast.wandkit.core.models.createWandKitClient
 import kotlinx.serialization.json.Json
+import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -206,6 +217,44 @@ internal class WandKitSdkContainer private constructor(
     internal val screenshotPromptController: ScreenshotPromptController by lazy {
         createScreenshotPromptController(
             submitReport = submitScreenshotReportUseCase,
+            fireAndForgetTask = fireAndForgetTask,
+            logger = logger,
+        )
+    }
+
+    internal val resolveFeaturePreviewUseCase: ResolveFeaturePreviewUseCase by lazy {
+        createResolveFeaturePreviewUseCase(
+            postsApi = postsApi,
+            postsSessionRepository = postsSessionRepository,
+            logger = logger,
+        )
+    }
+
+    internal val voteFeaturePreviewPostUseCase: VoteFeaturePreviewPostUseCase by lazy {
+        createVoteFeaturePreviewPostUseCase(
+            postsApi = postsApi,
+            postsSessionRepository = postsSessionRepository,
+            logger = logger,
+        )
+    }
+
+    internal val featurePreviewController: FeaturePreviewController by lazy {
+        createFeaturePreviewController(
+            voteUseCase = voteFeaturePreviewPostUseCase,
+            recordEvent = { name, properties ->
+                // Deliberately bypasses trackEventUseCase: a form the backend
+                // returns for this event must never auto-present over the
+                // feature-preview sheet, so the response's `form` is dropped
+                // here rather than published to feedbackFormController.
+                eventsRepository.trackEvent(
+                    WandKitEvent(name = name, properties = properties, occurredAt = Clock.System.now()),
+                    identityInfo,
+                )
+                Unit
+            },
+            openFeedbackPost = { postId ->
+                presentFeedbackScreen(this@WandKitSdkContainer, WandKitFeedbackScreen.Post(postId), FEATURE_PREVIEW_FOLLOWED_QUERY)
+            },
             fireAndForgetTask = fireAndForgetTask,
             logger = logger,
         )

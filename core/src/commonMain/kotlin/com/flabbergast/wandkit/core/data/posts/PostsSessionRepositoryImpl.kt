@@ -69,6 +69,8 @@ private fun SdkPostsSessionResponseDto.toDomain() = PostsSession(
         enabledTypes = config.enabledTypes,
         roadmapEnabled = config.roadmapEnabled,
         tags = config.tags.map { PostsTag(id = it.id, name = it.name, color = it.color) },
+        googlePlayUrl = config.googlePlayUrl,
+        appStoreUrl = config.appStoreUrl,
     ),
     displayName = displayName,
 )

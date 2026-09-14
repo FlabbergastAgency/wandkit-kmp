@@ -64,6 +64,8 @@ private fun Content(snackbarHostState: SnackbarHostState) {
     var isDetecting by remember { mutableStateOf(false) }
     var detectionResult by remember { mutableStateOf<String?>(null) }
     var progressText by remember { mutableStateOf<String?>(null) }
+    var featurePreviewPostIdInput by remember { mutableStateOf("") }
+    var featurePreviewResult by remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
     val activeUserId = userIdInput.trim().takeIf { it.isNotEmpty() }
@@ -323,6 +325,38 @@ private fun Content(snackbarHostState: SnackbarHostState) {
         // identified user to post - enter a User ID above first.
         Button(onClick = { WandKit.presentFeedback() }) {
             Text("Open feedback")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        OutlinedTextField(
+            value = featurePreviewPostIdInput,
+            onValueChange = {
+                featurePreviewPostIdInput = it
+                featurePreviewResult = null
+            },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Feature preview post ID") },
+            singleLine = true,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(
+            onClick = {
+                val postId = featurePreviewPostIdInput.trim()
+                if (postId.isEmpty()) {
+                    featurePreviewResult = "Enter a post ID first"
+                    return@Button
+                }
+
+                WandKit.presentFeaturePreview(
+                    postId = postId,
+                    onResult = { result -> featurePreviewResult = "Feature preview result: $result" },
+                )
+            },
+        ) {
+            Text("Feature preview")
+        }
+        if (featurePreviewResult != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = featurePreviewResult.orEmpty(), modifier = Modifier.fillMaxWidth())
         }
         AnimatedVisibility(showContent) {
             val greeting = remember { Greeting().greet() }

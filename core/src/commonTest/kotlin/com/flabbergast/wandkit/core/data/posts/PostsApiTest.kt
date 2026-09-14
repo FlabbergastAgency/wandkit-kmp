@@ -12,6 +12,7 @@ import com.flabbergast.wandkit.core.testutil.createTestPostsApiWithInterceptor
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.headersOf
@@ -282,6 +283,101 @@ class PostsApiTest {
         val exception = result.exceptionOrNull()
         assertTrue(exception is WandKitHttpException, "Expected WandKitHttpException but got $exception")
         assertEquals(500, exception.statusCode)
+    }
+
+    @Test
+    fun getFeaturePreviewSendsBearerTokenPlatformQueryAndDecodesComingSoonBody() = runBlocking {
+        var capturedAuth: String? = null
+        var capturedUrl: String? = null
+        var capturedMethod: HttpMethod? = null
+        val postsApi = createTestPostsApi { request ->
+            capturedAuth = request.headers[HttpHeaders.Authorization]
+            capturedUrl = request.url.toString()
+            capturedMethod = request.method
+            respond(
+                content = """
+                    {"state":"coming_soon","post_id":"post-1","post_status":"planned","viewer_voted":true,
+                    "copy":{"title":"FAA support is almost here","message":"Coming soon.",
+                    "primary_label":"Let me know","secondary_label":"Continue with EASA"},"store_url":null}
+                """.trimIndent().replace("\n", ""),
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+            )
+        }
+
+        val result = postsApi { getFeaturePreview("tok", "post-1") }
+
+        assertEquals("Bearer tok", capturedAuth)
+        assertEquals("https://example.test/api/v1/sdk/posts/post-1/feature-preview?platform=android", capturedUrl)
+        assertEquals(HttpMethod.Get, capturedMethod)
+        val data = result.getOrThrow().data
+        assertEquals("coming_soon", data.state)
+        assertEquals("post-1", data.postId)
+        assertEquals("planned", data.postStatus)
+        assertTrue(data.viewerVoted)
+        assertEquals("Let me know", data.previewCopy.primaryLabel)
+        assertNull(data.storeUrl)
+    }
+
+    @Test
+    fun getFeaturePreviewDecodesAvailableBodyWithStoreUrl() = runBlocking {
+        val postsApi = createTestPostsApi { _ ->
+            respond(
+                content = """
+                    {"state":"available","post_id":"post-1","post_status":"done","viewer_voted":false,
+                    "copy":{"title":"It's here","message":"Update the app.","primary_label":"Update app",
+                    "secondary_label":"Continue with EASA"},"store_url":"https://play.google.com/store/apps/details?id=com.example"}
+                """.trimIndent().replace("\n", ""),
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+            )
+        }
+
+        val result = postsApi { getFeaturePreview("tok", "post-1") }
+
+        val data = result.getOrThrow().data
+        assertEquals("available", data.state)
+        assertEquals("https://play.google.com/store/apps/details?id=com.example", data.storeUrl)
+    }
+
+    @Test
+    fun getFeaturePreviewFailsOn404() = runBlocking {
+        val postsApi = createTestPostsApi { _ ->
+            respond(content = "", status = HttpStatusCode.NotFound)
+        }
+
+        val result = postsApi { getFeaturePreview("tok", "missing-post") }
+
+        assertTrue(result.isFailure, "Expected failure but got $result")
+        val exception = result.exceptionOrNull()
+        assertTrue(exception is WandKitHttpException, "Expected WandKitHttpException but got $exception")
+        assertEquals(404, exception.statusCode)
+    }
+
+    @Test
+    fun votePostSendsBearerTokenToVoteEndpointAndDecodesBody() = runBlocking {
+        var capturedAuth: String? = null
+        var capturedUrl: String? = null
+        var capturedMethod: HttpMethod? = null
+        val postsApi = createTestPostsApi { request ->
+            capturedAuth = request.headers[HttpHeaders.Authorization]
+            capturedUrl = request.url.toString()
+            capturedMethod = request.method
+            respond(
+                content = """{"vote_count":4,"viewer_voted":true}""",
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+            )
+        }
+
+        val result = postsApi { votePost("tok", "post-1") }
+
+        assertEquals("Bearer tok", capturedAuth)
+        assertEquals("https://example.test/api/v1/sdk/posts/post-1/vote", capturedUrl)
+        assertEquals(HttpMethod.Put, capturedMethod)
+        val data = result.getOrThrow().data
+        assertEquals(4, data.voteCount)
+        assertTrue(data.viewerVoted)
     }
 
     private fun testSessionRequest(displayName: String? = null) = SdkPostsSessionRequestDto(

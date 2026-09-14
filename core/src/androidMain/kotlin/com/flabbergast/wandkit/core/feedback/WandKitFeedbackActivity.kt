@@ -97,6 +97,7 @@ public class WandKitFeedbackActivity : ComponentActivity() {
     private var state: State = State.LOADING
     private var isDark: Boolean = false
     private var currentScreen: WandKitFeedbackScreen = WandKitFeedbackScreen.Feed
+    private var currentQuery: String? = null
     private var currentSafeAreaInsets: FeedbackBootstrap.Insets = FeedbackBootstrap.Insets.Zero
 
     // MARK: - Lifecycle
@@ -135,14 +136,14 @@ public class WandKitFeedbackActivity : ComponentActivity() {
         configureWebView()
         registerBackHandling()
 
-        currentScreen = resolveScreen(intent)
+        applyLaunch(resolveLaunch(intent))
         reload()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        currentScreen = resolveScreen(intent)
+        applyLaunch(resolveLaunch(intent))
         reload()
     }
 
@@ -199,8 +200,13 @@ public class WandKitFeedbackActivity : ComponentActivity() {
             }
         }
 
-    private fun resolveScreen(intent: Intent): WandKitFeedbackScreen =
-        FeedbackLaunchStore.take(intent.getStringExtra(EXTRA_LAUNCH_ID)) ?: WandKitFeedbackScreen.Feed
+    private fun resolveLaunch(intent: Intent): FeedbackLaunchStore.Entry =
+        FeedbackLaunchStore.take(intent.getStringExtra(EXTRA_LAUNCH_ID)) ?: FeedbackLaunchStore.Entry(WandKitFeedbackScreen.Feed)
+
+    private fun applyLaunch(entry: FeedbackLaunchStore.Entry) {
+        currentScreen = entry.screen
+        currentQuery = entry.query
+    }
 
     private fun buildContentView(): FrameLayout {
         val root = FrameLayout(this)
@@ -413,11 +419,12 @@ public class WandKitFeedbackActivity : ComponentActivity() {
     /** The URL the webview starts on: the composer and a post detail deep-link straight to their route so the feed never flashes first. */
     private fun initialUrl(screen: WandKitFeedbackScreen): String {
         val base = container.config.feedbackWebUrl.trimEnd('/')
-        return when (screen) {
+        val path = when (screen) {
             is WandKitFeedbackScreen.Feed -> base
             is WandKitFeedbackScreen.Composer -> "$base/posts/new"
             is WandKitFeedbackScreen.Post -> "$base/posts/${screen.publicId}"
         }
+        return currentQuery?.let { "$path?$it" } ?: path
     }
 
     /** The `allowedOriginRules` entry for [WebViewCompat.addDocumentStartJavaScript]: the bootstrap carries a bearer token, so this must not be `"*"`. */

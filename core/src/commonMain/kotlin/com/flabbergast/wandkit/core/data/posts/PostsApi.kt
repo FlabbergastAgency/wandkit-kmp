@@ -7,12 +7,16 @@ import com.flabbergast.wandkit.core.data.posts.dto.SdkCreateAttachmentRequestDto
 import com.flabbergast.wandkit.core.data.posts.dto.SdkCreateAttachmentResponseDto
 import com.flabbergast.wandkit.core.data.posts.dto.SdkCreatePostRequestDto
 import com.flabbergast.wandkit.core.data.posts.dto.SdkCreatedPostDto
+import com.flabbergast.wandkit.core.data.posts.dto.SdkFeaturePreviewDto
+import com.flabbergast.wandkit.core.data.posts.dto.SdkPostVoteResponseDto
 import com.flabbergast.wandkit.core.data.posts.dto.SdkPostsSessionRequestDto
 import com.flabbergast.wandkit.core.data.posts.dto.SdkPostsSessionResponseDto
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.get
 import io.ktor.client.request.headers
+import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -33,6 +37,28 @@ internal interface PostsApi {
         token: String,
         request: SdkCreatePostRequestDto,
     ): WandKitHttpResponse<SdkCreatedPostDto>
+
+    /**
+     * The feature-preview sheet's state for [postId]: dashboard-managed copy
+     * and whether the post is still `coming_soon` or already `available`.
+     * 404 when no preview is configured, it's disabled, or the post isn't
+     * published.
+     */
+    suspend fun getFeaturePreview(
+        token: String,
+        postId: String,
+        platform: String = "android",
+    ): WandKitHttpResponse<SdkFeaturePreviewDto>
+
+    /**
+     * Upvotes a post. Idempotent server-side, and also follows it silently -
+     * this is how the feature-preview "let me know" action doubles as a
+     * follow.
+     */
+    suspend fun votePost(
+        token: String,
+        postId: String,
+    ): WandKitHttpResponse<SdkPostVoteResponseDto>
 
     /**
      * PUTs the raw bytes to a mint response's `upload_url`. Not deserialized -
@@ -98,6 +124,28 @@ private class PostsApiImpl(
         val response = client.post("$baseUrl/api/v1/sdk/posts") {
             bearerAuth(token)
             setBody(request)
+        }
+        return WandKitHttpResponse(response)
+    }
+
+    override suspend fun getFeaturePreview(
+        token: String,
+        postId: String,
+        platform: String,
+    ): WandKitHttpResponse<SdkFeaturePreviewDto> {
+        val response = client.get("$baseUrl/api/v1/sdk/posts/$postId/feature-preview") {
+            bearerAuth(token)
+            parameter("platform", platform)
+        }
+        return WandKitHttpResponse(response)
+    }
+
+    override suspend fun votePost(
+        token: String,
+        postId: String,
+    ): WandKitHttpResponse<SdkPostVoteResponseDto> {
+        val response = client.put("$baseUrl/api/v1/sdk/posts/$postId/vote") {
+            bearerAuth(token)
         }
         return WandKitHttpResponse(response)
     }

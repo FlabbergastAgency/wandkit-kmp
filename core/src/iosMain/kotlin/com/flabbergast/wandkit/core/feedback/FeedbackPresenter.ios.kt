@@ -7,6 +7,7 @@ private const val LOGGER_TAG = "[FeedbackPresenter]"
 internal actual fun presentFeedbackScreen(
     container: WandKitSdkContainer,
     screen: WandKitFeedbackScreen,
+    query: String?,
 ) {
     container.logger.warn(
         LOGGER_TAG,
