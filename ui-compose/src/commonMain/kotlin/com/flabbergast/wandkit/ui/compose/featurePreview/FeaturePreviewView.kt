@@ -143,7 +143,7 @@ private fun ComingSoonButtons(
     WandKitButton(
         text = content.primaryLabel,
         onClick = onPrimary,
-        colors = WandKitButtonColors(textColor = WandKitColors.label, backgroundColor = WandKitColors.systemBackground),
+        colors = WandKitButtonColors.Primary,
         modifier = Modifier.fillMaxWidth().height(56.dp),
         enabled = content.isPrimaryEnabled,
         isLoading = content.isVoting,
@@ -179,7 +179,7 @@ private fun AvailableButtons(
         WandKitButton(
             text = content.primaryLabel,
             onClick = onPrimary,
-            colors = WandKitButtonColors(textColor = WandKitColors.label, backgroundColor = WandKitColors.systemBackground),
+            colors = WandKitButtonColors.Primary,
             modifier = Modifier.fillMaxWidth().height(56.dp),
         )
 
@@ -202,7 +202,7 @@ private fun GenericButtons(
     WandKitButton(
         text = content.primaryLabel,
         onClick = onPrimary,
-        colors = WandKitButtonColors(textColor = WandKitColors.label, backgroundColor = WandKitColors.systemBackground),
+        colors = WandKitButtonColors.Primary,
         modifier = Modifier.fillMaxWidth().height(56.dp),
     )
 }
