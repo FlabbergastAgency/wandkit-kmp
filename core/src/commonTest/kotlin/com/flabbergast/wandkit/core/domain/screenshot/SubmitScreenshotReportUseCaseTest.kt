@@ -6,6 +6,8 @@ import com.flabbergast.wandkit.core.domain.posts.PostsSessionRepository
 import com.flabbergast.wandkit.core.feedback.WandKitComposerAttachment
 import com.flabbergast.wandkit.core.feedback.WandKitDebugAttachment
 import com.flabbergast.wandkit.core.feedback.WandKitDebugAttachmentsProvider
+import com.flabbergast.wandkit.core.replay.InMemoryRecordingSource
+import com.flabbergast.wandkit.core.replay.ReplayRecording
 import com.flabbergast.wandkit.core.testutil.NoOpLogger
 import com.flabbergast.wandkit.core.testutil.createTestPostsApi
 import io.ktor.client.engine.mock.MockEngine
@@ -47,7 +49,7 @@ class SubmitScreenshotReportUseCaseTest {
             logger = NoOpLogger,
         )
 
-        val result = useCase("It crashes", screenshotAttachment())
+        val result = useCase("It crashes", screenshotAttachment(), null)
 
         assertTrue(result.isSuccess, "Expected success but got $result")
         assertEquals("post-1", result.getOrNull())
@@ -86,7 +88,7 @@ class SubmitScreenshotReportUseCaseTest {
             logger = NoOpLogger,
         )
 
-        val result = useCase("It crashes", screenshotAttachment())
+        val result = useCase("It crashes", screenshotAttachment(), null)
 
         assertTrue(result.isSuccess, "Expected success but got $result")
         val createPost = engine.requestHistory.last { it.url.encodedPath == "/api/v1/sdk/posts" }
@@ -106,7 +108,7 @@ class SubmitScreenshotReportUseCaseTest {
             logger = NoOpLogger,
         )
 
-        val result = useCase("It crashes", screenshotAttachment())
+        val result = useCase("It crashes", screenshotAttachment(), null)
 
         assertTrue(result.isSuccess, "Expected success but got $result")
         val createPost = engine.requestHistory.last { it.url.encodedPath == "/api/v1/sdk/posts" }
@@ -129,7 +131,7 @@ class SubmitScreenshotReportUseCaseTest {
             logger = NoOpLogger,
         )
 
-        val result = useCase("It crashes", screenshotAttachment())
+        val result = useCase("It crashes", screenshotAttachment(), null)
 
         assertTrue(result.isSuccess, "Expected success but got $result")
         val createPost = engine.requestHistory.last { it.url.encodedPath == "/api/v1/sdk/posts" }
@@ -151,7 +153,7 @@ class SubmitScreenshotReportUseCaseTest {
             logger = NoOpLogger,
         )
 
-        val result = useCase("It crashes", screenshotAttachment())
+        val result = useCase("It crashes", screenshotAttachment(), null)
 
         assertTrue(result.isSuccess, "Expected success but got $result")
         val debugMints = engine.requestHistory.count {
@@ -180,7 +182,7 @@ class SubmitScreenshotReportUseCaseTest {
             logger = NoOpLogger,
         )
 
-        val result = useCase("It crashes", screenshotAttachment())
+        val result = useCase("It crashes", screenshotAttachment(), null)
 
         assertTrue(result.isSuccess, "Expected success but got $result")
         val debugMints = engine.requestHistory.count {
@@ -201,7 +203,7 @@ class SubmitScreenshotReportUseCaseTest {
             logger = NoOpLogger,
         )
 
-        val result = useCase("It crashes", screenshotAttachment())
+        val result = useCase("It crashes", screenshotAttachment(), null)
 
         assertTrue(result.isFailure, "Expected failure but got $result")
         assertTrue(engine.requestHistory.isEmpty(), "Did not expect any attachment requests")
@@ -217,7 +219,82 @@ class SubmitScreenshotReportUseCaseTest {
             logger = NoOpLogger,
         )
 
-        val result = useCase("It crashes", screenshotAttachment())
+        val result = useCase("It crashes", screenshotAttachment(), null)
+
+        assertTrue(result.isSuccess, "Expected success but got $result")
+        assertEquals(3, engine.requestHistory.size)
+    }
+
+    private fun replayRecording(bytes: ByteArray? = """{"v":1}\n""".encodeToByteArray()) = ReplayRecording(
+        source = InMemoryRecordingSource(bytes),
+        startEpochMillis = 0,
+        durationMillis = 1_000,
+        frameCount = 1,
+        eventCount = 1,
+    )
+
+    @Test
+    fun replayIsUploadedLastAsKindReplayAndAttachedToThePost() = runTest {
+        val engine = createRoutedEngine()
+        val useCase = createSubmitScreenshotReportUseCase(
+            postsApi = createTestPostsApi(engine),
+            postsSessionRepository = session(),
+            debugAttachmentsProvider = {
+                WandKitDebugAttachmentsProvider { listOf(WandKitDebugAttachment.text("log line", "app.log")) }
+            },
+            logger = NoOpLogger,
+        )
+
+        val result = useCase("It crashes", screenshotAttachment(), replayRecording())
+
+        assertTrue(result.isSuccess, "Expected success but got $result")
+        val requests = engine.requestHistory
+        assertEquals(7, requests.size, "Expected 7 requests but got ${requests.map { it.url.encodedPath }}")
+
+        val mintReplay = requests[4]
+        val putReplay = requests[5]
+        val createPost = requests[6]
+
+        val replayMintBody = mintReplay.bodyText()
+        assertTrue(replayMintBody.contains(""""kind":"replay""""), "Expected kind in $replayMintBody")
+        assertTrue(replayMintBody.contains(""""file_name":"replay.ndjson""""), "Expected file_name in $replayMintBody")
+        assertTrue(replayMintBody.contains("application/x-ndjson"), "Expected content type in $replayMintBody")
+
+        assertEquals(HttpMethod.Put, putReplay.method)
+        assertEquals(ContentType.parse("application/x-ndjson"), putReplay.body.contentType?.withoutParameters())
+
+        val postBody = createPost.bodyText()
+        assertTrue(postBody.contains(""""attachment_ids":["att-1","att-2","att-3"]"""), "Expected all ids in order in $postBody")
+    }
+
+    @Test
+    fun replayMintFailureStillCreatesThePostWithoutIt() = runTest {
+        val engine = createRoutedEngine(replayMintStatus = HttpStatusCode.PayloadTooLarge)
+        val useCase = createSubmitScreenshotReportUseCase(
+            postsApi = createTestPostsApi(engine),
+            postsSessionRepository = session(),
+            debugAttachmentsProvider = { null },
+            logger = NoOpLogger,
+        )
+
+        val result = useCase("It crashes", screenshotAttachment(), replayRecording())
+
+        assertTrue(result.isSuccess, "Expected success but got $result")
+        val postBody = engine.requestHistory.last().bodyText()
+        assertTrue(postBody.contains(""""attachment_ids":["att-1"]"""), "Expected only the screenshot id in $postBody")
+    }
+
+    @Test
+    fun unreadableReplayIsSkippedWithoutAnyReplayRequests() = runTest {
+        val engine = createRoutedEngine()
+        val useCase = createSubmitScreenshotReportUseCase(
+            postsApi = createTestPostsApi(engine),
+            postsSessionRepository = session(),
+            debugAttachmentsProvider = { null },
+            logger = NoOpLogger,
+        )
+
+        val result = useCase("It crashes", screenshotAttachment(), replayRecording(bytes = null))
 
         assertTrue(result.isSuccess, "Expected success but got $result")
         assertEquals(3, engine.requestHistory.size)
@@ -233,15 +310,22 @@ private fun HttpRequestData.bodyText(): String = (body as OutgoingContent.ByteAr
  * (identified by `"kind":"debug"` in the body) to fail without touching the
  * screenshot mint.
  */
-private fun createRoutedEngine(debugMintStatus: HttpStatusCode = HttpStatusCode.Created): MockEngine {
+private fun createRoutedEngine(
+    debugMintStatus: HttpStatusCode = HttpStatusCode.Created,
+    replayMintStatus: HttpStatusCode = HttpStatusCode.Created,
+): MockEngine {
     var mintCount = 0
     return MockEngine { request ->
         when {
             request.method == HttpMethod.Post && request.url.encodedPath == "/api/v1/sdk/posts/attachments" -> {
                 mintCount += 1
-                val isDebug = request.bodyText().contains(""""kind":"debug"""")
+                val body = request.bodyText()
+                val isDebug = body.contains(""""kind":"debug"""")
+                val isReplay = body.contains(""""kind":"replay"""")
                 if (isDebug && debugMintStatus != HttpStatusCode.Created) {
                     respondEmpty(debugMintStatus)
+                } else if (isReplay && replayMintStatus != HttpStatusCode.Created) {
+                    respondEmpty(replayMintStatus)
                 } else {
                     respond(
                         content = """{"id":"att-$mintCount","upload_url":"https://storage.test/att-$mintCount"}""",

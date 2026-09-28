@@ -25,6 +25,10 @@ import com.flabbergast.wandkit.core.data.referrals.createReferralsRepository
 import com.flabbergast.wandkit.core.platform.PlatformContext
 import com.flabbergast.wandkit.core.platform.createInstallReferralCodeProvider
 import com.flabbergast.wandkit.core.platform.createKeyValueStore
+import com.flabbergast.wandkit.core.platform.readDeviceContext
+import com.flabbergast.wandkit.core.data.posts.dto.SdkPostsSessionDeviceDto
+import com.flabbergast.wandkit.core.replay.SessionReplayRecorder
+import kotlin.concurrent.Volatile
 import com.flabbergast.wandkit.core.domain.events.EventsRepository
 import com.flabbergast.wandkit.core.domain.events.IdentifyInfo
 import com.flabbergast.wandkit.core.domain.events.TrackEventUseCase
@@ -100,6 +104,30 @@ internal class WandKitSdkContainer private constructor(
     }
 
     internal val deviceId = Uuid.generateV4().toString()
+
+    /**
+     * The platform's session replay recorder while it is running - set by the
+     * Android `configure` when [WandKitConfig.sessionReplay] and screenshot
+     * reporting are both on; always `null` on iOS.
+     */
+    @Volatile
+    internal var sessionReplayRecorder: SessionReplayRecorder? = null
+
+    /** The `device` object for a replay header - the same one the posts session is minted with. */
+    internal fun replayDevice(): SdkPostsSessionDeviceDto {
+        val deviceContext = readDeviceContext(platformContext)
+        return SdkPostsSessionDeviceDto(
+            platform = appConfiguration.platformName.lowercase(),
+            osVersion = deviceContext.osVersion,
+            appVersion = deviceContext.appVersion,
+            deviceModel = deviceContext.deviceModel,
+            locale = deviceContext.locale,
+        )
+    }
+
+    /** The replay header's `sdk`, e.g. `android-0.1.7` - the counterpart of iOS's `ios-<semver>`. */
+    internal val replaySdkName: String
+        get() = "${appConfiguration.platformName.lowercase()}-${appConfiguration.libraryVersion}"
 
     internal val keyValueStore by lazy { createKeyValueStore(platformContext) }
 

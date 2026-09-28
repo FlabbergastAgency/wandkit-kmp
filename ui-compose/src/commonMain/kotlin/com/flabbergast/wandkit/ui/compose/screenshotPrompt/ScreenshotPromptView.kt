@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,6 +26,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -110,6 +115,8 @@ internal fun ScreenshotPromptView(
                                 phase = phase,
                                 component = component,
                                 includesDebugAttachments = state.includesDebugAttachments,
+                                hasReplay = state.hasReplay,
+                                includeReplay = state.includeReplay,
                             )
 
                             is ScreenshotPromptComponent.ViewState.Phase.Sent -> ScreenshotSentContent()
@@ -183,6 +190,8 @@ private fun ScreenshotComposingContent(
     phase: ScreenshotPromptComponent.ViewState.Phase.Composing,
     component: ScreenshotPromptComponent,
     includesDebugAttachments: Boolean,
+    hasReplay: Boolean,
+    includeReplay: Boolean,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -208,6 +217,16 @@ private fun ScreenshotComposingContent(
             autoFocus = true,
         )
 
+        // One "what goes with this report" block: the replay switch, then
+        // the debug disclosure - same grouping as the iOS card.
+        if (hasReplay) {
+            ReplayToggleRow(
+                checked = includeReplay,
+                enabled = !phase.isSending,
+                onCheckedChange = component::onIncludeReplayChanged,
+            )
+        }
+
         if (includesDebugAttachments) {
             Text(
                 text = "Diagnostic logs will be included to help us fix this.",
@@ -226,6 +245,41 @@ private fun ScreenshotComposingContent(
                 textAlign = TextAlign.Center,
             )
         }
+    }
+}
+
+@Composable
+private fun ReplayToggleRow(
+    checked: Boolean,
+    enabled: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+            )
+            .padding(horizontal = 4.dp),
+    ) {
+        Text(
+            text = "Include a replay of the last minute",
+            style = WandKitTypography.bodySmall,
+            color = WandKitColors.label,
+            modifier = Modifier.weight(1f),
+        )
+        Switch(
+            checked = checked,
+            // The whole row is the toggle target; the switch is visual only.
+            onCheckedChange = null,
+            enabled = enabled,
+            colors = SwitchDefaults.colors(checkedTrackColor = WandKitColors.tintColor),
+        )
     }
 }
 
@@ -351,6 +405,44 @@ private fun ScreenshotPromptViewPreviewComposingWithDebugAttachments() {
 
 @Preview
 @Composable
+private fun ScreenshotPromptViewPreviewComposingWithReplayAndDebugAttachments() {
+    WandKitThemeProvider(theme = WandKitThemeDefaults.light()) {
+        ScreenshotPromptView(
+            PreviewScreenshotPromptComponent(
+                phase = ScreenshotPromptComponent.ViewState.Phase.Composing(
+                    text = "It crashes when I tap Save.",
+                    isSending = false,
+                    error = null,
+                ),
+                includesDebugAttachments = true,
+                hasReplay = true,
+            ),
+            contentAlignment = Alignment.Center,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ScreenshotPromptViewPreviewComposingWithReplayOff() {
+    WandKitThemeProvider(theme = WandKitThemeDefaults.dark()) {
+        ScreenshotPromptView(
+            PreviewScreenshotPromptComponent(
+                phase = ScreenshotPromptComponent.ViewState.Phase.Composing(
+                    text = "It crashes when I tap Save.",
+                    isSending = false,
+                    error = null,
+                ),
+                hasReplay = true,
+                includeReplay = false,
+            ),
+            contentAlignment = Alignment.Center,
+        )
+    }
+}
+
+@Preview
+@Composable
 private fun ScreenshotPromptViewPreviewComposingError() {
     WandKitThemeProvider(theme = WandKitThemeDefaults.light()) {
         ScreenshotPromptView(
@@ -380,6 +472,8 @@ private fun ScreenshotPromptViewPreviewSent() {
 private class PreviewScreenshotPromptComponent(
     phase: ScreenshotPromptComponent.ViewState.Phase = ScreenshotPromptComponent.ViewState.Phase.Prompt,
     includesDebugAttachments: Boolean = false,
+    hasReplay: Boolean = false,
+    includeReplay: Boolean = hasReplay,
 ) : ScreenshotPromptComponent {
     // Preview data only: decoding is wrapped in runCatching, so a non-image
     // payload just skips the thumbnail instead of crashing.
@@ -393,6 +487,8 @@ private class PreviewScreenshotPromptComponent(
                 ),
                 phase = phase,
                 includesDebugAttachments = includesDebugAttachments,
+                hasReplay = hasReplay,
+                includeReplay = includeReplay,
             )
 
             override val value: ScreenshotPromptComponent.ViewState get() = state

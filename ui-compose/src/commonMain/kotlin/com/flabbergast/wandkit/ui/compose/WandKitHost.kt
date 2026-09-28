@@ -9,6 +9,7 @@ import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.flabbergast.wandkit.core.components.root.WandKitComponent
 import com.flabbergast.wandkit.core.components.root.WandKitComponentFactory
+import com.flabbergast.wandkit.ui.compose.replay.InstallReplayMasking
 
 private const val WANDKIT_ROOT_COMPONENT_KEY = "WandKitRootComponent"
 
@@ -18,6 +19,7 @@ public fun WandKitHost(
     modifier: Modifier = Modifier,
     contentAlignment: Alignment = Alignment.Center,
 ) {
+    InstallReplayMasking()
     val componentContext = rememberWandKitComponentContext()
     val wandKitComponent = remember(componentContext) {
         componentContext.instanceKeeper.getOrCreate(WANDKIT_ROOT_COMPONENT_KEY) {

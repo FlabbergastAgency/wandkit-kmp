@@ -10,7 +10,9 @@ import androidx.annotation.RequiresApi
 import com.flabbergast.wandkit.core.di.WandKitSdkContainer
 import com.flabbergast.wandkit.core.domain.screenshot.ScreenshotGate
 import com.flabbergast.wandkit.core.domain.screenshot.ScreenshotPrompt
+import com.flabbergast.wandkit.core.feedback.WandKitComposerAttachment
 import com.flabbergast.wandkit.core.feedback.WandKitFeedbackActivity
+import com.flabbergast.wandkit.core.replay.ReplaySnapshot
 import kotlin.math.max
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -139,14 +141,44 @@ internal object ScreenshotDetector {
         }
 
         lastPromptAt = capturedAt
+
+        // Freeze the replay *before* the card can appear: the card must never
+        // show up in its own recording, and composing (which can take a
+        // while) must not roll the incident's lead-up out of the window.
+        // Cheap on the main thread; the encode happens below.
+        val replaySnapshot = runCatching { container.sessionReplayRecorder?.freeze() }.getOrNull()
+
         container.fireAndForgetTask {
             val attachment = ScreenshotEncoder.jpegAttachment(bitmap, "screenshot.jpg")
             bitmap.recycle()
             if (attachment == null) {
+                replaySnapshot?.discard()
                 container.logger.debug(TAG, "Screenshot encoding failed or exceeded the size cap")
             } else {
-                container.screenshotPromptController.publish(ScreenshotPrompt(attachment))
+                publishPrompt(container, attachment, replaySnapshot)
             }
+        }
+    }
+
+    /** Background thread: encodes the frozen replay (if any) and publishes the card. */
+    private fun publishPrompt(
+        container: WandKitSdkContainer,
+        attachment: WandKitComposerAttachment,
+        replaySnapshot: ReplaySnapshot?,
+    ) {
+        val replay = replaySnapshot?.encode()
+        container.logger.debug(
+            TAG,
+            replay?.let { "Replay frozen: $it" } ?: "No replay for this report: recorder off or no frame in the buffer",
+        )
+
+        val prompt = ScreenshotPrompt(
+            attachment = attachment,
+            replay = replay,
+            includeReplay = replay != null && (container.config.sessionReplay?.includeByDefault ?: true),
+        )
+        if (!container.screenshotPromptController.publish(prompt)) {
+            replay?.discard()
         }
     }
 

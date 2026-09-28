@@ -3,6 +3,7 @@ package com.flabbergast.wandkit.core.screenshot
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
+import com.flabbergast.wandkit.core.replay.AndroidSessionReplayRecorder
 import java.lang.ref.WeakReference
 
 /**
@@ -19,6 +20,7 @@ internal object CurrentActivityTracker : Application.ActivityLifecycleCallbacks 
     private var installed = false
     private var currentActivityRef: WeakReference<Activity>? = null
     private var resumedCount = 0
+    private var startedCount = 0
 
     internal val currentActivity: Activity?
         get() = currentActivityRef?.get()
@@ -38,6 +40,7 @@ internal object CurrentActivityTracker : Application.ActivityLifecycleCallbacks 
         currentActivityRef = WeakReference(activity)
         resumedCount++
         ScreenshotDetector.onActivityResumed(activity)
+        AndroidSessionReplayRecorder.onActivityResumed(activity)
     }
 
     override fun onActivityPaused(activity: Activity) {
@@ -46,6 +49,7 @@ internal object CurrentActivityTracker : Application.ActivityLifecycleCallbacks 
             currentActivityRef = null
         }
         ScreenshotDetector.onActivityPaused(activity)
+        AndroidSessionReplayRecorder.onActivityPaused()
     }
 
     override fun onActivityDestroyed(activity: Activity) {
@@ -53,7 +57,17 @@ internal object CurrentActivityTracker : Application.ActivityLifecycleCallbacks 
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
-    override fun onActivityStarted(activity: Activity) = Unit
-    override fun onActivityStopped(activity: Activity) = Unit
+    override fun onActivityStarted(activity: Activity) {
+        startedCount++
+    }
+
+    override fun onActivityStopped(activity: Activity) {
+        startedCount = maxOf(0, startedCount - 1)
+        // A rotation stops the old Activity before starting the new one; that
+        // dip to zero is not the app going to the background.
+        if (startedCount == 0 && !activity.isChangingConfigurations) {
+            AndroidSessionReplayRecorder.onAppBackgrounded()
+        }
+    }
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
 }

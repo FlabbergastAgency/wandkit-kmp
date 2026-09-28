@@ -10,6 +10,7 @@ import com.flabbergast.wandkit.core.feedback.WandKitComposerAttachment
 import com.flabbergast.wandkit.core.feedback.WandKitDebugAttachment
 import com.flabbergast.wandkit.core.feedback.WandKitDebugAttachmentsProvider
 import com.flabbergast.wandkit.core.feedback.WandKitPostType
+import com.flabbergast.wandkit.core.replay.ReplayRecording
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -17,9 +18,18 @@ import kotlinx.coroutines.withTimeoutOrNull
  * Uploads a screenshot and creates the report post directly against the API,
  * bypassing the webview composer entirely. Mints a fresh, short-lived posts
  * session per send (tokens are in-memory by design).
+ *
+ * The screenshot must upload or the report fails. Debug files and the
+ * session replay, if any, are best-effort: a failure to mint or upload one is
+ * logged and the report goes out without it. The replay goes last, as kind
+ * `replay` with `application/x-ndjson` - same order as the iOS SDK.
  */
 internal fun interface SubmitScreenshotReportUseCase {
-    suspend operator fun invoke(text: String, attachment: WandKitComposerAttachment): Result<String>
+    suspend operator fun invoke(
+        text: String,
+        attachment: WandKitComposerAttachment,
+        replay: ReplayRecording?,
+    ): Result<String>
 }
 
 internal fun createSubmitScreenshotReportUseCase(
@@ -58,7 +68,11 @@ private class DefaultSubmitScreenshotReportUseCase(
     private val debugAttachmentsProvider: () -> WandKitDebugAttachmentsProvider?,
     private val logger: Logger,
 ) : SubmitScreenshotReportUseCase {
-    override suspend fun invoke(text: String, attachment: WandKitComposerAttachment): Result<String> = runCatching {
+    override suspend fun invoke(
+        text: String,
+        attachment: WandKitComposerAttachment,
+        replay: ReplayRecording?,
+    ): Result<String> = runCatching {
         val session = postsSessionRepository.mintSession().getOrThrow()
         if (session.readOnly) throw ReadOnlyPostsSessionException()
 
@@ -84,13 +98,15 @@ private class DefaultSubmitScreenshotReportUseCase(
             }.getOrNull()
         }
 
+        val replayId = replay?.let { recording -> uploadReplay(session.token, recording) }
+
         val post = postsApi {
             createPost(
                 session.token,
                 SdkCreatePostRequestDto(
                     text = text,
                     type = WandKitPostType.BUG.wireValue,
-                    attachmentIds = listOf(screenshotId) + debugIds,
+                    attachmentIds = listOf(screenshotId) + debugIds + listOfNotNull(replayId),
                 ),
             )
         }.getOrThrow().data
@@ -100,7 +116,31 @@ private class DefaultSubmitScreenshotReportUseCase(
         logger.warn(LOGGER_TAG, "Screenshot report submission failed.", it)
     }
 
-    /** Mints an upload slot for one attachment and PUTs its bytes. Shared by the screenshot and debug-file paths. */
+    /**
+     * Reads the recording (from disk, when it was persisted) and uploads it.
+     * Never throws: returns `null` and logs when the file is gone or the
+     * mint/upload fails.
+     */
+    private suspend fun uploadReplay(token: String, recording: ReplayRecording): String? {
+        val data = recording.readBytes()
+        if (data == null) {
+            logger.warn(LOGGER_TAG, "Replay attachment skipped: the recording could not be read back.")
+            return null
+        }
+        return mintAndUpload(
+            token = token,
+            kind = ReplayRecording.ATTACHMENT_KIND,
+            contentType = ReplayRecording.CONTENT_TYPE,
+            data = data,
+            fileName = ReplayRecording.FILE_NAME,
+        ).onSuccess {
+            logger.debug(LOGGER_TAG, "Replay attachment uploaded: $recording")
+        }.onFailure {
+            logger.warn(LOGGER_TAG, "Replay attachment skipped.", it)
+        }.getOrNull()
+    }
+
+    /** Mints an upload slot for one attachment and PUTs its bytes. Shared by the screenshot, debug-file and replay paths. */
     private suspend fun mintAndUpload(
         token: String,
         kind: String,

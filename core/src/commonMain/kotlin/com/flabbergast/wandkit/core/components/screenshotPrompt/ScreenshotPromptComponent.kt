@@ -12,6 +12,9 @@ public interface ScreenshotPromptComponent {
 
     public fun onTextChanged(text: String)
 
+    /** The "Include a replay of the last minute" switch. */
+    public fun onIncludeReplayChanged(include: Boolean): Unit = Unit
+
     /** Uploads the screenshot and creates the report post. */
     public fun onSend()
 
@@ -27,6 +30,13 @@ public interface ScreenshotPromptComponent {
         val phase: Phase,
         /** True when a [com.flabbergast.wandkit.core.feedback.WandKitDebugAttachmentsProvider] is configured. */
         val includesDebugAttachments: Boolean = false,
+        /**
+         * True when a session replay was frozen for this report - show the
+         * "Include a replay of the last minute" switch.
+         */
+        val hasReplay: Boolean = false,
+        /** The switch's state; only meaningful when [hasReplay]. */
+        val includeReplay: Boolean = false,
     ) {
         public sealed interface Phase {
             public data object Prompt : Phase

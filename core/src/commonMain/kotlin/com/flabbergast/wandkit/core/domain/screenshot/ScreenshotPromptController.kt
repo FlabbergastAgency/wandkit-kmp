@@ -3,6 +3,7 @@ package com.flabbergast.wandkit.core.domain.screenshot
 import com.flabbergast.wandkit.core.domain.infrastructure.concurrency.FireAndForgetTask
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import com.flabbergast.wandkit.core.feedback.WandKitComposerAttachment
+import com.flabbergast.wandkit.core.replay.ReplayRecording
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +14,14 @@ import kotlinx.coroutines.flow.update
 internal data class ScreenshotPrompt(
     val attachment: WandKitComposerAttachment,
     val phase: Phase = Phase.Prompt,
+    /**
+     * The session replay frozen right before the card appeared, if the
+     * recorder was on and had a frame. Owned by this prompt: the controller
+     * discards it when the card goes away, sent or not.
+     */
+    val replay: ReplayRecording? = null,
+    /** The "Include a replay of the last minute" switch. Meaningless without [replay]. */
+    val includeReplay: Boolean = replay != null,
 ) {
     internal sealed interface Phase {
         /** The "Report a problem?" card. */
@@ -41,8 +50,13 @@ internal data class ScreenshotPrompt(
 internal interface ScreenshotPromptController {
     val prompt: StateFlow<ScreenshotPrompt?>
 
-    /** Ignored while a prompt is already up. */
-    fun publish(prompt: ScreenshotPrompt)
+    /**
+     * Ignored while a prompt is already up - in which case the caller still
+     * owns [ScreenshotPrompt.replay] and must discard it.
+     *
+     * @return whether [prompt] was published.
+     */
+    fun publish(prompt: ScreenshotPrompt): Boolean
 
     fun dismiss()
 
@@ -50,6 +64,9 @@ internal interface ScreenshotPromptController {
     fun report()
 
     fun updateText(text: String)
+
+    /** The "Include a replay of the last minute" switch; ignored when the prompt has no replay. */
+    fun setIncludeReplay(include: Boolean)
 
     /** Uploads the screenshot and creates the report post; auto-dismisses a moment after success. */
     fun send()
@@ -77,16 +94,25 @@ private class ScreenshotPromptControllerImpl(
     private val _prompt = MutableStateFlow<ScreenshotPrompt?>(null)
     override val prompt: StateFlow<ScreenshotPrompt?> = _prompt
 
-    override fun publish(prompt: ScreenshotPrompt) {
+    override fun publish(prompt: ScreenshotPrompt): Boolean {
+        var published = false
         _prompt.update { current ->
-            current ?: prompt.also {
-                logger.debug(LOGGER_TAG, "Published screenshot prompt (${it.attachment.data.size} bytes)")
-            }
+            published = current == null
+            current ?: prompt
         }
+        if (published) {
+            logger.debug(
+                LOGGER_TAG,
+                "Published screenshot prompt (${prompt.attachment.data.size} bytes, replay=${prompt.replay})",
+            )
+        }
+        return published
     }
 
     override fun dismiss() {
-        if (_prompt.getAndUpdate { null } != null) {
+        val dismissed = _prompt.getAndUpdate { null }
+        if (dismissed != null) {
+            dismissed.replay?.discard()
             logger.debug(LOGGER_TAG, "Dismissed screenshot prompt")
         }
     }
@@ -110,6 +136,15 @@ private class ScreenshotPromptControllerImpl(
         }
     }
 
+    override fun setIncludeReplay(include: Boolean) {
+        _prompt.update { current ->
+            if (current?.replay == null) return@update current
+            val phase = current.phase
+            if (phase is ScreenshotPrompt.Phase.Composing && phase.isSending) return@update current
+            current.copy(includeReplay = include)
+        }
+    }
+
     override fun send() {
         val current = _prompt.value ?: return
         val composing = current.phase as? ScreenshotPrompt.Phase.Composing ?: return
@@ -121,11 +156,17 @@ private class ScreenshotPromptControllerImpl(
             updated.copy(phase = phase.copy(isSending = true, error = null))
         }
 
+        // Read the switch from the latest state, not `current`: it can have
+        // been flipped since the Composing phase began.
+        val replayToSend = _prompt.value?.takeIf { it.includeReplay }?.replay
+
         fireAndForgetTask {
-            submitReport(text, current.attachment)
+            submitReport(text, current.attachment, replayToSend)
                 .onSuccess { postId ->
                     logger.debug(LOGGER_TAG, "Screenshot report sent (postId=$postId)")
                     _prompt.update { updated -> updated?.copy(phase = ScreenshotPrompt.Phase.Sent) }
+                    // Uploaded (or left out) - either way the local copy has served its purpose.
+                    current.replay?.discard()
                     delay(SENT_AUTO_DISMISS_MILLIS)
                     _prompt.update { updated -> if (updated?.phase == ScreenshotPrompt.Phase.Sent) null else updated }
                 }

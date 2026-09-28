@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
 import com.flabbergast.wandkit.core.WandKit
 import com.flabbergast.wandkit.core.config.WandKitConfig
+import com.flabbergast.wandkit.core.config.WandKitSessionReplayOptions
 import com.flabbergast.wandkit.core.configure
 import com.flabbergast.wandkit.core.feedback.WandKitDebugAttachment
 import com.flabbergast.wandkit.core.feedback.WandKitDebugAttachmentsProvider
@@ -39,6 +40,11 @@ class MainActivity : ComponentActivity() {
                         ),
                     )
                 },
+                // Records the last minute of frames, touches and
+                // WandKit.event calls, attached to a screenshot report when
+                // the user leaves the replay switch on. Frames go to the
+                // app's cache directory rather than the heap.
+                sessionReplay = WandKitSessionReplayOptions(),
             ),
             context = applicationContext,
         )

@@ -30,6 +30,8 @@ internal class DefaultScreenshotPromptComponent(
 
     override fun onTextChanged(text: String) = controller.updateText(text)
 
+    override fun onIncludeReplayChanged(include: Boolean) = controller.setIncludeReplay(include)
+
     override fun onSend() = controller.send()
 
     override fun onDismiss() = controller.dismiss()
@@ -48,4 +50,6 @@ private fun ScreenshotPrompt?.toViewState(includesDebugAttachments: Boolean): Sc
             is ScreenshotPrompt.Phase.Sent -> ScreenshotPromptComponent.ViewState.Phase.Sent
         },
         includesDebugAttachments = includesDebugAttachments,
+        hasReplay = this?.replay != null,
+        includeReplay = this?.replay != null && this?.includeReplay == true,
     )

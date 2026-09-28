@@ -26,6 +26,7 @@ This README covers:
 - `feedbackTheme`: styling for the feedback web app (see [Theming](#theming))
 - `screenshotReporting`: turns a screenshot into a "Report a problem?" prompt (see [Screenshot reporting](#screenshot-reporting))
 - `debugAttachmentsProvider`: supplies extra files (logs, JSON dumps) uploaded alongside a screenshot report, for your team's eyes only (see [Debug attachments](#debug-attachments))
+- `sessionReplay`: records the last minute of frames, touches and events and attaches it to a screenshot report (see [Session replay](#session-replay))
 
 Example:
 
@@ -433,6 +434,44 @@ What it does not do:
       ),
   )
   ```
+
+### Session replay
+
+Opt in alongside screenshot reporting and a report can carry a short replay of what led up to the screenshot:
+
+```kotlin
+WandKit.configure(
+    config = WandKitConfig(
+        apiKey = "...",
+        isDebugLoggingEnabled = false,
+        screenshotReporting = true,
+        sessionReplay = WandKitSessionReplayOptions(),
+    ),
+    context = applicationContext,
+)
+```
+
+While the app is in the foreground the SDK keeps a ring buffer of roughly the last minute (`windowSeconds = 60`, capped at `maxBytes = 4 MB`): low-resolution JPEG frames of your window (720 px long edge, captured on touch and about once a second, identical frames skipped), touches, and every `WandKit.event(...)` call. When a screenshot brings up the report card, the buffer is frozen *before* the card appears, and the composer shows an "Include a replay of the last minute" switch (on by default; `includeByDefault = false` flips that). Send with it on and the recording is uploaded as a dashboard-only `replay` attachment, played back in the post detail. The file is `wandkit-replay` v1 NDJSON - the same format the iOS SDK writes.
+
+**Storage.** By default (`persistToDisk = true`) the frames - the only heavy part - are written to `cacheDir/wandkit-replay/` instead of being kept on the heap; memory only holds a few bytes of metadata per frame plus the touches and events. The frozen recording is streamed to a file there too and read back only at upload time. Files follow the buffer's lifetime: deleted when evicted, when the app goes to the background, after the report is sent or the card dismissed, and anything a previous process left behind is swept on the next launch. `persistToDisk = false` keeps everything in memory, like iOS.
+
+**Masking** is applied to the recorded frame, never to your UI:
+
+- Always: password fields.
+- `maskTextInputs` (default on): `EditText`s, and Compose text fields (read from the Compose semantics tree - requires `WandKitHost()` from `ui-compose`, which screenshot reporting needs anyway).
+- `maskWebViews`: `WebView`s. `maskAllText`: every `TextView` and Compose text.
+- Your own: `Modifier.wandKitReplayMasked()` (or a `testTag` containing `wandkit-mask`) in Compose; a View `tag` or `contentDescription` containing `wandkit-mask`.
+- The soft keyboard is a separate window the capture can't see, so a placeholder keyboard is painted where it is; what was typed is never recorded.
+
+The recorder pauses while the app isn't in the foreground and while WandKit's own UI is up (the report card, surveys, the feedback screen, the feature-preview sheet), and records the pause as a gap the player skips. `WandKit.sessionReplayStatus` exposes frame count, buffered bytes and pause state for a debug indicator.
+
+What it does not do:
+
+- **Run without screenshot reporting, or below Android 14.** A replay can only be sent with a screenshot report, so the recorder doesn't start otherwise.
+- **Survive the app going to the background, a crash, or a relaunch.**
+- **Upload anything unless the user sends a report with the switch on.**
+- **Keep the lead-up across reports.** Freezing hands the buffer to the report, so the next report's replay starts from the previous screenshot.
+- **Hook into your navigation or network.** Touches come from a pass-through `Window.Callback` wrapper, events only from your own `WandKit.event(...)` calls.
 
 ## How Forms Work
 

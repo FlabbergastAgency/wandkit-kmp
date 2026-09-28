@@ -2,6 +2,8 @@ package com.flabbergast.wandkit.core.domain.screenshot
 
 import com.flabbergast.wandkit.core.domain.infrastructure.concurrency.FireAndForgetTask
 import com.flabbergast.wandkit.core.feedback.WandKitComposerAttachment
+import com.flabbergast.wandkit.core.replay.ReplayRecording
+import com.flabbergast.wandkit.core.replay.ReplayRecordingSource
 import com.flabbergast.wandkit.core.testutil.NoOpLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -14,6 +16,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 /** Never actually runs the block - for tests that don't call [ScreenshotPromptController.send]. */
 private fun noopFireAndForgetTask(): FireAndForgetTask = object : FireAndForgetTask {
@@ -40,7 +44,7 @@ class ScreenshotPromptControllerTest {
     @Test
     fun publishSetsThePrompt() {
         val controller = createScreenshotPromptController(
-            submitReport = { _, _ -> Result.success("post-1") },
+            submitReport = { _, _, _ -> Result.success("post-1") },
             fireAndForgetTask = noopTask,
             logger = NoOpLogger,
         )
@@ -54,7 +58,7 @@ class ScreenshotPromptControllerTest {
     @Test
     fun secondPublishWhileOneIsUpIsIgnored() {
         val controller = createScreenshotPromptController(
-            submitReport = { _, _ -> Result.success("post-1") },
+            submitReport = { _, _, _ -> Result.success("post-1") },
             fireAndForgetTask = noopTask,
             logger = NoOpLogger,
         )
@@ -70,7 +74,7 @@ class ScreenshotPromptControllerTest {
     @Test
     fun dismissClearsThePrompt() {
         val controller = createScreenshotPromptController(
-            submitReport = { _, _ -> Result.success("post-1") },
+            submitReport = { _, _, _ -> Result.success("post-1") },
             fireAndForgetTask = noopTask,
             logger = NoOpLogger,
         )
@@ -84,7 +88,7 @@ class ScreenshotPromptControllerTest {
     @Test
     fun dismissDuringComposingClearsThePrompt() {
         val controller = createScreenshotPromptController(
-            submitReport = { _, _ -> Result.success("post-1") },
+            submitReport = { _, _, _ -> Result.success("post-1") },
             fireAndForgetTask = noopTask,
             logger = NoOpLogger,
         )
@@ -99,7 +103,7 @@ class ScreenshotPromptControllerTest {
     @Test
     fun reportMovesFromPromptToComposingWithEmptyText() {
         val controller = createScreenshotPromptController(
-            submitReport = { _, _ -> Result.success("post-1") },
+            submitReport = { _, _, _ -> Result.success("post-1") },
             fireAndForgetTask = noopTask,
             logger = NoOpLogger,
         )
@@ -117,7 +121,7 @@ class ScreenshotPromptControllerTest {
     @Test
     fun reportWithNothingUpDoesNothing() {
         val controller = createScreenshotPromptController(
-            submitReport = { _, _ -> Result.success("post-1") },
+            submitReport = { _, _, _ -> Result.success("post-1") },
             fireAndForgetTask = noopTask,
             logger = NoOpLogger,
         )
@@ -130,7 +134,7 @@ class ScreenshotPromptControllerTest {
     @Test
     fun updateTextUpdatesComposingTextAndClearsAnExistingError() {
         val controller = createScreenshotPromptController(
-            submitReport = { _, _ -> Result.success("post-1") },
+            submitReport = { _, _, _ -> Result.success("post-1") },
             fireAndForgetTask = noopTask,
             logger = NoOpLogger,
         )
@@ -149,7 +153,7 @@ class ScreenshotPromptControllerTest {
     fun sendWithBlankTextDoesNotCallTheUseCase() {
         var called = false
         val controller = createScreenshotPromptController(
-            submitReport = { _, _ -> called = true; Result.success("post-1") },
+            submitReport = { _, _, _ -> called = true; Result.success("post-1") },
             fireAndForgetTask = noopTask,
             logger = NoOpLogger,
         )
@@ -169,7 +173,7 @@ class ScreenshotPromptControllerTest {
     fun sendWithNothingUpDoesNothing() {
         var called = false
         val controller = createScreenshotPromptController(
-            submitReport = { _, _ -> called = true; Result.success("post-1") },
+            submitReport = { _, _, _ -> called = true; Result.success("post-1") },
             fireAndForgetTask = noopTask,
             logger = NoOpLogger,
         )
@@ -184,7 +188,7 @@ class ScreenshotPromptControllerTest {
     fun sendSucceedsThenAutoDismissesAfterShowingSent() = runTest {
         val fireAndForgetTask = launchingFireAndForgetTask()
         val controller = createScreenshotPromptController(
-            submitReport = { text, attachment ->
+            submitReport = { text, attachment, _ ->
                 assertEquals("It crashes when I tap Save", text)
                 assertEquals("screenshot.png", attachment.fileName)
                 Result.success("post-1")
@@ -211,7 +215,7 @@ class ScreenshotPromptControllerTest {
     fun sendShowsIsSendingWhileInFlight() = runTest {
         val fireAndForgetTask = launchingFireAndForgetTask()
         val controller = createScreenshotPromptController(
-            submitReport = { _, _ -> Result.success("post-1") },
+            submitReport = { _, _, _ -> Result.success("post-1") },
             fireAndForgetTask = fireAndForgetTask,
             logger = NoOpLogger,
         )
@@ -231,7 +235,7 @@ class ScreenshotPromptControllerTest {
         var attempt = 0
         val fireAndForgetTask = launchingFireAndForgetTask()
         val controller = createScreenshotPromptController(
-            submitReport = { _, _ ->
+            submitReport = { _, _, _ ->
                 attempt += 1
                 if (attempt == 1) Result.failure(Exception("network down")) else Result.success("post-1")
             },
@@ -261,4 +265,152 @@ class ScreenshotPromptControllerTest {
 
         assertNull(controller.prompt.value)
     }
+
+    // region Session replay
+
+    private fun replay(): Pair<ReplayRecording, TrackingRecordingSource> {
+        val source = TrackingRecordingSource()
+        return ReplayRecording(source, startEpochMillis = 0, durationMillis = 1000, frameCount = 2, eventCount = 3) to source
+    }
+
+    @Test
+    fun promptWithReplayIncludesItByDefault() {
+        val (recording, _) = replay()
+        assertTrue(ScreenshotPrompt(attachment(), replay = recording).includeReplay)
+        assertFalse(ScreenshotPrompt(attachment()).includeReplay)
+    }
+
+    @Test
+    fun secondPublishIsRejectedSoTheCallerCanDiscardItsReplay() {
+        val controller = createScreenshotPromptController(
+            submitReport = { _, _, _ -> Result.success("post-1") },
+            fireAndForgetTask = noopTask,
+            logger = NoOpLogger,
+        )
+        val (second, _) = replay()
+
+        assertTrue(controller.publish(ScreenshotPrompt(attachment("first"))))
+        assertFalse(controller.publish(ScreenshotPrompt(attachment("second"), replay = second)))
+    }
+
+    @Test
+    fun setIncludeReplayTogglesOnlyWhenThereIsAReplay() {
+        val controller = createScreenshotPromptController(
+            submitReport = { _, _, _ -> Result.success("post-1") },
+            fireAndForgetTask = noopTask,
+            logger = NoOpLogger,
+        )
+        controller.publish(ScreenshotPrompt(attachment()))
+        controller.setIncludeReplay(true)
+        assertFalse(controller.prompt.value!!.includeReplay)
+
+        controller.dismiss()
+        val (recording, _) = replay()
+        controller.publish(ScreenshotPrompt(attachment(), replay = recording))
+        controller.report()
+        controller.setIncludeReplay(false)
+        assertFalse(controller.prompt.value!!.includeReplay)
+        controller.setIncludeReplay(true)
+        assertTrue(controller.prompt.value!!.includeReplay)
+    }
+
+    @Test
+    fun sendPassesTheReplayWhenIncludedAndDiscardsItAfterSuccess() = runTest {
+        var sentReplay: ReplayRecording? = null
+        val controller = createScreenshotPromptController(
+            submitReport = { _, _, replay ->
+                sentReplay = replay
+                Result.success("post-1")
+            },
+            fireAndForgetTask = launchingFireAndForgetTask(),
+            logger = NoOpLogger,
+        )
+        val (recording, source) = replay()
+        controller.publish(ScreenshotPrompt(attachment(), replay = recording))
+        controller.report()
+        controller.updateText("It crashes")
+
+        controller.send()
+        runCurrent()
+
+        assertSame(recording, sentReplay)
+        assertTrue(source.discarded)
+    }
+
+    @Test
+    fun sendLeavesTheReplayOutWhenSwitchedOffButStillDiscardsIt() = runTest {
+        var submitted = false
+        var sentReplay: ReplayRecording? = null
+        val controller = createScreenshotPromptController(
+            submitReport = { _, _, replay ->
+                submitted = true
+                sentReplay = replay
+                Result.success("post-1")
+            },
+            fireAndForgetTask = launchingFireAndForgetTask(),
+            logger = NoOpLogger,
+        )
+        val (recording, source) = replay()
+        controller.publish(ScreenshotPrompt(attachment(), replay = recording))
+        controller.report()
+        controller.setIncludeReplay(false)
+        controller.updateText("It crashes")
+
+        controller.send()
+        runCurrent()
+
+        assertTrue(submitted)
+        assertNull(sentReplay)
+        assertTrue(source.discarded)
+    }
+
+    @Test
+    fun dismissDiscardsTheReplay() {
+        val controller = createScreenshotPromptController(
+            submitReport = { _, _, _ -> Result.success("post-1") },
+            fireAndForgetTask = noopTask,
+            logger = NoOpLogger,
+        )
+        val (recording, source) = replay()
+        controller.publish(ScreenshotPrompt(attachment(), replay = recording))
+
+        controller.dismiss()
+
+        assertTrue(source.discarded)
+    }
+
+    @Test
+    fun failedSendKeepsTheReplayForTheRetry() = runTest {
+        val controller = createScreenshotPromptController(
+            submitReport = { _, _, _ -> Result.failure(Exception("network down")) },
+            fireAndForgetTask = launchingFireAndForgetTask(),
+            logger = NoOpLogger,
+        )
+        val (recording, source) = replay()
+        controller.publish(ScreenshotPrompt(attachment(), replay = recording))
+        controller.report()
+        controller.updateText("It crashes")
+
+        controller.send()
+        runCurrent()
+
+        assertFalse(source.discarded)
+        assertSame(recording, controller.prompt.value?.replay)
+    }
+
+    // endregion
 }
+
+private class TrackingRecordingSource : ReplayRecordingSource {
+    var discarded = false
+        private set
+
+    override val sizeBytes: Long = 10
+
+    override fun readBytes(): ByteArray? = if (discarded) null else ByteArray(10)
+
+    override fun discard() {
+        discarded = true
+    }
+}
+

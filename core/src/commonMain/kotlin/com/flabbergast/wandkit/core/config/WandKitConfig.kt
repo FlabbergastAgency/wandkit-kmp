@@ -49,4 +49,14 @@ public data class WandKitConfig(
      * lambdas/instances are not `equal`.
      */
     val debugAttachmentsProvider: WandKitDebugAttachmentsProvider? = null,
+    /**
+     * Opt-in for the session replay recorder: a short recording of screenshot
+     * frames, touches and [com.flabbergast.wandkit.core.WandKit.event] calls
+     * from roughly the last minute, attached to a screenshot report when the
+     * user leaves "Include a replay of the last minute" on. Android 14+ and
+     * only together with [screenshotReporting]; see
+     * [WandKitSessionReplayOptions] for what is captured, masked and stored.
+     * `null` (the default) means the recorder never starts.
+     */
+    val sessionReplay: WandKitSessionReplayOptions? = null,
 )

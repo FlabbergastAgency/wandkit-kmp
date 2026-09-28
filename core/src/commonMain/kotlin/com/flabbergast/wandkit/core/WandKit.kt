@@ -12,6 +12,7 @@ import com.flabbergast.wandkit.core.featurepreview.WandKitFeaturePreviewResult
 import com.flabbergast.wandkit.core.featurepreview.presentFeaturePreviewFlow
 import com.flabbergast.wandkit.core.feedback.WandKitFeedbackScreen
 import com.flabbergast.wandkit.core.feedback.presentFeedbackScreen
+import com.flabbergast.wandkit.core.replay.WandKitSessionReplayStatus
 import kotlin.time.Instant
 
 public object WandKit {
@@ -62,7 +63,18 @@ public object WandKit {
             properties = properties,
             occurredAt = occurredAt,
         )
+        // The session replay timeline is fed from here too - there is no
+        // separate event API just for replay.
+        WandKitSdkContainer.get().sessionReplayRecorder?.recordEvent(name, properties)
     }
+
+    /**
+     * The session replay recorder's current state, for host-app indicators;
+     * `null` when it is not running (not configured, screenshot reporting
+     * off, below Android 14, or on iOS).
+     */
+    public val sessionReplayStatus: WandKitSessionReplayStatus?
+        get() = WandKitSdkContainer.get().sessionReplayRecorder?.status
 
     /**
      * Presents the feedback UI - the feed, the composer, the roadmap - full
