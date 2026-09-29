@@ -3,6 +3,8 @@ package com.flabbergast.wandkit.core.screenshot
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
+import com.flabbergast.wandkit.core.accessgate.AccessGateActivityPresenter
+import com.flabbergast.wandkit.core.di.WandKitSdkContainer
 import com.flabbergast.wandkit.core.replay.AndroidSessionReplayRecorder
 import java.lang.ref.WeakReference
 
@@ -10,7 +12,9 @@ import java.lang.ref.WeakReference
  * Tracks the foreground Activity so [com.flabbergast.wandkit.core.feedback.presentFeedbackScreen]
  * can launch on top of it instead of starting a new task, and so
  * [ScreenshotDetector] knows which Activity to arm or disarm as the host app
- * navigates between screens.
+ * navigates between screens, and so the invite gate can cover every host
+ * Activity ([AccessGateActivityPresenter]) and re-check a cached pass when the
+ * app returns to the foreground.
  *
  * Registered once, from `WandKit.configureForAndroid`. A [WeakReference]
  * means holding on to a destroyed Activity here can never keep it alive past
@@ -21,6 +25,13 @@ internal object CurrentActivityTracker : Application.ActivityLifecycleCallbacks 
     private var currentActivityRef: WeakReference<Activity>? = null
     private var resumedCount = 0
     private var startedCount = 0
+
+    /**
+     * Whether the last time the started count dropped to zero was a
+     * configuration change (rotation, dark mode) rather than the app leaving
+     * the foreground - the restart that follows is then not a foreground.
+     */
+    private var lastStopWasConfigurationChange = false
 
     internal val currentActivity: Activity?
         get() = currentActivityRef?.get()
@@ -39,6 +50,7 @@ internal object CurrentActivityTracker : Application.ActivityLifecycleCallbacks 
     override fun onActivityResumed(activity: Activity) {
         currentActivityRef = WeakReference(activity)
         resumedCount++
+        AccessGateActivityPresenter.onActivityResumed(activity)
         ScreenshotDetector.onActivityResumed(activity)
         AndroidSessionReplayRecorder.onActivityResumed(activity)
     }
@@ -56,15 +68,28 @@ internal object CurrentActivityTracker : Application.ActivityLifecycleCallbacks 
         ScreenshotDetector.onActivityDestroyed(activity)
     }
 
-    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
+    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+        AccessGateActivityPresenter.onActivityCreated(activity)
+    }
+
     override fun onActivityStarted(activity: Activity) {
+        val isForeground = startedCount == 0 && !lastStopWasConfigurationChange
         startedCount++
+        lastStopWasConfigurationChange = false
+        if (isForeground) {
+            // The first start after configure counts too; the controller's
+            // throttle treats the launch check as the most recent one.
+            WandKitSdkContainer.activeAccessGate.value?.onAppForegrounded()
+        }
     }
 
     override fun onActivityStopped(activity: Activity) {
         startedCount = maxOf(0, startedCount - 1)
         // A rotation stops the old Activity before starting the new one; that
         // dip to zero is not the app going to the background.
+        if (startedCount == 0) {
+            lastStopWasConfigurationChange = activity.isChangingConfigurations
+        }
         if (startedCount == 0 && !activity.isChangingConfigurations) {
             AndroidSessionReplayRecorder.onAppBackgrounded()
         }

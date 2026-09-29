@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Debug builds only: extra host Activities for the invite gate device tests
+    (a second host screen, and a trampoline that starts it and finishes). The
+    trampoline is exported so a test can start it with `adb shell am start`.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity
+            android:name=".SecondHostActivity"
+            android:exported="false" />
+        <activity
+            android:name=".TrampolineActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+    </application>
+</manifest>

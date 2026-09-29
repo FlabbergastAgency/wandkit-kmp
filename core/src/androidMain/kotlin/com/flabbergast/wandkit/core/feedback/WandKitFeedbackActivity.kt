@@ -111,6 +111,15 @@ public class WandKitFeedbackActivity : ComponentActivity() {
             finish()
             return
         }
+        if (WandKitSdkContainer.isAccessGateBlocking) {
+            // The one choke point for every way in - presentFeedback,
+            // feedbackIntent, the feature-preview follow-up: nothing of ours
+            // may open while the invite gate is up.
+            resolvedContainer.logger.debug(TAG, "Not showing feedback: the invite gate is up")
+            super.onCreate(savedInstanceState)
+            finish()
+            return
+        }
         container = resolvedContainer
         isDark = resolveIsDark()
 

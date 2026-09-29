@@ -27,6 +27,7 @@ This README covers:
 - `screenshotReporting`: turns a screenshot into a "Report a problem?" prompt (see [Screenshot reporting](#screenshot-reporting))
 - `debugAttachmentsProvider`: supplies extra files (logs, JSON dumps) uploaded alongside a screenshot report, for your team's eyes only (see [Debug attachments](#debug-attachments))
 - `sessionReplay`: records the last minute of frames, touches and events and attaches it to a screenshot report (see [Session replay](#session-replay))
+- `accessGate`: opts into invite gating, a blocking "enter your invite code" screen at launch (see [Invite gating](#invite-gating))
 
 Example:
 
@@ -472,6 +473,114 @@ What it does not do:
 - **Upload anything unless the user sends a report with the switch on.**
 - **Keep the lead-up across reports.** Freezing hands the buffer to the report, so the next report's replay starts from the previous screenshot.
 - **Hook into your navigation or network.** Touches come from a pass-through `Window.Callback` wrapper, events only from your own `WandKit.event(...)` calls.
+
+## Invite gating
+
+Restrict the whole app to invited users. When you opt in, the SDK shows a blocking screen at launch asking for an invite code, claims the code against WandKit, and hands you the code (and how many times it has been claimed) once the user is let through. Your own backend, not WandKit, ties a code to one of your accounts.
+
+Gating is a **local opt-in**: pass `accessGate` in `WandKitConfig` and the SDK checks the server on every launch. Leave it out (the default) and the SDK never shows the gate and never makes a gate network call - whatever the dashboard setting is, an app that never asked for gating cannot be gated. The dashboard switch then decides whether an opted-in build actually gates.
+
+**Android only.** Requirements:
+
+- Call `WandKit.configure(config, context)` from `Application.onCreate`, not from an Activity. That is where the SDK registers its Activity callbacks, so the gate can cover your very first Activity before its first frame. Configuring later still gates, but your first screen may flash before the gate appears.
+- Include the `ui-compose` module: the gate screen (`WandKitAccessGateActivity`) lives there and is declared in its manifest, so there is nothing to add to yours. Without it the SDK logs an error and gating stays off.
+- Configure with a `Context`. Without one the SDK has no persistent storage, would ask for the code on every launch, and therefore logs an error and leaves gating off.
+
+The iOS targets of this library log a warning and never gate; use the native WandKit iOS SDK there.
+
+```kotlin
+class MyApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        WandKit.configure(
+            config = WandKitConfig(
+                apiKey = "your_api_key",
+                isDebugLoggingEnabled = false,
+                accessGate = WandKitAccessGateOptions(onStateChange = { state ->
+                    when (state) {
+                        WandKitAccessGateState.Checking -> Unit // Launch check in flight - the gate is already up.
+                        WandKitAccessGateState.Disabled -> Unit // Gating is off. Nothing to do.
+                        is WandKitAccessGateState.Blocked -> {
+                            // The gate is up, asking for a code. state.reason is one of:
+                            //   NoCode   - this install has never claimed one
+                            //   Revoked  - a cached code was revoked since it was claimed
+                            //   Expired  - a cached code expired since it was claimed
+                            //   NotFound - a cached code is no longer known to the server
+                            //   Offline  - couldn't reach the server, nothing cached to fall back on
+                            myAuth.logOut()
+                        }
+                        is WandKitAccessGateState.Passed ->
+                            Log.i("App", "Access pass ${state.pass.code}, claimed ${state.pass.claimCount} times")
+                    }
+                }),
+            ),
+            context = this,
+        )
+    }
+}
+```
+
+`onStateChange` runs on the main thread for every state transition, never for a repeat of the same state - use it to log a blocked user out of your own app, and to read the code as soon as it is `Passed`.
+
+While the gate is checking or blocked, no other WandKit UI shows: `presentFeedback()` and `presentFeaturePreview()` do nothing (the latter reports `Dismissed`), event-triggered forms are dropped and screenshots don't raise the report card. Back on the gate sends the app to the background instead of revealing it.
+
+The screen shows the dashboard's title and message when set (English defaults otherwise), and a "Need a code?" link when the project has a help URL - point it at the page with your access-request form.
+
+### Reading the pass
+
+`WandKit.accessPass` returns what `onStateChange` last reported with `Passed`, whenever you want it - including right after `configure` returns, since a cached pass is set synchronously. `WandKit.accessGateState` is the equivalent for the full state.
+
+```kotlin
+WandKit.accessPass?.let { pass ->
+    myBackend.reportAccessCode(pass.code)
+}
+```
+
+WandKit does not bind a code to your users for you - send `pass.code`, together with whatever identifies your signed-in user, to your own backend on sign-up or sign-in.
+
+### Verify the code on your server
+
+The claim count the SDK reports (`pass.claimCount`) is **advisory only** - it comes straight from the device, and a patched client could fake it. Don't enforce anything with it.
+
+To actually tie an access code to one of your accounts (single use, an allow-list, whatever your product needs), check it server to server: have your backend call `GET /api/v1/access-codes/{code}` with a server key (`wks_...`, from the dashboard - never ship it in the app) when a user with a pass signs up or signs in, and record the code against your own user. The response includes the code's live `status`, `claim_count`, and `email` (the address the code was sent to, useful for matching accounts when it differs from the sign-up email) - trust that, not what the SDK reports.
+
+### Logout
+
+```kotlin
+fun logout() {
+    WandKit.clearUser()
+    WandKit.resetAccessGate()
+}
+```
+
+`resetAccessGate()` clears the cached code and runs the launch check again, as if this install had never claimed one. Call it on logout when the next person on this device should need their own code.
+
+### Offline behaviour
+
+- **Cached pass, no network:** the app stays open. The background check that runs alongside it stays "passed" on a network error - only an actual answer from the server (revoked, expired, not found) clears the pass.
+- **No cached pass, last known setting "disabled":** the app opens. A background check still runs, and if gating is now on, the gate appears and blocks with `NoCode`.
+- **No cached pass otherwise** (first launch, or the last known setting was "enabled" or is unknown): the gate stays up with a "Try again" button until a status check succeeds.
+
+A wrong or wrong-kind API key fails the same way as being offline (and logs an error): opening the app would defeat the gate.
+
+### Timeouts
+
+The status check (at launch, and the foreground re-check below) is bounded to **10 seconds**; claiming a code to **15 seconds**. Either timing out is treated like any other network error: a status check with no cached pass shows `Blocked(Offline)`, one with a cached pass stays `Passed`, and a claim shows the offline screen while keeping what the user typed.
+
+### Foreground re-check
+
+Coming back to the app with a cached pass silently re-runs the status check, so a code revoked while the app was in the background is noticed without waiting for a cold start. It runs at most once every 5 minutes (the launch check counts as the first).
+
+### Reinstall behaviour
+
+The install ID lives in the app's `SharedPreferences`, so it does **not** survive a reinstall or "Clear data". A reinstalled app asks for the invite code again, and entering the same code counts as a new claim - `pass.claimCount` reflects that extra claim.
+
+### Rollout checklist
+
+1. Ship an app version with `accessGate` options.
+2. Create a reviewer code and put it in the Play review notes.
+3. Send codes to existing users.
+4. Turn the gate on in the dashboard.
 
 ## How Forms Work
 

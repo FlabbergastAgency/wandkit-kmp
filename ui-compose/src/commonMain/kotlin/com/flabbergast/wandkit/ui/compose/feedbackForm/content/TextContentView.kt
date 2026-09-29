@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,6 +59,7 @@ internal fun WandKitFilledTextField(
     modifier: Modifier = Modifier,
     placeholder: String? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
     autoFocus: Boolean = false,
     singleLine: Boolean = false,
 ) {
@@ -84,6 +86,7 @@ internal fun WandKitFilledTextField(
         textStyle = textStyle,
         cursorBrush = SolidColor(WandKitColors.label),
         keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
         singleLine = singleLine,
         decorationBox = { innerTextField ->
             Box {

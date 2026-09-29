@@ -18,6 +18,18 @@ internal class WandKitApi<ApiType>(
         }
 
     /**
+     * Like [invoke], but a non-2xx [WandKitHttpException] also carries the
+     * parsed error envelope ([WandKitHttpException.errorBody]) - for endpoints
+     * whose callers branch on the backend's error `code`, not only the status.
+     */
+    suspend inline fun <reified ApiResult : Any> invokeReadingErrorBody(
+        crossinline apiCall: suspend ApiType.() -> WandKitHttpResponse<ApiResult>,
+    ): Result<RemoteSuccess<ApiResult>> =
+        safeApiCall(readErrorBody = true) {
+            apiCall(api)
+        }
+
+    /**
      * Like [invoke], but only checks the status code rather than deserializing
      * a body - for calls whose response isn't ours to parse (a presigned
      * upload PUT may answer with the storage provider's own XML, or nothing
@@ -75,6 +87,7 @@ internal class WandKitApi<ApiType>(
         }
 
     private suspend inline fun <reified ApiResult : Any> safeApiCall(
+        readErrorBody: Boolean = false,
         block: suspend () -> WandKitHttpResponse<ApiResult>,
     ): Result<RemoteSuccess<ApiResult>> =
         runCatching {
@@ -88,7 +101,10 @@ internal class WandKitApi<ApiType>(
                         data = body,
                     )
                 }
-                else -> throw WandKitHttpException(response.response.status.value)
+                else -> throw WandKitHttpException(
+                    statusCode = response.response.status.value,
+                    errorBody = if (readErrorBody) response.response.readErrorBodyOrNull() else null,
+                )
             }
 
         }.onFailure {

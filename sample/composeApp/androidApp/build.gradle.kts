@@ -15,6 +15,10 @@ dependencies {
     implementation(projects.sample.composeApp.shared)
     implementation(projects.core)
     implementation(libs.compose.activity)
+    // The invite gate test hooks' host screen (AccessGateDebug.kt).
+    implementation(libs.compose.foundation)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.ui)
 }
 
 android {
@@ -27,6 +31,39 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+
+        // Invite gating is off unless asked for, so the sample behaves as
+        // before by default. Try it against a local backend only, e.g.
+        //   ./gradlew :sample:composeApp:androidApp:installDebug \
+        //     -Pwandkit.sample.accessGate=true \
+        //     -Pwandkit.sample.apiBaseUrl=http://10.0.2.2:8082 \
+        //     -Pwandkit.sample.apiKey=wk_...
+        // The base URL and key overrides are empty (unchanged defaults) otherwise.
+        buildConfigField(
+            "boolean",
+            "WANDKIT_ACCESS_GATE",
+            providers.gradleProperty("wandkit.sample.accessGate").orElse("false").get().toBoolean().toString(),
+        )
+        // SDK debug logging, on unless -Pwandkit.sample.debugLogging=false
+        // (to check what a release-like build logs).
+        buildConfigField(
+            "boolean",
+            "WANDKIT_DEBUG_LOGGING",
+            providers.gradleProperty("wandkit.sample.debugLogging").orElse("true").get().toBoolean().toString(),
+        )
+        buildConfigField(
+            "String",
+            "WANDKIT_API_BASE_URL_OVERRIDE",
+            "\"${providers.gradleProperty("wandkit.sample.apiBaseUrl").orElse("").get()}\"",
+        )
+        buildConfigField(
+            "String",
+            "WANDKIT_API_KEY_OVERRIDE",
+            "\"${providers.gradleProperty("wandkit.sample.apiKey").orElse("").get()}\"",
+        )
+    }
+    buildFeatures {
+        buildConfig = true
     }
     packaging {
         resources {

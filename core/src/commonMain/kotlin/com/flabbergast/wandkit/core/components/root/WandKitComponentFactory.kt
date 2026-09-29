@@ -20,6 +20,7 @@ private class WandKitComponentFactoryImpl(
         formController = container.feedbackFormController,
         screenshotPromptController = container.screenshotPromptController,
         featurePreviewController = container.featurePreviewController,
+        accessGateBlocking = WandKitSdkContainer.accessGateBlocking,
     )
 }
 

@@ -1,7 +1,17 @@
 package com.flabbergast.wandkit.core.di
 
 import com.arkivanov.essenty.instancekeeper.InstanceKeeper
+import com.flabbergast.wandkit.core.accessgate.createAccessGatePresenter
+import com.flabbergast.wandkit.core.accessgate.isBlocking
 import com.flabbergast.wandkit.core.config.WandKitConfig
+import com.flabbergast.wandkit.core.data.accessgate.AccessGateApi
+import com.flabbergast.wandkit.core.data.accessgate.AccessGateStore
+import com.flabbergast.wandkit.core.data.accessgate.createAccessGateApi
+import com.flabbergast.wandkit.core.data.accessgate.createAccessGateRepository
+import com.flabbergast.wandkit.core.data.accessgate.createAccessGateStore
+import com.flabbergast.wandkit.core.domain.accessgate.AccessGateController
+import com.flabbergast.wandkit.core.domain.accessgate.AccessGateRepository
+import com.flabbergast.wandkit.core.platform.InMemoryKeyValueStore
 import com.flabbergast.wandkit.core.config.createAppConfiguration
 import com.flabbergast.wandkit.core.data.events.EventsApi
 import com.flabbergast.wandkit.core.data.events.createEventsApi
@@ -50,6 +60,7 @@ import com.flabbergast.wandkit.core.domain.forms.createFeedbackFormController
 import com.flabbergast.wandkit.core.domain.forms.createSubmitFormUseCase
 import com.flabbergast.wandkit.core.domain.infrastructure.concurrency.createFireAndForgetTask
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
+import com.flabbergast.wandkit.core.domain.infrastructure.logger.LogLevel
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.createAppLogger
 import com.flabbergast.wandkit.core.domain.install.InstallIdentity
 import com.flabbergast.wandkit.core.domain.install.createInstallIdentity
@@ -63,6 +74,14 @@ import com.flabbergast.wandkit.core.domain.infrastructure.threading.BackgroundDi
 import com.flabbergast.wandkit.core.feedback.WandKitFeedbackScreen
 import com.flabbergast.wandkit.core.feedback.presentFeedbackScreen
 import com.flabbergast.wandkit.core.models.createWandKitClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
@@ -188,6 +207,58 @@ internal class WandKitSdkContainer private constructor(
         )
     }
 
+    internal val accessGateApi: WandKitApi<AccessGateApi> by lazy {
+        createAccessGateApi(
+            httpClient = httpClient,
+            baseUrl = appConfiguration.baseUrl,
+            logger = logger,
+        )
+    }
+
+    internal val accessGateRepository: AccessGateRepository by lazy {
+        createAccessGateRepository(
+            accessGateApi = accessGateApi,
+            installIdentity = installIdentity,
+            platform = appConfiguration.platformName.lowercase(),
+            sdkVersion = replaySdkName,
+        )
+    }
+
+    internal val accessGateStore: AccessGateStore by lazy {
+        createAccessGateStore(keyValueStore = keyValueStore, json = json)
+    }
+
+    /**
+     * Errors only, whatever [WandKitConfig.isDebugLoggingEnabled] says: a gate
+     * that is off (or cannot let anyone in) because of the app's setup must
+     * show up in a release build's log too.
+     */
+    private val accessGateMisconfigurationLogger: Logger by lazy { createAppLogger(LogLevel.ERROR) }
+
+    internal val accessGateController: AccessGateController by lazy {
+        AccessGateController(
+            repository = accessGateRepository,
+            store = accessGateStore,
+            presenterFactory = { createAccessGatePresenter(platformContext, accessGateMisconfigurationLogger) },
+            isStorePersistent = keyValueStore !is InMemoryKeyValueStore,
+            logger = logger,
+            misconfigurationLogger = accessGateMisconfigurationLogger,
+            dispatcher = Dispatchers.Main.immediate,
+        )
+    }
+
+    /**
+     * Starts the invite gate when [WandKitConfig.accessGate] opted in. Without
+     * it the controller is never even created: no gate network call, ever.
+     */
+    private fun startAccessGate() {
+        val options = config.accessGate ?: return
+        // Published before start() so the platform presenter, which reads the
+        // live state through [activeAccessGate], sees the first transition.
+        activeAccessGate.value = accessGateController
+        accessGateController.start(options)
+    }
+
     internal val eventsRepository: EventsRepository by lazy {
         createEventsRepository(
             eventsApi = eventsApi,
@@ -289,7 +360,12 @@ internal class WandKitSdkContainer private constructor(
     }
 
     internal val trackEventUseCase: TrackEventUseCase
-        get() = createTrackEventUseCase(eventsRepository, feedbackFormController)
+        get() = createTrackEventUseCase(
+            eventsRepository = eventsRepository,
+            feedbackFormController = feedbackFormController,
+            isAccessGateBlocking = { isAccessGateBlocking },
+            logger = logger,
+        )
 
     internal val dismissFormUseCase: DismissFormUseCase
         get() = createDismissFormUseCase(feedbackFormRepository, feedbackFormController)
@@ -300,9 +376,36 @@ internal class WandKitSdkContainer private constructor(
     internal companion object {
         private var instance: WandKitSdkContainer? = null
 
+        /**
+         * The invite gate of the latest `configure` that opted in; `null`
+         * when it did not. Process-wide, so the gate screen and the lifecycle
+         * glue follow a re-configure instead of holding on to a stale gate.
+         */
+        val activeAccessGate = MutableStateFlow<AccessGateController?>(null)
+
+        /** While true, no other WandKit UI may be presented. */
+        val isAccessGateBlocking: Boolean
+            get() = activeAccessGate.value?.isBlocking == true
+
+        @OptIn(ExperimentalCoroutinesApi::class)
+        val accessGateBlocking: Flow<Boolean> = activeAccessGate
+            .flatMapLatest { controller -> controller?.state?.map { it.isBlocking } ?: flowOf(false) }
+            .distinctUntilChanged()
+
         fun get(): WandKitSdkContainer = instance ?: error("WandKit SDK isn't initialized.")
+
+        /** The latest configured container, or `null` before `configure`. */
+        val currentOrNull: WandKitSdkContainer?
+            get() = instance
         fun init(config: WandKitConfig, platformContext: PlatformContext? = null) {
-            instance = WandKitSdkContainer(config, platformContext)
+            // A second configure must not stack a second gate: the previous
+            // one stops for good before the new one starts.
+            activeAccessGate.value?.shutdown()
+            activeAccessGate.value = null
+
+            val container = WandKitSdkContainer(config, platformContext)
+            instance = container
+            container.startAccessGate()
         }
     }
 }
