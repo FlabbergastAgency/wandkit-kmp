@@ -18,6 +18,7 @@ class ScreenshotGateTest {
         isAppActive: Boolean = true,
         lastPromptAt: Instant? = null,
         now: Instant = this.now,
+        isAccessGateBlocking: Boolean = false,
     ) = ScreenshotGate.Context(
         isEnabled = isEnabled,
         isIdentified = isIdentified,
@@ -26,6 +27,7 @@ class ScreenshotGateTest {
         isAppActive = isAppActive,
         lastPromptAt = lastPromptAt,
         now = now,
+        isAccessGateBlocking = isAccessGateBlocking,
     )
 
     @Test
@@ -36,6 +38,11 @@ class ScreenshotGateTest {
     @Test
     fun disabledIsSkipped() {
         assertEquals(ScreenshotGate.Skip.DISABLED, ScreenshotGate.skipReason(context(isEnabled = false)))
+    }
+
+    @Test
+    fun accessGateBlockingIsSkipped() {
+        assertEquals(ScreenshotGate.Skip.ACCESS_GATE, ScreenshotGate.skipReason(context(isAccessGateBlocking = true)))
     }
 
     @Test

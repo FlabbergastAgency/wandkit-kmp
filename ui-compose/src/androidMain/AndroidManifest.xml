@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
+    <application>
+        <!--
+            The invite gate. Started by class name from core while the gate is
+            checking or blocked; lives in the host's own task (not excluded
+            from recents) so Back and Recents behave like any host screen.
+        -->
+        <activity
+            android:name="com.flabbergast.wandkit.ui.compose.accessGate.WandKitAccessGateActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/WandKit.Theme.AccessGate" />
+    </application>
 </manifest>

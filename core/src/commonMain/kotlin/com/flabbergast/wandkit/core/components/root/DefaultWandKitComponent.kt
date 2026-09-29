@@ -15,7 +15,9 @@ import com.flabbergast.wandkit.core.domain.featurepreview.FeaturePreviewControll
 import com.flabbergast.wandkit.core.domain.forms.FeedbackFormController
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPageId
 import com.flabbergast.wandkit.core.domain.screenshot.ScreenshotPromptController
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -25,6 +27,7 @@ internal class DefaultWandKitComponent(
     formController: FeedbackFormController,
     screenshotPromptController: ScreenshotPromptController,
     featurePreviewController: FeaturePreviewController,
+    accessGateBlocking: Flow<Boolean> = flowOf(false),
 ): WandKitComponent, ComponentContext by componentContext {
     private val navigation = SlotNavigation<Config>()
 
@@ -42,14 +45,18 @@ internal class DefaultWandKitComponent(
         // form is up, and a form arriving while either is up simply covers
         // it. Between the other two, a feature preview - a deliberate,
         // host-triggered action - takes priority over an incidental
-        // screenshot card.
+        // screenshot card. And while the invite gate is checking or blocked,
+        // nothing shows at all: its Activity covers the app, and whatever was
+        // up comes back once the gate lets the user through.
         componentScope.launch {
             combine(
                 formController.form,
                 featurePreviewController.prompt,
                 screenshotPromptController.prompt,
-            ) { form, featurePreview, prompt ->
+                accessGateBlocking,
+            ) { form, featurePreview, prompt, isGateBlocking ->
                 when {
+                    isGateBlocking -> null
                     form != null -> Config.FeedbackForm(form.entryPage.id)
                     featurePreview != null -> Config.FeaturePreview
                     prompt != null -> Config.ScreenshotPrompt

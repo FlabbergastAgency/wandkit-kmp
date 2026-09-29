@@ -14,6 +14,8 @@ internal object ScreenshotGate {
     internal enum class Skip {
         /** The host never opted in. */
         DISABLED,
+        /** The invite gate is checking or blocked; nothing may show over it. */
+        ACCESS_GATE,
         /**
          * Anonymous sessions are read-only: they can neither compose nor
          * upload, and the web app would bounce them to the feed.
@@ -42,11 +44,13 @@ internal object ScreenshotGate {
         val isAppActive: Boolean,
         val lastPromptAt: Instant?,
         val now: Instant,
+        val isAccessGateBlocking: Boolean = false,
     )
 
     /** `null` means "show the card". */
     internal fun skipReason(context: Context): Skip? = when {
         !context.isEnabled -> Skip.DISABLED
+        context.isAccessGateBlocking -> Skip.ACCESS_GATE
         !context.isIdentified -> Skip.ANONYMOUS
         context.isOverlayVisible -> Skip.OVERLAY_VISIBLE
         context.isFeedbackVisible -> Skip.FEEDBACK_VISIBLE

@@ -1,5 +1,7 @@
 package com.flabbergast.wandkit.core
 
+import com.flabbergast.wandkit.core.accessgate.WandKitAccessGateState
+import com.flabbergast.wandkit.core.accessgate.WandKitAccessPass
 import com.flabbergast.wandkit.core.config.WandKitConfig
 import com.flabbergast.wandkit.core.di.WandKitSdkContainer
 import com.flabbergast.wandkit.core.models.WandKitClient
@@ -23,6 +25,34 @@ public object WandKit {
         config: WandKitConfig,
     ) {
         WandKitSdkContainer.init(config)
+    }
+
+    /**
+     * The invite gate's current state. [WandKitAccessGateState.Disabled] when
+     * `configure` was not given [WandKitConfig.accessGate] (or has not run).
+     * Transitions are also pushed to
+     * [com.flabbergast.wandkit.core.config.WandKitAccessGateOptions.onStateChange].
+     */
+    public val accessGateState: WandKitAccessGateState
+        get() = WandKitSdkContainer.activeAccessGate.value?.state?.value ?: WandKitAccessGateState.Disabled
+
+    /**
+     * The claimed invite code while the gate is [WandKitAccessGateState.Passed],
+     * otherwise `null`. A cached pass is readable the moment `configure`
+     * returns. Send [WandKitAccessPass.code] to your own backend and verify it
+     * there - the claim count is advisory.
+     */
+    public val accessPass: WandKitAccessPass?
+        get() = (accessGateState as? WandKitAccessGateState.Passed)?.pass
+
+    /**
+     * Forgets this install's invite code and runs the launch check again, as
+     * if the code had never been entered - call it on logout when the next
+     * person on this device should need their own code. A no-op without
+     * [WandKitConfig.accessGate].
+     */
+    public fun resetAccessGate() {
+        WandKitSdkContainer.activeAccessGate.value?.reset()
     }
 
     /**
@@ -94,6 +124,8 @@ public object WandKit {
      * new-post composer, optionally seeded with a title, description, type and
      * image attachments. Read-only sessions land on the feed instead.
      *
+     * A no-op (with a log line) while the invite gate is checking or blocked.
+     *
      * Android only. The iOS targets of this library log a warning; use the
      * native WandKit iOS SDK there.
      */
@@ -119,6 +151,9 @@ public object WandKit {
      * it, reporting [WandKitFeaturePreviewResult.Dismissed]) when the post
      * has no preview configured, it is disabled, unpublished, or the fetch
      * fails.
+     *
+     * While the invite gate is checking or blocked nothing is shown and
+     * [onResult] reports [WandKitFeaturePreviewResult.Dismissed].
      *
      * Android only. The iOS targets of this library log a warning and do
      * nothing; use the native WandKit iOS SDK there.

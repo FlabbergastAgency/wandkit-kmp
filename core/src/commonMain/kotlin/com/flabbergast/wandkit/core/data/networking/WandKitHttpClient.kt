@@ -25,6 +25,7 @@ internal value class WandKitHttpClient(
 )
 
 private const val LOGGER_TAG = "[KtorHttpClient]"
+private const val ACCESS_GATE_PATH_SEGMENT = "/sdk/access-gate/"
 
 internal fun createHttpClient(
     json: Json,
@@ -49,6 +50,9 @@ internal fun createHttpClient(
 
             }
             level = LogLevel.ALL
+            // Invite-gate calls carry the code the user typed (and, in the
+            // headers, the API key); keep them out of the debug log entirely.
+            filter { request -> !request.url.buildString().contains(ACCESS_GATE_PATH_SEGMENT) }
         }
 
         install(HttpTimeout) {

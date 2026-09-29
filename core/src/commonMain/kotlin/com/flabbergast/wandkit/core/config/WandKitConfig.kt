@@ -59,4 +59,12 @@ public data class WandKitConfig(
      * `null` (the default) means the recorder never starts.
      */
     val sessionReplay: WandKitSessionReplayOptions? = null,
+    /**
+     * Opt-in for invite gating: a blocking screen at launch that asks for an
+     * invite code while the project has gating turned on in the dashboard.
+     * Android only, needs the `ui-compose` module and `configure` called from
+     * `Application.onCreate`; see [WandKitAccessGateOptions]. `null` (the
+     * default) means the SDK never gates and never makes a gate network call.
+     */
+    val accessGate: WandKitAccessGateOptions? = null,
 )

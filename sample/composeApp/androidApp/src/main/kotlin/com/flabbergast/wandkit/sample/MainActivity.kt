@@ -1,60 +1,23 @@
 package com.flabbergast.wandkit.sample
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.lifecycle.lifecycleScope
-import com.flabbergast.wandkit.core.WandKit
-import com.flabbergast.wandkit.core.config.WandKitConfig
-import com.flabbergast.wandkit.core.config.WandKitSessionReplayOptions
-import com.flabbergast.wandkit.core.configure
-import com.flabbergast.wandkit.core.feedback.WandKitDebugAttachment
-import com.flabbergast.wandkit.core.feedback.WandKitDebugAttachmentsProvider
-import kotlinx.coroutines.launch
 
+/** WandKit itself is configured in [SampleApplication]. */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        WandKit.configure(
-            config = WandKitConfig(
-                // The local dev stack (the production API has no posts
-                // endpoints yet) - same project and hosts as the iOS example.
-                // Plain http, so the sample manifest allows cleartext traffic.
-                apiKey = "wk_ZcesAUIcwicpEB1SL28PKKVcRgKY3JNLsNPAF840Cps",
-                isDebugLoggingEnabled = true,
-                apiBaseUrl = "http://192.168.1.79:8081",
-                feedbackWebUrl = "http://192.168.1.79:3002",
-                screenshotReporting = true,
-                // Sample only: a couple of generated lines standing in for
-                // whatever your app's own log file/JSON dump would contain.
-                debugAttachmentsProvider = WandKitDebugAttachmentsProvider {
-                    val now = System.currentTimeMillis()
-                    listOf(
-                        WandKitDebugAttachment.text(
-                            text = "[$now] sample app log\n[$now] screenshot report triggered",
-                            fileName = "sample-app.log",
-                        ),
-                    )
-                },
-                // Records the last minute of frames, touches and
-                // WandKit.event calls, attached to a screenshot report when
-                // the user leaves the replay switch on. Frames go to the
-                // app's cache directory rather than the heap.
-                sessionReplay = WandKitSessionReplayOptions(),
-            ),
-            context = applicationContext,
-        )
-
-        // Right after configure: fingerprint accuracy decays fast, so detection
-        // has to run long before there is any UI to show the result in.
-        WandKit.detectReferralOnFirstLaunchIfNeeded()
-
         setContent {
-            App()
+            if (BuildConfig.WANDKIT_ACCESS_GATE) {
+                // Gate test builds only: a red host screen with test hooks.
+                DebugHostContent(activity = this, label = "MainActivity")
+            } else {
+                App()
+            }
         }
     }
 }

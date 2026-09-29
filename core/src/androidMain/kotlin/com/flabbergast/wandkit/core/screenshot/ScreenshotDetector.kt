@@ -81,6 +81,7 @@ internal object ScreenshotDetector {
         val now = Clock.System.now()
         val context = ScreenshotGate.Context(
             isEnabled = enabled,
+            isAccessGateBlocking = WandKitSdkContainer.isAccessGateBlocking,
             isIdentified = !container.externalUserId.isNullOrBlank(),
             isOverlayVisible = container.feedbackFormController.form.value != null ||
                 container.screenshotPromptController.prompt.value != null,

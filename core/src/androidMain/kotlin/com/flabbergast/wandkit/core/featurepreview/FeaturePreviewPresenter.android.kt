@@ -9,6 +9,7 @@ import com.flabbergast.wandkit.core.domain.featurepreview.statusForEvent
 import kotlin.time.Clock
 
 private const val EVENT_OPENED = "feature_preview_opened"
+private const val LOGGER_TAG = "[FeaturePreviewPresenter]"
 
 /** Fixed copy for [FeaturePreviewResolution.Generic] - there is no dashboard-managed copy to show, so it isn't fetched. */
 private val GENERIC_PREVIEW_COPY = FeaturePreviewCopy(
@@ -23,6 +24,11 @@ internal actual fun presentFeaturePreviewFlow(
     postId: String,
     onResult: (WandKitFeaturePreviewResult) -> Unit,
 ) {
+    if (WandKitSdkContainer.isAccessGateBlocking) {
+        container.logger.warn(LOGGER_TAG, "Not presenting feature preview $postId: the invite gate is up")
+        onResult(WandKitFeaturePreviewResult.Dismissed)
+        return
+    }
     container.fireAndForgetTask {
         val resolution = container.resolveFeaturePreviewUseCase(postId)
 
@@ -37,6 +43,13 @@ internal actual fun presentFeaturePreviewFlow(
             container.identityInfo,
         )
 
+        // The gate can come up while the post resolves (a background check
+        // finding gating switched on); the sheet must not show under it.
+        if (WandKitSdkContainer.isAccessGateBlocking) {
+            container.logger.debug(LOGGER_TAG, "Dropped feature preview $postId: the invite gate came up")
+            onResult(WandKitFeaturePreviewResult.Dismissed)
+            return@fireAndForgetTask
+        }
         container.featurePreviewController.publish(resolution.toPrompt(requestedPostId = postId), onResult)
     }
 }

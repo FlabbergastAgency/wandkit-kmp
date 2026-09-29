@@ -26,6 +26,10 @@ internal actual fun presentFeedbackScreen(
     screen: WandKitFeedbackScreen,
     query: String?,
 ) {
+    if (WandKitSdkContainer.isAccessGateBlocking) {
+        container.logger.warn(TAG, "Not presenting feedback: the invite gate is up")
+        return
+    }
     val launchId = FeedbackLaunchStore.put(screen, query)
     val activityContext = CurrentActivityTracker.currentActivity
     val context: Context = activityContext

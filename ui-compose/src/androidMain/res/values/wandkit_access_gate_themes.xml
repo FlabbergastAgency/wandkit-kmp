@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Opaque and matching the gate's own background, so nothing of the host
+        shows while the window comes up. No window animations: the gate must
+        appear and disappear without a transition that would reveal the app.
+    -->
+    <style name="WandKit.Theme.AccessGate" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+</resources>
