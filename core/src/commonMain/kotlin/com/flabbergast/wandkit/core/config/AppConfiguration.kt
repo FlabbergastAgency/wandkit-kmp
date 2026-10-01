@@ -8,7 +8,16 @@ internal data class AppConfiguration(
     val platformName: String,
     val platformVersion: String,
     val logLevel: LogLevel,
-)
+) {
+    /**
+     * The canonical lowercase value the backend keys applications on
+     * (`ios` / `android`), as opposed to [platformName], which is the OS's own
+     * spelling and stays in the user agent. iPadOS is an iOS application as far
+     * as the backend is concerned, and UIDevice reports it by its own name.
+     */
+    val platform: String
+        get() = platformName.lowercase().let { if (it == "ipados") "ios" else it }
+}
 
 private const val BASE_URL = "https://api.wandkit.flabic.com"
 

@@ -11,4 +11,5 @@ internal actual fun readDeviceContext(platformContext: PlatformContext?): Device
     appVersion = NSBundle.mainBundle.infoDictionary?.get("CFBundleShortVersionString") as? String,
     deviceModel = UIDevice.currentDevice.model,
     locale = NSLocale.currentLocale.localeIdentifier,
+    appIdentifier = NSBundle.mainBundle.bundleIdentifier?.takeIf { it.isNotBlank() },
 )

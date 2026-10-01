@@ -34,9 +34,9 @@ internal fun createReferralDetectionStore(
     json: Json,
 ): ReferralDetectionStore = ReferralDetectionStoreImpl(keyValueStore, json)
 
-private const val KEY_DETECTION_ATTEMPTED = "wandkit.referral.detectionAttempted"
-private const val KEY_DETECTION = "wandkit.referral.detection"
-private const val KEY_DETECTION_FAILURE_COUNT = "wandkit.referral.detectionFailureCount"
+internal const val KEY_DETECTION_ATTEMPTED = "wandkit.referral.detectionAttempted"
+internal const val KEY_DETECTION = "wandkit.referral.detection"
+internal const val KEY_DETECTION_FAILURE_COUNT = "wandkit.referral.detectionFailureCount"
 
 private class ReferralDetectionStoreImpl(
     private val keyValueStore: KeyValueStore,

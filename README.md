@@ -38,6 +38,12 @@ WandKitConfig(
 )
 ```
 
+## Projects, environments and API keys
+
+Use one WandKit project per product. Its environments (production, staging, ...) live inside the project, and each environment has one application per platform. Create an SDK key per application on the dashboard's Apps & environments page, and give every build the key of its own application: a staging build uses the staging application's key, so its users, events and posts stay in the staging environment and never mix with production.
+
+The SDK reports the build's own identifier with its requests (the Android application id, or the iOS bundle identifier) and the platform as `android` or `ios`. The backend uses the identifier to fill in the application's package name or bundle id the first time it sees it, and to warn in the dashboard when a key is used from a different app. A key created before applications existed keeps working: the backend works out the application from the reported platform.
+
 ## Setup
 
 Add the SDK modules to your app:

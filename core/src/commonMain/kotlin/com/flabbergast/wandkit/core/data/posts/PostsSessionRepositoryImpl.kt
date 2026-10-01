@@ -46,11 +46,12 @@ private class PostsSessionRepositoryImpl(
             externalUserId = externalUserId,
             displayName = externalUserId?.let { displayName()?.trim()?.takeIf { name -> name.isNotBlank() } },
             device = SdkPostsSessionDeviceDto(
-                platform = appConfiguration.platformName.lowercase(),
+                platform = appConfiguration.platform,
                 osVersion = deviceContext.osVersion,
                 appVersion = deviceContext.appVersion,
                 deviceModel = deviceContext.deviceModel,
                 locale = deviceContext.locale,
+                appIdentifier = deviceContext.appIdentifier,
             ),
         )
 
