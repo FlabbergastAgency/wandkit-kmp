@@ -27,7 +27,7 @@ internal fun createDetectReferralRequest(
         languages = fingerprint.languages,
         timezone = fingerprint.timezone,
         timezoneOffsetMinutes = fingerprint.timezoneOffsetMinutes,
-        platform = appConfiguration.platformName,
+        platform = appConfiguration.platform,
         screenWidth = fingerprint.screenWidth,
         screenHeight = fingerprint.screenHeight,
         viewportWidth = fingerprint.screenWidth,

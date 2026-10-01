@@ -15,21 +15,17 @@ internal fun IdentifyInfo.toEventRequestUser() = EventRequestUserDto(
 )
 
 internal fun AppConfiguration.toEventRequestSdk() = EventRequestSdkDto(
-    platform = platformName,
+    platform = platform,
     version = libraryVersion,
     supportedPageTypes = EVENT_REQUEST_SUPPORTED_PAGE_TYPES,
 )
 
-/**
- * The wire contract wants a lowercase "android"/"ios", not the "Android"/"iOS"
- * [AppConfiguration.platformName] already sends in [toEventRequestSdk] - kept
- * separate here so that unrelated field is not touched. Mirrors
- * [com.flabbergast.wandkit.core.data.forms.mappers.toSubmitFormDeviceDto].
- */
+/** Mirrors [com.flabbergast.wandkit.core.data.forms.mappers.toSubmitFormDeviceDto]. */
 internal fun AppConfiguration.toEventRequestDevice(deviceContext: DeviceContext) = EventRequestDeviceDto(
-    platform = platformName.lowercase(),
+    platform = platform,
     osVersion = deviceContext.osVersion,
     appVersion = deviceContext.appVersion,
     deviceModel = deviceContext.deviceModel,
     locale = deviceContext.locale,
+    appIdentifier = deviceContext.appIdentifier,
 )

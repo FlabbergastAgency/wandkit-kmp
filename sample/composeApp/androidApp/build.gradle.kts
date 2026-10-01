@@ -38,6 +38,8 @@ android {
         //     -Pwandkit.sample.accessGate=true \
         //     -Pwandkit.sample.apiBaseUrl=http://10.0.2.2:8082 \
         //     -Pwandkit.sample.apiKey=wk_...
+        // The key is an application's key (one per platform and environment),
+        // so point a staging build at the staging application's key.
         // The base URL and key overrides are empty (unchanged defaults) otherwise.
         buildConfigField(
             "boolean",

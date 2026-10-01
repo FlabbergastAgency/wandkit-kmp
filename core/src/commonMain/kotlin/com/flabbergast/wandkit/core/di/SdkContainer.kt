@@ -12,6 +12,7 @@ import com.flabbergast.wandkit.core.data.accessgate.createAccessGateStore
 import com.flabbergast.wandkit.core.domain.accessgate.AccessGateController
 import com.flabbergast.wandkit.core.domain.accessgate.AccessGateRepository
 import com.flabbergast.wandkit.core.platform.InMemoryKeyValueStore
+import com.flabbergast.wandkit.core.platform.discardStateOfPreviousApiKey
 import com.flabbergast.wandkit.core.config.createAppConfiguration
 import com.flabbergast.wandkit.core.data.events.EventsApi
 import com.flabbergast.wandkit.core.data.events.createEventsApi
@@ -136,17 +137,18 @@ internal class WandKitSdkContainer private constructor(
     internal fun replayDevice(): SdkPostsSessionDeviceDto {
         val deviceContext = readDeviceContext(platformContext)
         return SdkPostsSessionDeviceDto(
-            platform = appConfiguration.platformName.lowercase(),
+            platform = appConfiguration.platform,
             osVersion = deviceContext.osVersion,
             appVersion = deviceContext.appVersion,
             deviceModel = deviceContext.deviceModel,
             locale = deviceContext.locale,
+            appIdentifier = deviceContext.appIdentifier,
         )
     }
 
     /** The replay header's `sdk`, e.g. `android-0.1.7` - the counterpart of iOS's `ios-<semver>`. */
     internal val replaySdkName: String
-        get() = "${appConfiguration.platformName.lowercase()}-${appConfiguration.libraryVersion}"
+        get() = "${appConfiguration.platform}-${appConfiguration.libraryVersion}"
 
     internal val keyValueStore by lazy { createKeyValueStore(platformContext) }
 
@@ -219,7 +221,7 @@ internal class WandKitSdkContainer private constructor(
         createAccessGateRepository(
             accessGateApi = accessGateApi,
             installIdentity = installIdentity,
-            platform = appConfiguration.platformName.lowercase(),
+            platform = appConfiguration.platform,
             sdkVersion = replaySdkName,
         )
     }
@@ -404,6 +406,8 @@ internal class WandKitSdkContainer private constructor(
             activeAccessGate.value = null
 
             val container = WandKitSdkContainer(config, platformContext)
+            // Before anything can read the gate pass or referral state.
+            discardStateOfPreviousApiKey(container.keyValueStore, config.apiKey)
             instance = container
             container.startAccessGate()
         }

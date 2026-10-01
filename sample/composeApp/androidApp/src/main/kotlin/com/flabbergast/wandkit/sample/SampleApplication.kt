@@ -36,6 +36,9 @@ class SampleApplication : Application() {
             config = WandKitConfig(
                 // The local dev stack (the production API has no posts
                 // endpoints yet) - same project and hosts as the iOS example.
+                // A key belongs to one application of one environment; this
+                // one predates applications, so the backend resolves the
+                // application from the platform the SDK reports.
                 // Plain http, so the sample manifest allows cleartext traffic.
                 apiKey = BuildConfig.WANDKIT_API_KEY_OVERRIDE.ifBlank { "wk_ZcesAUIcwicpEB1SL28PKKVcRgKY3JNLsNPAF840Cps" },
                 isDebugLoggingEnabled = BuildConfig.WANDKIT_DEBUG_LOGGING,

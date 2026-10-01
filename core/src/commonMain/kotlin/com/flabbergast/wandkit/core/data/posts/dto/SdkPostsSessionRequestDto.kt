@@ -40,4 +40,7 @@ internal data class SdkPostsSessionDeviceDto(
     val deviceModel: String? = null,
     @SerialName("locale")
     val locale: String? = null,
+    /** The Android application id / iOS bundle identifier; the backend binds it to the application the key belongs to. */
+    @SerialName("app_identifier")
+    val appIdentifier: String? = null,
 )

@@ -12,6 +12,7 @@ internal data class DeviceContext(
     val appVersion: String?,
     val deviceModel: String?,
     val locale: String?,
+    val appIdentifier: String?,
 )
 
 /**

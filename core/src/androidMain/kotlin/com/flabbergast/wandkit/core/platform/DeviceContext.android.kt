@@ -16,5 +16,6 @@ internal actual fun readDeviceContext(platformContext: PlatformContext?): Device
         appVersion = appVersion,
         deviceModel = Build.MODEL,
         locale = Locale.getDefault().toLanguageTag(),
+        appIdentifier = context?.packageName?.takeIf { it.isNotBlank() },
     )
 }
