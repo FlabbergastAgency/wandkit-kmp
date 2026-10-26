@@ -123,6 +123,12 @@ WandKit.event(
 )
 ```
 
+### Native review prompt
+
+An event can show a feedback form. When a star-rating page in that form has **Request native review on 5-star rating** turned on in the dashboard and the user gives 5 stars, the SDK asks for the Google Play In-App Review card once the form closes - whether it was completed or closed early, never mid-flow. There is nothing to wire up in your app.
+
+Play decides whether the card actually appears: it is quota-limited and only shows for builds installed from Play (an internal test track or internal app sharing works), so a debug build installed from Android Studio never shows it. Session replay and screenshot detection skip the card. **Android only.**
+
 ## Referrals
 
 The SDK also supports creating and redeeming referral links and codes.

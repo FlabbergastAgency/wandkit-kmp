@@ -44,6 +44,14 @@ internal data class EventPageDto(
      */
     @SerialName("post_creation")
     val postCreation: JsonElement? = null,
+    /**
+     * `stars` pages only: a 5-star answer asks for the native Play review
+     * once the form closes. Typed as [JsonElement] like [postCreation], so a
+     * malformed value just means no review rather than failing the whole
+     * form's decode.
+     */
+    @SerialName("request_native_review")
+    val requestNativeReview: JsonElement? = null,
     @SerialName("next")
     val next: List<EventNextRuleDto> = emptyList(),
 )

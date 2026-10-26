@@ -55,6 +55,7 @@ import com.flabbergast.wandkit.core.domain.featurepreview.createVoteFeaturePrevi
 import com.flabbergast.wandkit.core.domain.forms.DismissFormUseCase
 import com.flabbergast.wandkit.core.domain.forms.FeedbackFormController
 import com.flabbergast.wandkit.core.domain.forms.FeedbackFormRepository
+import com.flabbergast.wandkit.core.domain.forms.NativeReviewHooks
 import com.flabbergast.wandkit.core.domain.forms.SubmitFormUseCase
 import com.flabbergast.wandkit.core.domain.forms.createDismissFormUseCase
 import com.flabbergast.wandkit.core.domain.forms.createFeedbackFormController
@@ -75,6 +76,7 @@ import com.flabbergast.wandkit.core.domain.infrastructure.threading.BackgroundDi
 import com.flabbergast.wandkit.core.feedback.WandKitFeedbackScreen
 import com.flabbergast.wandkit.core.feedback.presentFeedbackScreen
 import com.flabbergast.wandkit.core.models.createWandKitClient
+import com.flabbergast.wandkit.core.review.NativeReviewPresenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -303,7 +305,14 @@ internal class WandKitSdkContainer private constructor(
     }
 
     internal val feedbackFormController: FeedbackFormController by lazy {
-        createFeedbackFormController(logger)
+        createFeedbackFormController(
+            logger = logger,
+            nativeReviewHooks = object : NativeReviewHooks {
+                override fun prefetch() = NativeReviewPresenter.prefetch(platformContext, logger)
+                override fun request() = NativeReviewPresenter.request(logger)
+                override fun discard() = NativeReviewPresenter.discard()
+            },
+        )
     }
 
     internal val submitScreenshotReportUseCase: SubmitScreenshotReportUseCase by lazy {
