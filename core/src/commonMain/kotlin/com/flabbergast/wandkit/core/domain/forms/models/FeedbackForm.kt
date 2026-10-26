@@ -30,7 +30,18 @@ internal data class FeedbackFormPage(
      * SDK never models what `post_creation` itself would do.
      */
     val hasPostCreation: Boolean = false,
+    /**
+     * `stars` pages only: a top rating here asks for the native Play review
+     * once the form closes. Always false on other page types.
+     */
+    val requestNativeReview: Boolean = false,
 ) {
+    /** Whether giving [stars] on this page should ask for the native Play review. */
+    fun requestsNativeReview(stars: Int): Boolean {
+        val starsContent = content as? Content.Stars ?: return false
+        return requestNativeReview && stars == starsContent.starCount
+    }
+
     sealed interface Content {
         data object Thumbs: Content
 

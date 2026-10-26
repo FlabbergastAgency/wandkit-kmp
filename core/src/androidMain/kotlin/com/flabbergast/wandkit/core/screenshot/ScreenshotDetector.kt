@@ -13,6 +13,7 @@ import com.flabbergast.wandkit.core.domain.screenshot.ScreenshotPrompt
 import com.flabbergast.wandkit.core.feedback.WandKitComposerAttachment
 import com.flabbergast.wandkit.core.feedback.WandKitFeedbackActivity
 import com.flabbergast.wandkit.core.replay.ReplaySnapshot
+import com.flabbergast.wandkit.core.review.isPlayReviewActivity
 import kotlin.math.max
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -51,7 +52,8 @@ internal object ScreenshotDetector {
 
     internal fun onActivityResumed(activity: Activity) {
         if (!supportsScreenCaptureCallback() || !enabled) return
-        if (activity is WandKitFeedbackActivity) return
+        // A screenshot of the Play review card is not one of the app's UI.
+        if (activity is WandKitFeedbackActivity || activity.isPlayReviewActivity()) return
         Api34ScreenCaptureCallbacks.register(activity) { onScreenCaptured(activity) }
     }
 
