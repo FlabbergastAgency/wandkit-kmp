@@ -9,7 +9,11 @@ internal interface AccessGateRepository {
     /** The silent status check; [code] is the cached pass's code, `null` when there is none. */
     suspend fun status(code: String?): Result<AccessGateStatus>
 
-    /** Claims [code] (as typed, trimmed) for this install. Always records a claim. */
+    /**
+     * Claims [code] (as typed, trimmed) for this install, with its device id
+     * and - only when the app has identified one - the user id. Always
+     * records a claim.
+     */
     suspend fun claim(code: String): Result<AccessGateClaim>
 }
 
@@ -55,3 +59,6 @@ internal class AccessGateTimeoutException(
 internal const val ERROR_CODE_NOT_FOUND = "access_code_not_found"
 internal const val ERROR_CODE_EXPIRED = "access_code_expired"
 internal const val ERROR_CODE_REVOKED = "access_code_revoked"
+
+/** 409: a capped (e.g. single-use) code other installs have already used up. */
+internal const val ERROR_CODE_ALREADY_USED = "access_code_already_used"

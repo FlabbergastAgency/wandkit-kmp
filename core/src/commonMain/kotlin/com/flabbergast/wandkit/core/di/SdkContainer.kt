@@ -85,10 +85,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import kotlin.time.Clock
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalUuidApi::class)
 internal class WandKitSdkContainer private constructor(
     internal val config: WandKitConfig,
     internal val platformContext: PlatformContext?,
@@ -123,7 +120,17 @@ internal class WandKitSdkContainer private constructor(
         }
     }
 
-    internal val deviceId = Uuid.generateV4().toString()
+    /**
+     * The persisted anonymous id every event (and invite-code claim) carries
+     * as `device_id` - the same value on every launch of this install. See
+     * [InstallIdentity.deviceId].
+     */
+    internal val deviceId: String
+        get() = installIdentity.deviceId
+
+    /** The identified user's id, or `null` when nobody is identified (a blank id counts as none). */
+    private val identifiedUserId: String?
+        get() = externalUserId?.takeIf { it.isNotBlank() }
 
     /**
      * The platform's session replay recorder while it is running - set by the
@@ -159,11 +166,18 @@ internal class WandKitSdkContainer private constructor(
     }
 
     internal val identityInfo: IdentifyInfo
-        get() = IdentifyInfo(
-            userId = externalUserId ?: Uuid.generateV4().toString(),
-            deviceId = deviceId,
-            displayName = externalUserId?.let { displayName?.trim()?.takeIf { name -> name.isNotBlank() } },
-        )
+        get() {
+            // No made-up id for an anonymous install: the backend keys it by
+            // `device_id` alone, and would otherwise take a random id at face
+            // value as a new identified user (and later stamp an invite-code
+            // claim onto it).
+            val userId = identifiedUserId
+            return IdentifyInfo(
+                userId = userId,
+                deviceId = deviceId,
+                displayName = userId?.let { displayName?.trim()?.takeIf { name -> name.isNotBlank() } },
+            )
+        }
 
     internal val json: Json by lazy { createJson() }
 
@@ -221,6 +235,7 @@ internal class WandKitSdkContainer private constructor(
         createAccessGateRepository(
             accessGateApi = accessGateApi,
             installIdentity = installIdentity,
+            externalUserId = { identifiedUserId },
             platform = appConfiguration.platform,
             sdkVersion = replaySdkName,
         )

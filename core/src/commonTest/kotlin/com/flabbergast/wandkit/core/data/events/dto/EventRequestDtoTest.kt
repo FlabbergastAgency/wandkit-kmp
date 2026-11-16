@@ -106,6 +106,32 @@ class EventRequestDtoTest {
     }
 
     @Test
+    fun anonymousUserEncodesOnlyTheDeviceId() {
+        val json = createJson()
+        val request = EventRequestDto(
+            eventName = "screen_viewed",
+            user = EventRequestUserDto(deviceId = "device-1"),
+            occurredAt = "2026-08-20T00:00:00Z",
+            sdk = EventRequestSdkDto(platform = "Android", version = "1.0.0"),
+        )
+
+        val encoded = json.encodeToString(EventRequestDto.serializer(), request)
+
+        assertTrue(encoded.contains("\"user\":{\"device_id\":\"device-1\"}"), encoded)
+        assertFalse(encoded.contains("external_user_id"))
+    }
+
+    @Test
+    fun identifiedUserEncodesTheExternalUserIdAndTheDeviceId() {
+        val json = createJson()
+        val user = EventRequestUserDto(externalUserId = "user-1", deviceId = "device-1")
+
+        val encoded = json.encodeToString(EventRequestUserDto.serializer(), user)
+
+        assertEquals("""{"external_user_id":"user-1","device_id":"device-1"}""", encoded)
+    }
+
+    @Test
     fun sdkEncodesSupportedPageTypes() {
         val json = createJson()
         val request = EventRequestDto(

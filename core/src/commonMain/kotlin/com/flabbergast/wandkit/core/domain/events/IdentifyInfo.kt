@@ -1,7 +1,8 @@
 package com.flabbergast.wandkit.core.domain.events
 
 internal data class IdentifyInfo(
-    val userId: String,
+    /** The id passed to `identify(...)`; `null` while nobody is identified - never a made-up id. */
+    val userId: String?,
     val deviceId: String,
     val displayName: String? = null,
 )

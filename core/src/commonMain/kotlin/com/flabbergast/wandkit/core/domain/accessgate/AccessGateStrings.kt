@@ -14,6 +14,7 @@ internal object AccessGateStrings {
     const val ERROR_NOT_FOUND = "That code isn't valid."
     const val ERROR_EXPIRED = "That code has expired."
     const val ERROR_REVOKED = "That code is no longer valid."
+    const val ERROR_ALREADY_USED = "This code has already been used."
     const val ERROR_RATE_LIMITED = "Too many attempts. Try again in a minute."
     const val ERROR_GENERIC = "Something went wrong. Please try again."
 }

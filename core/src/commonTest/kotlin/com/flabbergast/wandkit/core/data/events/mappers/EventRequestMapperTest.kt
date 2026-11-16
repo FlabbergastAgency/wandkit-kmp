@@ -106,24 +106,34 @@ class EventRequestMapperTest {
     }
 
     /**
-     * Mirrors [com.flabbergast.wandkit.core.di.WandKitSdkContainer.identityInfo]: it only
-     * threads a name through when there is a real identified `externalUserId`, so the random
-     * UUID fallback used for anonymous events must reach this mapper with a `null` name even
-     * if the container is still holding a suggestion from an earlier `identify(...)` call.
+     * Mirrors [com.flabbergast.wandkit.core.di.WandKitSdkContainer.identityInfo]: an
+     * anonymous install has no user id at all (never a made-up one) and no name, even
+     * if the container is still holding a suggestion from an earlier `identify(...)`.
      */
     @Test
-    fun toEventRequestUserOmitsDisplayNameForAnonymousEventDespiteLingeringName() {
+    fun toEventRequestUserOmitsUserIdAndDisplayNameForAnonymousEvent() {
         val anonymousIdentifyInfo = IdentifyInfo(
-            userId = "3f6e9e2a-9b3b-4a34-8e34-2e6b8f6a9c11",
+            userId = null,
             deviceId = "device-1",
             displayName = null,
         )
 
         val user = anonymousIdentifyInfo.toEventRequestUser()
 
+        assertNull(user.externalUserId)
+        assertEquals("device-1", user.deviceId)
         assertNull(user.displayName)
 
         val encoded = createJson().encodeToString(EventRequestUserDto.serializer(), user)
-        assertFalse(encoded.contains("\"display_name\""))
+        assertEquals("""{"device_id":"device-1"}""", encoded)
+    }
+
+    @Test
+    fun toEventRequestUserKeepsTheExternalUserIdWhenIdentified() {
+        val user = IdentifyInfo(userId = "user-1", deviceId = "device-1").toEventRequestUser()
+
+        val encoded = createJson().encodeToString(EventRequestUserDto.serializer(), user)
+        assertTrue(encoded.contains("\"external_user_id\":\"user-1\""))
+        assertTrue(encoded.contains("\"device_id\":\"device-1\""))
     }
 }

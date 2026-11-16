@@ -71,6 +71,12 @@ public object WandKit {
      * posts until they set their own name in the feedback UI, and re-identifying
      * with a new suggestion updates it - but never overwrites a name the user
      * has already set themselves.
+     *
+     * Until then, and after [clearUser], events go out anonymously: they carry
+     * no user id, only this install's persisted device id, so the whole
+     * install is one anonymous user. The first event after `identify` links
+     * that anonymous user (and the invite code it claimed, if any) to
+     * [userId].
      */
     public fun identify(
         userId: String,
@@ -79,6 +85,10 @@ public object WandKit {
         WandKitSdkContainer.get().setUserId(userId, displayName)
     }
 
+    /**
+     * Forgets the identified user. Later events are anonymous again, under the
+     * same device id as before - it is never reset.
+     */
     public fun clearUser() {
         WandKitSdkContainer.get().setUserId(null)
     }

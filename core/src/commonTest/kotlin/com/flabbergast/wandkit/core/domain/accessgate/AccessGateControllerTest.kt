@@ -478,6 +478,23 @@ class AccessGateControllerTest {
     }
 
     @Test
+    fun claim_alreadyUsed_showsItsOwnInlineError() = runTest {
+        assertClaimShowsError(AccessGateApiException(409, ERROR_CODE_ALREADY_USED), AccessGateStrings.ERROR_ALREADY_USED)
+        assertEquals("This code has already been used.", AccessGateStrings.ERROR_ALREADY_USED)
+    }
+
+    /** An older server, or a 409 this SDK does not know yet, keeps the generic message. */
+    @Test
+    fun claim_unknownConflict_showsGenericError() = runTest {
+        assertClaimShowsError(AccessGateApiException(409, "access_code_something_new"), AccessGateStrings.ERROR_GENERIC)
+    }
+
+    @Test
+    fun claim_conflictWithoutAnErrorCode_showsGenericError() = runTest {
+        assertClaimShowsError(AccessGateApiException(409, null), AccessGateStrings.ERROR_GENERIC)
+    }
+
+    @Test
     fun claim_rateLimited_showsTryAgainInAMinute() = runTest {
         assertClaimShowsError(AccessGateApiException(429, null), AccessGateStrings.ERROR_RATE_LIMITED)
     }

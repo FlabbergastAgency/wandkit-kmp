@@ -7,14 +7,25 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 /**
- * Who this install is, as far as referrals are concerned.
+ * Who this install is, as far as referrals, the invite gate and anonymous
+ * events are concerned.
  *
- * Distinct from the per-session device id used for events: a claim binds an
- * install permanently, so this id has to survive relaunches or an inviter loses
- * a referral they earned.
+ * A referral or gate claim binds an install permanently, so these ids have to
+ * survive relaunches or an inviter loses a referral they earned.
  */
 internal interface InstallIdentity {
     val installId: String
+
+    /**
+     * The anonymous id events (and invite-code claims) carry as `device_id`.
+     * The backend keys an install nobody has identified as `dev:<device_id>`,
+     * and ties a claim to the user the app later identifies through it, so it
+     * must be the same on every launch. Stored under its own key, first
+     * seeded from [installId] (so an existing install starts with device id
+     * == install id), and never cleared by identify, logout or an API-key
+     * change.
+     */
+    val deviceId: String
 
     /**
      * When the SDK first ran here. Fingerprint matching uses it to tell a fresh
@@ -25,7 +36,8 @@ internal interface InstallIdentity {
 
 internal fun createInstallIdentity(keyValueStore: KeyValueStore): InstallIdentity = InstallIdentityImpl(keyValueStore)
 
-private const val KEY_INSTALL_ID = "wandkit.installId"
+internal const val KEY_INSTALL_ID = "wandkit.installId"
+internal const val KEY_DEVICE_ID = "wandkit.deviceId"
 private const val KEY_FIRST_LAUNCH_AT = "wandkit.firstLaunchAt"
 
 @OptIn(ExperimentalUuidApi::class)
@@ -34,6 +46,10 @@ private class InstallIdentityImpl(
 ) : InstallIdentity {
     override val installId: String by lazy {
         keyValueStore.getOrPut(KEY_INSTALL_ID) { Uuid.generateV4().toString() }
+    }
+
+    override val deviceId: String by lazy {
+        keyValueStore.getOrPut(KEY_DEVICE_ID) { installId }
     }
 
     override val firstLaunchAt: Instant by lazy {

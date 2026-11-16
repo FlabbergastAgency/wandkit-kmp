@@ -388,6 +388,7 @@ internal class AccessGateController(
             error.errorCode == ERROR_CODE_NOT_FOUND -> AccessGateStrings.ERROR_NOT_FOUND
             error.errorCode == ERROR_CODE_EXPIRED -> AccessGateStrings.ERROR_EXPIRED
             error.errorCode == ERROR_CODE_REVOKED -> AccessGateStrings.ERROR_REVOKED
+            error.errorCode == ERROR_CODE_ALREADY_USED -> AccessGateStrings.ERROR_ALREADY_USED
             error.statusCode == 429 -> AccessGateStrings.ERROR_RATE_LIMITED
             else -> {
                 logger.error(LOGGER_TAG, "Claim failed (HTTP ${error.statusCode}, ${error.errorCode ?: "no error code"})")
