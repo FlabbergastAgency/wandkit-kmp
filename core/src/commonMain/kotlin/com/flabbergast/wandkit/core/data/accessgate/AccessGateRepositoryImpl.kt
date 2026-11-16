@@ -19,11 +19,14 @@ import kotlinx.coroutines.CancellationException
 internal fun createAccessGateRepository(
     accessGateApi: WandKitApi<AccessGateApi>,
     installIdentity: InstallIdentity,
+    /** The identified user's id, `null` while nobody is identified. */
+    externalUserId: () -> String?,
     platform: String,
     sdkVersion: String,
 ): AccessGateRepository = AccessGateRepositoryImpl(
     accessGateApi = accessGateApi,
     installIdentity = installIdentity,
+    externalUserId = externalUserId,
     platform = platform,
     sdkVersion = sdkVersion,
 )
@@ -31,6 +34,7 @@ internal fun createAccessGateRepository(
 private class AccessGateRepositoryImpl(
     private val accessGateApi: WandKitApi<AccessGateApi>,
     private val installIdentity: InstallIdentity,
+    private val externalUserId: () -> String?,
     private val platform: String,
     private val sdkVersion: String,
 ) : AccessGateRepository {
@@ -49,6 +53,8 @@ private class AccessGateRepositoryImpl(
                     code = code,
                     platform = platform,
                     sdkVersion = sdkVersion,
+                    deviceId = installIdentity.deviceId,
+                    externalUserId = externalUserId()?.takeIf { it.isNotBlank() },
                 ),
             )
         }

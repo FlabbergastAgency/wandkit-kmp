@@ -17,6 +17,7 @@ class ApiKeyBindingTest {
         store.putString(KEY_ACCESS_GATE_LAST_KNOWN_ENABLED, "true")
         store.putBoolean(KEY_DETECTION_ATTEMPTED, true)
         store.putString("wandkit.installId", "install-1")
+        store.putString("wandkit.deviceId", "device-1")
     }
 
     @Test
@@ -25,7 +26,7 @@ class ApiKeyBindingTest {
     }
 
     @Test
-    fun changingTheKeyClearsGateAndReferralStateButKeepsInstallIdentity() {
+    fun changingTheKeyClearsGateAndReferralStateButKeepsInstallAndDeviceIds() {
         discardStateOfPreviousApiKey(store, "wk_a")
         seed()
 
@@ -35,6 +36,7 @@ class ApiKeyBindingTest {
         assertNull(store.getString(KEY_ACCESS_GATE_LAST_KNOWN_ENABLED))
         assertFalse(store.getBoolean(KEY_DETECTION_ATTEMPTED))
         assertEquals("install-1", store.getString("wandkit.installId"))
+        assertEquals("device-1", store.getString("wandkit.deviceId"))
     }
 
     @Test

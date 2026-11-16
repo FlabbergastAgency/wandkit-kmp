@@ -37,17 +37,42 @@ class AccessGateDtoTest {
         assertEquals("K7QM-2XFT", body["code"]?.jsonPrimitive?.content)
     }
 
-    @Test
-    fun claimRequestUsesSnakeCase() {
-        val body = Json.parseToJsonElement(
-            json.encodeToString(
-                AccessGateClaimRequestDto(installId = "install-1", code = "k7qm 2xft", platform = "android", sdkVersion = "android-0.1.8"),
-            ),
-        ).jsonObject
+    private fun encode(request: AccessGateClaimRequestDto): JsonObject =
+        Json.parseToJsonElement(json.encodeToString(request)).jsonObject
 
-        assertEquals(setOf("install_id", "code", "platform", "sdk_version"), body.keys)
+    @Test
+    fun claimRequestUsesSnakeCase_andAnAnonymousClaimSendsTheDeviceIdButNoUserId() {
+        val body = encode(
+            AccessGateClaimRequestDto(
+                installId = "install-1",
+                code = "k7qm 2xft",
+                platform = "android",
+                sdkVersion = "android-0.1.8",
+                deviceId = "device-1",
+            ),
+        )
+
+        assertEquals(setOf("install_id", "code", "platform", "sdk_version", "device_id"), body.keys)
         assertEquals("k7qm 2xft", body["code"]?.jsonPrimitive?.content)
         assertEquals("android-0.1.8", body["sdk_version"]?.jsonPrimitive?.content)
+        assertEquals("device-1", body["device_id"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun claimRequestCarriesTheUserIdOnlyWhenIdentified() {
+        val body = encode(
+            AccessGateClaimRequestDto(
+                installId = "install-1",
+                code = "K7QM-2XFT",
+                platform = "android",
+                sdkVersion = "android-0.1.8",
+                deviceId = "device-1",
+                externalUserId = "user-1",
+            ),
+        )
+
+        assertEquals("device-1", body["device_id"]?.jsonPrimitive?.content)
+        assertEquals("user-1", body["external_user_id"]?.jsonPrimitive?.content)
     }
 
     @Test

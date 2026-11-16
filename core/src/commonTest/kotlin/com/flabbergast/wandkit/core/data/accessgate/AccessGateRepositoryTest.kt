@@ -37,10 +37,12 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.io.IOException
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -59,16 +61,31 @@ private fun testHttpClient(engine: MockEngine): WandKitHttpClient {
 }
 
 private fun repository(
+    externalUserId: () -> String? = { null },
     handler: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData,
 ): Pair<AccessGateRepository, MockEngine> {
     val engine = MockEngine { request -> handler(request) }
     val api = createAccessGateApi(testHttpClient(engine), baseUrl = "https://example.test", logger = NoOpLogger)
     val installIdentity = object : InstallIdentity {
         override val installId = "install-1"
+
+        // Deliberately not the install id, so a test can tell which one went out.
+        override val deviceId = "device-1"
         override val firstLaunchAt = Instant.fromEpochMilliseconds(0)
     }
-    return createAccessGateRepository(api, installIdentity, platform = "android", sdkVersion = "android-0.1.8") to engine
+    return createAccessGateRepository(
+        api,
+        installIdentity,
+        externalUserId = externalUserId,
+        platform = "android",
+        sdkVersion = "android-0.1.8",
+    ) to engine
 }
+
+private fun HttpRequestData.jsonBody(): JsonObject =
+    Json.parseToJsonElement((body as OutgoingContent.ByteArrayContent).bytes().decodeToString()).jsonObject
+
+private const val CLAIM_OK = """{"code":"K7QM-2XFT","claim_count":4,"expires_at":null}"""
 
 class AccessGateRepositoryTest {
     @Test
@@ -87,6 +104,57 @@ class AccessGateRepositoryTest {
         assertEquals("install-1", body["install_id"]?.jsonPrimitive?.content)
         assertEquals("android", body["platform"]?.jsonPrimitive?.content)
         assertEquals("android-0.1.8", body["sdk_version"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun anonymousClaim_sendsThePersistedDeviceId_andNoUserId() = runTest {
+        val (repository, engine) = repository { respond(CLAIM_OK, HttpStatusCode.OK, jsonHeaders) }
+
+        repository.claim("K7QM-2XFT")
+
+        val body = engine.requestHistory.single().jsonBody()
+        assertEquals("device-1", body["device_id"]?.jsonPrimitive?.content)
+        assertFalse("external_user_id" in body)
+    }
+
+    @Test
+    fun identifiedClaim_sendsTheUserIdToo() = runTest {
+        val (repository, engine) = repository(externalUserId = { "user-1" }) {
+            respond(CLAIM_OK, HttpStatusCode.OK, jsonHeaders)
+        }
+
+        repository.claim("K7QM-2XFT")
+
+        val body = engine.requestHistory.single().jsonBody()
+        assertEquals("device-1", body["device_id"]?.jsonPrimitive?.content)
+        assertEquals("user-1", body["external_user_id"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun claim_readsTheUserIdAtClaimTime_andTreatsBlankAsAnonymous() = runTest {
+        var userId: String? = "  "
+        val (repository, engine) = repository(externalUserId = { userId }) {
+            respond(CLAIM_OK, HttpStatusCode.OK, jsonHeaders)
+        }
+
+        repository.claim("K7QM-2XFT")
+        userId = "user-2"
+        repository.claim("K7QM-2XFT")
+
+        val (first, second) = engine.requestHistory.map { it.jsonBody() }
+        assertFalse("external_user_id" in first)
+        assertEquals("user-2", second["external_user_id"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun statusCheck_carriesNoDeviceOrUserId() = runTest {
+        val (repository, engine) = repository(externalUserId = { "user-1" }) {
+            respond("""{"enabled":true}""", HttpStatusCode.OK, jsonHeaders)
+        }
+
+        repository.status("K7QM-2XFT")
+
+        assertEquals(setOf("install_id", "code"), engine.requestHistory.single().jsonBody().keys)
     }
 
     @Test
@@ -120,8 +188,8 @@ class AccessGateRepositoryTest {
     }
 
     @Test
-    fun claimConflict_distinguishesExpiredFromRevoked() = runTest {
-        for (code in listOf("access_code_expired", "access_code_revoked")) {
+    fun claimConflict_distinguishesExpiredRevokedAndAlreadyUsed() = runTest {
+        for (code in listOf("access_code_expired", "access_code_revoked", "access_code_already_used")) {
             val (repository, _) = repository {
                 respond("""{"error":"Conflict","code":"$code","message":"x"}""", HttpStatusCode.Conflict, jsonHeaders)
             }

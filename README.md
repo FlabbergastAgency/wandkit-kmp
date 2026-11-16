@@ -100,6 +100,10 @@ Clear the identified user when needed:
 WandKit.clearUser()
 ```
 
+Until you call `identify(...)` (and again after `clearUser()`), events are **anonymous**: they carry no user id, only this install's device id. The SDK never makes one up. The device id is generated once per install and kept in the app's storage (`SharedPreferences` on Android), so every launch of the install is the same anonymous user on the dashboard, and per-user logic (event counts, form triggers and cooldowns) adds up across launches. `identify`, `clearUser` and `resetAccessGate` never change it; a reinstall or "Clear data" does.
+
+The first event after `identify(...)` carries both ids, which links the anonymous user, and the invite code it claimed if the app is gated, to the identified one.
+
 ## Track Events
 
 Send events with a name and optional string properties:
@@ -482,7 +486,7 @@ What it does not do:
 
 ## Invite gating
 
-Restrict the whole app to invited users. When you opt in, the SDK shows a blocking screen at launch asking for an invite code, claims the code against WandKit, and hands you the code (and how many times it has been claimed) once the user is let through. Your own backend, not WandKit, ties a code to one of your accounts.
+Restrict the whole app to invited users. When you opt in, the SDK shows a blocking screen at launch asking for an invite code, claims the code against WandKit, and hands you the code (and how many times it has been claimed) once the user is let through. Once you `identify(...)` the user, the dashboard shows which of your users came in with which code (see [Who used a code](#who-used-a-code)); enforcing anything per user is still your own backend's job.
 
 Gating is a **local opt-in**: pass `accessGate` in `WandKitConfig` and the SDK checks the server on every launch. Leave it out (the default) and the SDK never shows the gate and never makes a gate network call - whatever the dashboard setting is, an app that never asked for gating cannot be gated. The dashboard switch then decides whether an opted-in build actually gates.
 
@@ -532,6 +536,19 @@ While the gate is checking or blocked, no other WandKit UI shows: `presentFeedba
 
 The screen shows the dashboard's title and message when set (English defaults otherwise), and a "Need a code?" link when the project has a help URL - point it at the page with your access-request form.
 
+A code the server rejects keeps the gate up with an inline message above the field:
+
+| Server answer | Message |
+|---|---|
+| Unknown code (404 `access_code_not_found`) | That code isn't valid. |
+| Expired (409 `access_code_expired`) | That code has expired. |
+| Revoked (409 `access_code_revoked`) | That code is no longer valid. |
+| Used up by other installs (409 `access_code_already_used`) | This code has already been used. |
+| Rate limited (429) | Too many attempts. Try again in a minute. |
+| Anything else | Something went wrong. Please try again. |
+
+Codes can be limited to a number of installs in the dashboard; emailed codes (bulk send, approved access requests) work on **one install**. An install that already claimed a code can always enter it again, for example after `resetAccessGate()`.
+
 ### Reading the pass
 
 `WandKit.accessPass` returns what `onStateChange` last reported with `Passed`, whenever you want it - including right after `configure` returns, since a cached pass is set synchronously. `WandKit.accessGateState` is the equivalent for the full state.
@@ -542,7 +559,11 @@ WandKit.accessPass?.let { pass ->
 }
 ```
 
-WandKit does not bind a code to your users for you - send `pass.code`, together with whatever identifies your signed-in user, to your own backend on sign-up or sign-in.
+### Who used a code
+
+The claim carries this install's device id (the same one anonymous events carry) and, if you already called `identify(...)`, your user id. A claim made before login is tied to the install's anonymous user, and the first event after `identify(...)` attaches your user to it, so the dashboard's invite codes page and user detail show which user used which code. Nothing to do beyond calling `identify(...)` when the user signs in.
+
+This attribution comes from the device, so it is for visibility only. To tie a code to one of your accounts with any guarantee, send `pass.code`, together with whatever identifies your signed-in user, to your own backend on sign-up or sign-in and verify it there (next section).
 
 ### Verify the code on your server
 
@@ -579,7 +600,7 @@ Coming back to the app with a cached pass silently re-runs the status check, so 
 
 ### Reinstall behaviour
 
-The install ID lives in the app's `SharedPreferences`, so it does **not** survive a reinstall or "Clear data". A reinstalled app asks for the invite code again, and entering the same code counts as a new claim - `pass.claimCount` reflects that extra claim.
+The install and device IDs live in the app's `SharedPreferences`, so they do **not** survive a reinstall or "Clear data". A reinstalled app asks for the invite code again, and entering the same code counts as a new claim - `pass.claimCount` reflects that extra claim. On a single-use code (every emailed code) that new claim is a new install, so it is rejected with "This code has already been used." - send that person another code from the dashboard. The same goes for a second device.
 
 ### Rollout checklist
 
@@ -607,6 +628,11 @@ The `displayName` suggested via `identify(...)` rides along on every event for
 an identified user, not just the posts session mint, so this prefill is
 available even if the user never opened the feedback UI before triggering the
 form.
+
+Only identified users' answers become posts. An anonymous user (no
+`identify(...)`) can still be shown a form and their response is recorded, but
+a page set to create a post creates none and the display-name page is not
+spliced in.
 
 ## Compose Host Setup
 

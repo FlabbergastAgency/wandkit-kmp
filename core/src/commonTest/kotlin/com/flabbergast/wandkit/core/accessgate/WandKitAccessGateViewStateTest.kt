@@ -60,6 +60,17 @@ class WandKitAccessGateViewStateTest {
     }
 
     @Test
+    fun anAlreadyUsedClaimShowsItsMessageOnTheCodeField() {
+        val view = accessGateViewState(
+            WandKitAccessGateState.Blocked(WandKitAccessGateBlockReason.NoCode),
+            AccessGateScreenState(claimErrorMessage = AccessGateStrings.ERROR_ALREADY_USED),
+        )
+
+        assertEquals(WandKitAccessGateViewState.Phase.CodeEntry, view.phase)
+        assertEquals("This code has already been used.", view.errorMessage)
+    }
+
+    @Test
     fun aClaimErrorWinsOverTheBlockReason() {
         val view = accessGateViewState(
             WandKitAccessGateState.Blocked(WandKitAccessGateBlockReason.Expired),
