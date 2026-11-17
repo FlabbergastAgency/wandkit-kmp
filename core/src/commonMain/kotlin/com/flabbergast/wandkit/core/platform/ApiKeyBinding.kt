@@ -17,10 +17,10 @@ private const val KEY_API_KEY_HASH = "wandkit.apiKeyHash"
  * environment's pass or referral state, so it is dropped the first time the SDK
  * sees a different key. Only a hash of the key is stored, never the key.
  *
- * The install and device ids are left alone - they identify the install, not
- * the key. With no stored hash (the first launch after this shipped) the
- * current one is recorded and nothing is cleared, so existing installs are not
- * disturbed.
+ * The install id, the device id and the user the device id is linked to are
+ * left alone - they identify the install and who uses it, not the key. With
+ * no stored hash (the first launch after this shipped) the current one is
+ * recorded and nothing is cleared, so existing installs are not disturbed.
  */
 internal fun discardStateOfPreviousApiKey(
     keyValueStore: KeyValueStore,

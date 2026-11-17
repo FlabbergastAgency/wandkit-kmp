@@ -6,8 +6,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data class EventRequestUserDto(
     /**
-     * Omitted (not `null`) for an anonymous install: the backend then keys the
-     * user by [deviceId] alone.
+     * Omitted (not `null`) while nobody is identified: the backend then keys
+     * the user by [deviceId] alone - or, once that id is linked, by the user
+     * it was linked to.
      */
     @SerialName("external_user_id")
     val externalUserId: String? = null,

@@ -13,20 +13,25 @@ import com.flabbergast.wandkit.core.domain.accessgate.AccessGateCodeCheck
 import com.flabbergast.wandkit.core.domain.accessgate.AccessGateCodeStatus
 import com.flabbergast.wandkit.core.domain.accessgate.AccessGateRepository
 import com.flabbergast.wandkit.core.domain.accessgate.AccessGateStatus
+import com.flabbergast.wandkit.core.domain.events.IdentifyInfo
 import com.flabbergast.wandkit.core.domain.install.InstallIdentity
 import kotlinx.coroutines.CancellationException
 
 internal fun createAccessGateRepository(
     accessGateApi: WandKitApi<AccessGateApi>,
     installIdentity: InstallIdentity,
-    /** The identified user's id, `null` while nobody is identified. */
-    externalUserId: () -> String?,
+    /**
+     * Who is claiming, read at claim time: the current device id and the
+     * identified user's id (`null` while nobody is identified), as one
+     * snapshot so a concurrent identify or logout cannot mix the two.
+     */
+    identity: () -> IdentifyInfo,
     platform: String,
     sdkVersion: String,
 ): AccessGateRepository = AccessGateRepositoryImpl(
     accessGateApi = accessGateApi,
     installIdentity = installIdentity,
-    externalUserId = externalUserId,
+    identity = identity,
     platform = platform,
     sdkVersion = sdkVersion,
 )
@@ -34,7 +39,7 @@ internal fun createAccessGateRepository(
 private class AccessGateRepositoryImpl(
     private val accessGateApi: WandKitApi<AccessGateApi>,
     private val installIdentity: InstallIdentity,
-    private val externalUserId: () -> String?,
+    private val identity: () -> IdentifyInfo,
     private val platform: String,
     private val sdkVersion: String,
 ) : AccessGateRepository {
@@ -45,21 +50,23 @@ private class AccessGateRepositoryImpl(
             .toAccessGateResult()
             .map { it.data.toAccessGateStatus() }
 
-    override suspend fun claim(code: String): Result<AccessGateClaim> =
-        accessGateApi.invokeReadingErrorBody {
+    override suspend fun claim(code: String): Result<AccessGateClaim> {
+        val claimant = identity()
+        return accessGateApi.invokeReadingErrorBody {
             claim(
                 AccessGateClaimRequestDto(
                     installId = installIdentity.installId,
                     code = code,
                     platform = platform,
                     sdkVersion = sdkVersion,
-                    deviceId = installIdentity.deviceId,
-                    externalUserId = externalUserId()?.takeIf { it.isNotBlank() },
+                    deviceId = claimant.deviceId,
+                    externalUserId = claimant.userId?.takeIf { it.isNotBlank() },
                 ),
             )
         }
             .toAccessGateResult()
             .map { it.data.toAccessGateClaim() }
+    }
 }
 
 /**
