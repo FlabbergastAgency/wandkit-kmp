@@ -3,6 +3,7 @@ package com.flabbergast.wandkit.core.platform
 import com.flabbergast.wandkit.core.data.accessgate.KEY_ACCESS_GATE_LAST_KNOWN_ENABLED
 import com.flabbergast.wandkit.core.data.accessgate.KEY_ACCESS_GATE_PASS
 import com.flabbergast.wandkit.core.data.referrals.KEY_DETECTION_ATTEMPTED
+import com.flabbergast.wandkit.core.domain.install.createInstallIdentity
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -18,6 +19,7 @@ class ApiKeyBindingTest {
         store.putBoolean(KEY_DETECTION_ATTEMPTED, true)
         store.putString("wandkit.installId", "install-1")
         store.putString("wandkit.deviceId", "device-1")
+        store.putString("wandkit.deviceIdLinkedUser", "user-1")
     }
 
     @Test
@@ -26,7 +28,7 @@ class ApiKeyBindingTest {
     }
 
     @Test
-    fun changingTheKeyClearsGateAndReferralStateButKeepsInstallAndDeviceIds() {
+    fun changingTheKeyClearsGateAndReferralStateButKeepsInstallAndDeviceIdsAndTheLink() {
         discardStateOfPreviousApiKey(store, "wk_a")
         seed()
 
@@ -37,6 +39,23 @@ class ApiKeyBindingTest {
         assertFalse(store.getBoolean(KEY_DETECTION_ATTEMPTED))
         assertEquals("install-1", store.getString("wandkit.installId"))
         assertEquals("device-1", store.getString("wandkit.deviceId"))
+        // Who the device id belongs to does not depend on the key either.
+        assertEquals("user-1", store.getString("wandkit.deviceIdLinkedUser"))
+    }
+
+    @Test
+    fun aKeyChangeDoesNotRotateTheDeviceId_onTheNextLogin() {
+        discardStateOfPreviousApiKey(store, "wk_a")
+        val identity = createInstallIdentity(store)
+        identity.linkDeviceIdTo("user-1")
+        val deviceId = identity.deviceId
+
+        discardStateOfPreviousApiKey(store, "wk_b")
+        val relaunched = createInstallIdentity(store)
+        relaunched.linkDeviceIdTo("user-1")
+
+        assertEquals(deviceId, relaunched.deviceId)
+        assertEquals(identity.installId, relaunched.installId)
     }
 
     @Test

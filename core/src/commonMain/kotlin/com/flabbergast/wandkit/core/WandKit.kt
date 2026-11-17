@@ -65,32 +65,51 @@ public object WandKit {
 
     /**
      * Identifies the current user, optionally suggesting a display name for
-     * them.
+     * them. Call it when the user signs in, and again on every launch while
+     * they are signed in - the user id is kept in memory only.
      *
      * [displayName] is only a suggestion: it is shown on the user's feedback
      * posts until they set their own name in the feedback UI, and re-identifying
      * with a new suggestion updates it - but never overwrites a name the user
      * has already set themselves.
      *
-     * Until then, and after [clearUser], events go out anonymously: they carry
-     * no user id, only this install's persisted device id, so the whole
-     * install is one anonymous user. The first event after `identify` links
-     * that anonymous user (and the invite code it claimed, if any) to
-     * [userId].
+     * Before sign-in, everything this install sends is one anonymous user,
+     * keyed by a persisted device id. The first event after `identify` carries
+     * both ids, and the backend then merges that anonymous user - its events,
+     * form history and the invite code it claimed, if any - into [userId] for
+     * good. From then on the device id belongs to [userId]: what the app sends
+     * before the next `identify` (say, at the next launch) still counts as
+     * theirs.
+     *
+     * Identifying the same user again changes nothing. Identifying a
+     * different user than the one this device id belongs to starts them on a
+     * fresh device id first, so they never inherit the previous user's
+     * history. Ids are compared trimmed, so `" user_1 "` is the same user as
+     * `"user_1"`.
+     *
+     * A blank [userId] means "not identified": events go out anonymously, but
+     * the device id stays linked to whoever it was linked to, so they still
+     * count as that user. A blank id is not a sign-out - call [clearUser] on
+     * sign-out.
      */
     public fun identify(
         userId: String,
         displayName: String? = null,
     ) {
-        WandKitSdkContainer.get().setUserId(userId, displayName)
+        WandKitSdkContainer.get().identify(userId, displayName)
     }
 
     /**
-     * Forgets the identified user. Later events are anonymous again, under the
-     * same device id as before - it is never reset.
+     * Forgets the identified user. Call it when the user signs out.
+     *
+     * If the device id had been linked to a user by [identify], it is replaced
+     * by a fresh one, so whoever uses the app next starts as a new anonymous
+     * user instead of being counted as the previous one. With nobody linked it
+     * changes nothing, so calling it on every signed-out launch is fine. The
+     * install id ([installId]) never changes.
      */
     public fun clearUser() {
-        WandKitSdkContainer.get().setUserId(null)
+        WandKitSdkContainer.get().clearUser()
     }
 
     public fun event(

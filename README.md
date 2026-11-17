@@ -80,7 +80,7 @@ WandKit.configure(
 
 ## Identify A User
 
-If you have a known user id, identify the user before sending events:
+When the user signs in, identify them - and again on every launch while they are signed in, since the SDK keeps the user id in memory only:
 
 ```kotlin
 WandKit.identify(userId = "user_123")
@@ -92,17 +92,24 @@ You can also suggest a display name for the user:
 WandKit.identify(userId = "user_123", displayName = "Jane")
 ```
 
-`displayName` is only a suggestion: it is shown on the user's feedback posts until they set their own name in the feedback UI, and re-identifying with a new name updates the suggestion but never overwrites a name the user has already set themselves. Passing `null` (the default) leaves any previously suggested name untouched.
+`displayName` is only a suggestion: it is shown on the user's feedback posts until they set their own name in the feedback UI, and re-identifying with a new name updates the suggestion but never overwrites a name the user has already set themselves. Passing `null` (the default) leaves any previously suggested name untouched (for the same user - identifying a different user never carries the previous user's suggestion over).
 
-Clear the identified user when needed:
+When the user signs out, clear them. **Always call this on sign-out**, or the next person to use the device is counted as the previous user:
 
 ```kotlin
 WandKit.clearUser()
 ```
 
-Until you call `identify(...)` (and again after `clearUser()`), events are **anonymous**: they carry no user id, only this install's device id. The SDK never makes one up. The device id is generated once per install and kept in the app's storage (`SharedPreferences` on Android), so every launch of the install is the same anonymous user on the dashboard, and per-user logic (event counts, form triggers and cooldowns) adds up across launches. `identify`, `clearUser` and `resetAccessGate` never change it; a reinstall or "Clear data" does.
+### Anonymous users and sign-in
 
-The first event after `identify(...)` carries both ids, which links the anonymous user, and the invite code it claimed if the app is gated, to the identified one.
+- **Before sign-in, the install is one anonymous user.** Events carry no user id (the SDK never makes one up), only a device id that the SDK keeps in the app's storage (`SharedPreferences` on Android). Every launch is the same anonymous user on the dashboard, and per-user logic (event counts, form triggers and cooldowns) adds up across launches.
+- **Signing in merges that history into the user.** The first event after `identify(...)` carries both ids. The backend then moves the anonymous user's events, counters and form history - and the invite code it claimed, if the app is gated - onto the identified user, and the anonymous user disappears from the dashboard. From then on that device id belongs to the user, so what the app sends at the next launch before it calls `identify(...)` again still counts as them.
+- **`clearUser()` starts a fresh anonymous user.** It replaces the device id with a new one, so whoever uses the app next starts with a clean history instead of being counted as the previous user. If nobody was signed in it changes nothing, so calling it on every signed-out launch is fine.
+- **Switching accounts works the same way.** `identify(...)` with a different user than the one the device id belongs to starts a fresh device id first. Identifying the same user again changes nothing.
+- User ids are compared trimmed: `identify(" user_123 ")` is the same user as `identify("user_123")`.
+- **A blank id is not a sign-out.** `identify("")` (or a whitespace-only id) sends events anonymously but leaves the device id and its link alone, so an app that passes `user?.id ?: ""` on every launch before its user has loaded does not get a new anonymous id per launch. The flip side: an app that "signs out" with `identify("")` keeps counting as the previous user. Call `clearUser()` on sign-out.
+
+The install id (`WandKit.installId`, used for referrals and the invite-code cap) never changes - not on sign-in, sign-out, account switch or an API-key change. The device id and which user it belongs to survive relaunches and API-key changes too. A reinstall or "Clear data" resets all of them.
 
 ## Track Events
 
@@ -561,7 +568,7 @@ WandKit.accessPass?.let { pass ->
 
 ### Who used a code
 
-The claim carries this install's device id (the same one anonymous events carry) and, if you already called `identify(...)`, your user id. A claim made before login is tied to the install's anonymous user, and the first event after `identify(...)` attaches your user to it, so the dashboard's invite codes page and user detail show which user used which code. Nothing to do beyond calling `identify(...)` when the user signs in.
+The claim carries the current device id (the same one anonymous events carry) and, if you already called `identify(...)`, your user id. A claim made before login is tied to the anonymous user, and the first event after `identify(...)` merges it into your user (see [Anonymous users and sign-in](#anonymous-users-and-sign-in)), so the dashboard's invite codes page and user detail show which user used which code. Nothing to do beyond calling `identify(...)` when the user signs in and `clearUser()` when they sign out.
 
 This attribution comes from the device, so it is for visibility only. To tie a code to one of your accounts with any guarantee, send `pass.code`, together with whatever identifies your signed-in user, to your own backend on sign-up or sign-in and verify it there (next section).
 
@@ -580,7 +587,7 @@ fun logout() {
 }
 ```
 
-`resetAccessGate()` clears the cached code and runs the launch check again, as if this install had never claimed one. Call it on logout when the next person on this device should need their own code.
+`clearUser()` gives the next person on this device a fresh anonymous id, so their activity is not counted as yours. `resetAccessGate()` clears the cached code and runs the launch check again, as if this install had never claimed one. Call it on logout when the next person on this device should need their own code; leave it out if the device stays let in.
 
 ### Offline behaviour
 
@@ -600,7 +607,7 @@ Coming back to the app with a cached pass silently re-runs the status check, so 
 
 ### Reinstall behaviour
 
-The install and device IDs live in the app's `SharedPreferences`, so they do **not** survive a reinstall or "Clear data". A reinstalled app asks for the invite code again, and entering the same code counts as a new claim - `pass.claimCount` reflects that extra claim. On a single-use code (every emailed code) that new claim is a new install, so it is rejected with "This code has already been used." - send that person another code from the dashboard. The same goes for a second device.
+The install and device IDs live in the app's `SharedPreferences`, so they do **not** survive a reinstall or "Clear data". Signing out (`clearUser()`) changes the device id but never the install id, so it does not use up another claim. A reinstalled app asks for the invite code again, and entering the same code counts as a new claim - `pass.claimCount` reflects that extra claim. On a single-use code (every emailed code) that new claim is a new install, so it is rejected with "This code has already been used." - send that person another code from the dashboard. The same goes for a second device.
 
 ### Rollout checklist
 
