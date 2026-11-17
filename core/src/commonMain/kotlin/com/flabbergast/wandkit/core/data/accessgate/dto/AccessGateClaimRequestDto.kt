@@ -20,9 +20,10 @@ internal data class AccessGateClaimRequestDto(
     @SerialName("sdk_version")
     val sdkVersion: String,
     /**
-     * The persisted anonymous id events carry as `device_id`. Ties the claim
-     * to this install's anonymous user and, once the app identifies someone,
-     * to that user.
+     * The current anonymous id, the same one events carry as `device_id`.
+     * Ties the claim to the anonymous user and, once the app identifies
+     * someone, to that user (or straight to the user the backend already
+     * linked this id to).
      */
     @SerialName("device_id")
     val deviceId: String,

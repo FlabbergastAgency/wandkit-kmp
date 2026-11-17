@@ -12,6 +12,7 @@ import com.flabbergast.wandkit.core.data.accessgate.createAccessGateStore
 import com.flabbergast.wandkit.core.domain.accessgate.AccessGateController
 import com.flabbergast.wandkit.core.domain.accessgate.AccessGateRepository
 import com.flabbergast.wandkit.core.platform.InMemoryKeyValueStore
+import com.flabbergast.wandkit.core.platform.KeyValueStore
 import com.flabbergast.wandkit.core.platform.discardStateOfPreviousApiKey
 import com.flabbergast.wandkit.core.config.createAppConfiguration
 import com.flabbergast.wandkit.core.data.events.EventsApi
@@ -36,6 +37,8 @@ import com.flabbergast.wandkit.core.data.referrals.createReferralsRepository
 import com.flabbergast.wandkit.core.platform.PlatformContext
 import com.flabbergast.wandkit.core.platform.createInstallReferralCodeProvider
 import com.flabbergast.wandkit.core.platform.createKeyValueStore
+import com.flabbergast.wandkit.core.platform.createReentrantLock
+import com.flabbergast.wandkit.core.platform.withLock
 import com.flabbergast.wandkit.core.platform.readDeviceContext
 import com.flabbergast.wandkit.core.data.posts.dto.SdkPostsSessionDeviceDto
 import com.flabbergast.wandkit.core.replay.SessionReplayRecorder
@@ -89,6 +92,7 @@ import kotlin.time.Clock
 internal class WandKitSdkContainer private constructor(
     internal val config: WandKitConfig,
     internal val platformContext: PlatformContext?,
+    private val keyValueStoreOverride: KeyValueStore?,
 ): InstanceKeeper.Instance {
     internal val backgroundDispatcher = BackgroundDispatcher()
     internal val wandKitClient = createWandKitClient()
@@ -97,40 +101,78 @@ internal class WandKitSdkContainer private constructor(
 
     internal val logger: Logger by lazy { createAppLogger(appConfiguration.logLevel) }
 
+    /**
+     * Makes [identify] and [clearUser] one step for every reader of
+     * [identityInfo]: a request never pairs the new user with the previous
+     * device id, or the previous user with the new one - that pair would link
+     * the id to the wrong user for good.
+     */
+    private val identityLock = createReentrantLock()
+
+    /** The identified user's id, or `null` when nobody is identified - never blank. */
+    @Volatile
     internal var externalUserId: String? = null
         private set
 
+    @Volatile
     internal var displayName: String? = null
         private set
 
     /**
-     * Sets the identified user id and, optionally, a display name suggestion.
+     * Sets the identified user id and, optionally, a display name suggestion,
+     * and keeps the anonymous device id in step with it (see
+     * [InstallIdentity.deviceId]). Ids are compared trimmed, as the backend
+     * does, so `" user_1 "` is the same user as `"user_1"`.
      *
-     * A `null` [userId] clears both - there is no user to suggest a name for.
-     * A non-null [userId] with a `null` [displayName] leaves any previously
-     * set name untouched, so re-identifying without a name is a no-op on it
-     * rather than clearing it.
+     * - A user other than the one the device id is linked to gets a fresh
+     *   device id first, then the id is linked to them.
+     * - The same user again changes nothing but the name: a `null`
+     *   [displayName] leaves the previously set name untouched rather than
+     *   clearing it. A different user never inherits the previous one's name.
+     * - A blank [userId] means "not identified (yet)", not a sign-out: the
+     *   next requests are anonymous, but the link and the device id are left
+     *   alone - an app passing `user?.id ?: ""` on every launch before its
+     *   user has loaded must not get a new device id per launch. Only
+     *   [clearUser] ends a link without a new user.
      */
-    internal fun setUserId(userId: String?, displayName: String? = null) {
-        externalUserId = userId
-        if (userId == null) {
-            this.displayName = null
-        } else if (displayName != null) {
-            this.displayName = displayName
+    internal fun identify(userId: String, displayName: String? = null) {
+        val linkedAs = userId.trim()
+        identityLock.withLock {
+            if (linkedAs.isEmpty()) {
+                externalUserId = null
+                this.displayName = null
+                return
+            }
+            installIdentity.linkDeviceIdTo(linkedAs)
+            if (linkedAs != externalUserId?.trim()) {
+                this.displayName = displayName
+            } else if (displayName != null) {
+                this.displayName = displayName
+            }
+            externalUserId = userId
         }
     }
 
     /**
-     * The persisted anonymous id every event (and invite-code claim) carries
-     * as `device_id` - the same value on every launch of this install. See
+     * Sign-out: clears the user and the name, and replaces the device id with
+     * a fresh one if it was linked to a user. Nothing linked (an app clearing
+     * on every signed-out launch), nothing changes.
+     */
+    internal fun clearUser() {
+        identityLock.withLock {
+            installIdentity.unlinkDeviceId()
+            externalUserId = null
+            displayName = null
+        }
+    }
+
+    /**
+     * The anonymous id the next request carries as `device_id`. It changes on
+     * logout and account switch, so read it per request. See
      * [InstallIdentity.deviceId].
      */
     internal val deviceId: String
         get() = installIdentity.deviceId
-
-    /** The identified user's id, or `null` when nobody is identified (a blank id counts as none). */
-    private val identifiedUserId: String?
-        get() = externalUserId?.takeIf { it.isNotBlank() }
 
     /**
      * The platform's session replay recorder while it is running - set by the
@@ -157,7 +199,7 @@ internal class WandKitSdkContainer private constructor(
     internal val replaySdkName: String
         get() = "${appConfiguration.platform}-${appConfiguration.libraryVersion}"
 
-    internal val keyValueStore by lazy { createKeyValueStore(platformContext) }
+    internal val keyValueStore: KeyValueStore by lazy { keyValueStoreOverride ?: createKeyValueStore(platformContext) }
 
     internal val installIdentity: InstallIdentity by lazy { createInstallIdentity(keyValueStore) }
 
@@ -165,14 +207,19 @@ internal class WandKitSdkContainer private constructor(
         createReferralDetectionStore(keyValueStore = keyValueStore, json = json)
     }
 
+    /**
+     * Who the next request is from: the user and the device id as one
+     * consistent snapshot. Read it once per request and use that copy for
+     * both ids.
+     */
     internal val identityInfo: IdentifyInfo
-        get() {
-            // No made-up id for an anonymous install: the backend keys it by
+        get() = identityLock.withLock {
+            // No made-up id for an anonymous user: the backend keys it by
             // `device_id` alone, and would otherwise take a random id at face
             // value as a new identified user (and later stamp an invite-code
             // claim onto it).
-            val userId = identifiedUserId
-            return IdentifyInfo(
+            val userId = externalUserId
+            IdentifyInfo(
                 userId = userId,
                 deviceId = deviceId,
                 displayName = userId?.let { displayName?.trim()?.takeIf { name -> name.isNotBlank() } },
@@ -235,7 +282,7 @@ internal class WandKitSdkContainer private constructor(
         createAccessGateRepository(
             accessGateApi = accessGateApi,
             installIdentity = installIdentity,
-            externalUserId = { identifiedUserId },
+            identity = { identityInfo },
             platform = appConfiguration.platform,
             sdkVersion = replaySdkName,
         )
@@ -414,13 +461,18 @@ internal class WandKitSdkContainer private constructor(
         /** The latest configured container, or `null` before `configure`. */
         val currentOrNull: WandKitSdkContainer?
             get() = instance
-        fun init(config: WandKitConfig, platformContext: PlatformContext? = null) {
+        /** [keyValueStore] is for tests: one store over several configures stands in for relaunches. */
+        fun init(
+            config: WandKitConfig,
+            platformContext: PlatformContext? = null,
+            keyValueStore: KeyValueStore? = null,
+        ) {
             // A second configure must not stack a second gate: the previous
             // one stops for good before the new one starts.
             activeAccessGate.value?.shutdown()
             activeAccessGate.value = null
 
-            val container = WandKitSdkContainer(config, platformContext)
+            val container = WandKitSdkContainer(config, platformContext, keyValueStore)
             // Before anything can read the gate pass or referral state.
             discardStateOfPreviousApiKey(container.keyValueStore, config.apiKey)
             instance = container

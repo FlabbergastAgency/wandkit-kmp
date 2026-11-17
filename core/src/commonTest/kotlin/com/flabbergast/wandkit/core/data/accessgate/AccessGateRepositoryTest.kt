@@ -10,6 +10,7 @@ import com.flabbergast.wandkit.core.data.networking.createJson
 import com.flabbergast.wandkit.core.domain.accessgate.AccessGateApiException
 import com.flabbergast.wandkit.core.domain.accessgate.AccessGateClaim
 import com.flabbergast.wandkit.core.domain.accessgate.AccessGateRepository
+import com.flabbergast.wandkit.core.domain.events.IdentifyInfo
 import com.flabbergast.wandkit.core.domain.install.InstallIdentity
 import com.flabbergast.wandkit.core.testutil.NoOpLogger
 import com.flabbergast.wandkit.core.domain.accessgate.ACCESS_GATE_CLAIM_TIMEOUT
@@ -62,21 +63,24 @@ private fun testHttpClient(engine: MockEngine): WandKitHttpClient {
 
 private fun repository(
     externalUserId: () -> String? = { null },
+    // Deliberately not the install id, so a test can tell which one went out.
+    deviceId: () -> String = { "device-1" },
     handler: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData,
 ): Pair<AccessGateRepository, MockEngine> {
     val engine = MockEngine { request -> handler(request) }
     val api = createAccessGateApi(testHttpClient(engine), baseUrl = "https://example.test", logger = NoOpLogger)
     val installIdentity = object : InstallIdentity {
         override val installId = "install-1"
-
-        // Deliberately not the install id, so a test can tell which one went out.
-        override val deviceId = "device-1"
+        override val deviceId get() = error("the claim must take the device id from the identity snapshot")
+        override val deviceIdLinkedUserId: String? = null
+        override fun linkDeviceIdTo(userId: String) = error("not used")
+        override fun unlinkDeviceId() = error("not used")
         override val firstLaunchAt = Instant.fromEpochMilliseconds(0)
     }
     return createAccessGateRepository(
         api,
         installIdentity,
-        externalUserId = externalUserId,
+        identity = { IdentifyInfo(userId = externalUserId(), deviceId = deviceId()) },
         platform = "android",
         sdkVersion = "android-0.1.8",
     ) to engine
@@ -144,6 +148,38 @@ class AccessGateRepositoryTest {
         val (first, second) = engine.requestHistory.map { it.jsonBody() }
         assertFalse("external_user_id" in first)
         assertEquals("user-2", second["external_user_id"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun claim_sendsTheDeviceIdCurrentAtClaimTime() = runTest {
+        // A logout or account switch between two claims rotates the device id.
+        var deviceId = "device-1"
+        val (repository, engine) = repository(deviceId = { deviceId }) {
+            respond(CLAIM_OK, HttpStatusCode.OK, jsonHeaders)
+        }
+
+        repository.claim("K7QM-2XFT")
+        deviceId = "device-2"
+        repository.claim("K7QM-2XFT")
+
+        val (first, second) = engine.requestHistory.map { it.jsonBody() }
+        assertEquals("device-1", first["device_id"]?.jsonPrimitive?.content)
+        assertEquals("device-2", second["device_id"]?.jsonPrimitive?.content)
+        // The install id never rotates: the invite-code cap keys on it.
+        assertEquals("install-1", second["install_id"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun claim_readsTheIdentityOnce() = runTest {
+        var reads = 0
+        val (repository, _) = repository(deviceId = { reads++; "device-$reads" }) {
+            respond(CLAIM_OK, HttpStatusCode.OK, jsonHeaders)
+        }
+
+        repository.claim("K7QM-2XFT")
+
+        // One snapshot for both ids, so a concurrent identify cannot mix them.
+        assertEquals(1, reads)
     }
 
     @Test

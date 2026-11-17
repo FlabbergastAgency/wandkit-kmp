@@ -20,6 +20,10 @@ private class WandKitClientImpl : WandKitClient {
         properties: Map<String, String>,
         occurredAt: Instant?,
     ) {
+        // Who sent the event is decided now, not when the coroutine runs: an
+        // event recorded just before `clearUser()` or a switch to another
+        // user belongs to the previous user and their device id.
+        val identifyInfo = container.identityInfo
         scope.launch {
             container.trackEventUseCase(
                 event = WandKitEvent(
@@ -27,7 +31,7 @@ private class WandKitClientImpl : WandKitClient {
                     properties = properties,
                     occurredAt = occurredAt ?: Clock.System.now(),
                 ),
-                identifyInfo = container.identityInfo,
+                identifyInfo = identifyInfo,
             )
         }
     }
