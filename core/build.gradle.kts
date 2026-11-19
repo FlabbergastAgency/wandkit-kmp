@@ -81,6 +81,7 @@ kotlin {
 
         androidMain.dependencies {
             implementation(libs.android.installreferrer)
+            implementation(libs.play.review)
             implementation(libs.ktor.client.okhttp)
             // The feedback screen: document-start script injection and
             // window-insets helpers. `coroutines-android` supplies
