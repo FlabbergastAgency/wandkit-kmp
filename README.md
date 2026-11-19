@@ -49,8 +49,8 @@ The SDK reports the build's own identifier with its requests (the Android applic
 Add the SDK modules to your app:
 
 ```kotlin
-implementation("com.flabbergast.wandkit:core:<version>")
-implementation("com.flabbergast.wandkit:ui-compose:<version>")
+implementation("agency.flabbergast.wandkit:core:<version>")
+implementation("agency.flabbergast.wandkit:ui-compose:<version>")
 ```
 
 Configure WandKit must be called before calling other WandKit methods.
