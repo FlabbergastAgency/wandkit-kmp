@@ -120,6 +120,12 @@ skie {
 }
 
 mavenPublishing {
+    publishToMavenCentral()
+    // Maven Central needs signed artifacts; skip signing when no key is set so publishToMavenLocal works without one.
+    if (providers.gradleProperty("signingInMemoryKey").isPresent) {
+        signAllPublications()
+    }
+
     pom {
         name = "WandKit Compose UI"
         description = "The Compose UI library for WandKit Compose Multiplatform."
