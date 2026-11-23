@@ -80,7 +80,7 @@ class SubmitScreenshotReportUseCaseTest {
     }
 
     @Test
-    fun headlessPostUploadsTheGivenDebugFilesAndSendsTypeAndTags() = runTest {
+    fun headlessPostUploadsTheGivenDebugFilesAndSendsType() = runTest {
         val engine = createRoutedEngine()
         val useCase = createSubmitPostUseCase(
             postsApi = createTestPostsApi(engine),
@@ -91,14 +91,12 @@ class SubmitScreenshotReportUseCaseTest {
         val result = useCase(
             "Nice",
             WandKitPostType.PRAISE,
-            listOf("thumbs-up"),
             listOf(WandKitDebugAttachment.text("log line", "app.log")),
         )
 
         assertTrue(result.isSuccess, "Expected success but got $result")
         val postBody = engine.requestHistory.last().bodyText()
         assertTrue(postBody.contains(""""type":"praise""""), "Expected type in $postBody")
-        assertTrue(postBody.contains(""""tags":["thumbs-up"]"""), "Expected tags in $postBody")
         assertTrue(postBody.contains(""""attachment_ids":["att-1"]"""), "Expected the debug id in $postBody")
     }
 
@@ -111,7 +109,7 @@ class SubmitScreenshotReportUseCaseTest {
             logger = NoOpLogger,
         )
 
-        val result = useCase("Hi", null, emptyList(), emptyList())
+        val result = useCase("Hi", null, emptyList())
 
         assertTrue(result.isSuccess, "Expected success but got $result")
         assertEquals(listOf("/api/v1/sdk/posts"), engine.requestHistory.map { it.url.encodedPath })
@@ -127,7 +125,7 @@ class SubmitScreenshotReportUseCaseTest {
             logger = NoOpLogger,
         )
 
-        val result = useCase("Hi", null, emptyList(), emptyList())
+        val result = useCase("Hi", null, emptyList())
 
         assertTrue(result.exceptionOrNull() is WandKitReadOnlySessionException)
         assertTrue(engine.requestHistory.isEmpty())

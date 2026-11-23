@@ -176,10 +176,7 @@ public object WandKit {
      * team-only - shown in the dashboard, never to end users - and best-effort:
      * one that fails to upload is skipped and the post still goes out. At
      * most five files of 10 MB each are kept. [type] is a hint; the backend
-     * falls back to `other`. [tags] are names of tags that already exist in
-     * the project, matched case-insensitively; unknown, blank and repeated
-     * names are skipped and only the first 10 count, so a tag never fails the
-     * post.
+     * falls back to `other`.
      *
      * It uses whichever user [identify] last named. Anonymous sessions are
      * read-only, so the call fails for them with a
@@ -189,9 +186,8 @@ public object WandKit {
     public suspend fun submitPost(
         text: String,
         type: WandKitPostType? = null,
-        tags: List<String> = emptyList(),
         debugAttachments: List<WandKitDebugAttachment> = emptyList(),
-    ): Result<String> = WandKitSdkContainer.get().submitPostUseCase(text, type, tags, debugAttachments)
+    ): Result<String> = WandKitSdkContainer.get().submitPostUseCase(text, type, debugAttachments)
 
     /**
      * Presents the native "coming soon / it's here" sheet for [postId] - a

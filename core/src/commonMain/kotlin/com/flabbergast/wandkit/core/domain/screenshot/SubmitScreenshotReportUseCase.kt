@@ -35,14 +35,13 @@ internal fun interface SubmitScreenshotReportUseCase {
 
 /**
  * The same pipeline without a screenshot: creates a post of any [type] with
- * [tags] and host-supplied [debugAttachments] (capped like the provider's),
+ * host-supplied [debugAttachments] (capped like the provider's),
  * for host apps that build their own feedback UI.
  */
 internal fun interface SubmitPostUseCase {
     suspend operator fun invoke(
         text: String,
         type: WandKitPostType?,
-        tags: List<String>,
         debugAttachments: List<WandKitDebugAttachment>,
     ): Result<String>
 }
@@ -97,7 +96,6 @@ private class DefaultSubmitPostUseCase(
     ): Result<String> = submit(
         text = text,
         type = WandKitPostType.BUG,
-        tags = emptyList(),
         attachment = attachment,
         debugAttachments = null,
         replay = replay,
@@ -106,12 +104,10 @@ private class DefaultSubmitPostUseCase(
     override suspend fun invoke(
         text: String,
         type: WandKitPostType?,
-        tags: List<String>,
         debugAttachments: List<WandKitDebugAttachment>,
     ): Result<String> = submit(
         text = text,
         type = type,
-        tags = tags,
         attachment = null,
         debugAttachments = debugAttachments,
         replay = null,
@@ -121,7 +117,6 @@ private class DefaultSubmitPostUseCase(
     private suspend fun submit(
         text: String,
         type: WandKitPostType?,
-        tags: List<String>,
         attachment: WandKitComposerAttachment?,
         debugAttachments: List<WandKitDebugAttachment>?,
         replay: ReplayRecording?,
@@ -161,7 +156,6 @@ private class DefaultSubmitPostUseCase(
                 SdkCreatePostRequestDto(
                     text = text,
                     type = type?.wireValue,
-                    tags = tags.ifEmpty { null },
                     attachmentIds = (listOfNotNull(screenshotId) + debugIds + listOfNotNull(replayId)).ifEmpty { null },
                 ),
             )
