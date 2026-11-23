@@ -10,6 +10,8 @@ internal data class SdkCreatePostRequestDto(
     val text: String,
     @SerialName("type")
     val type: String? = null,
+    @SerialName("tags")
+    val tags: List<String>? = null,
     @SerialName("attachment_ids")
     val attachmentIds: List<String>? = null,
 )

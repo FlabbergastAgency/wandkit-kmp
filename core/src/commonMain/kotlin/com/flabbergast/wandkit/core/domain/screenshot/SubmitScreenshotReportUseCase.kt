@@ -10,6 +10,7 @@ import com.flabbergast.wandkit.core.feedback.WandKitComposerAttachment
 import com.flabbergast.wandkit.core.feedback.WandKitDebugAttachment
 import com.flabbergast.wandkit.core.feedback.WandKitDebugAttachmentsProvider
 import com.flabbergast.wandkit.core.feedback.WandKitPostType
+import com.flabbergast.wandkit.core.feedback.WandKitReadOnlySessionException
 import com.flabbergast.wandkit.core.replay.ReplayRecording
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
@@ -32,19 +33,44 @@ internal fun interface SubmitScreenshotReportUseCase {
     ): Result<String>
 }
 
+/**
+ * The same pipeline without a screenshot: creates a post of any [type] with
+ * [tags] and host-supplied [debugAttachments] (capped like the provider's),
+ * for host apps that build their own feedback UI.
+ */
+internal fun interface SubmitPostUseCase {
+    suspend operator fun invoke(
+        text: String,
+        type: WandKitPostType?,
+        tags: List<String>,
+        debugAttachments: List<WandKitDebugAttachment>,
+    ): Result<String>
+}
+
 internal fun createSubmitScreenshotReportUseCase(
     postsApi: WandKitApi<PostsApi>,
     postsSessionRepository: PostsSessionRepository,
     debugAttachmentsProvider: () -> WandKitDebugAttachmentsProvider?,
     logger: Logger,
-): SubmitScreenshotReportUseCase = DefaultSubmitScreenshotReportUseCase(
+): SubmitScreenshotReportUseCase = DefaultSubmitPostUseCase(
     postsApi = postsApi,
     postsSessionRepository = postsSessionRepository,
     debugAttachmentsProvider = debugAttachmentsProvider,
     logger = logger,
 )
 
-private const val LOGGER_TAG = "[SubmitScreenshotReportUseCase]"
+internal fun createSubmitPostUseCase(
+    postsApi: WandKitApi<PostsApi>,
+    postsSessionRepository: PostsSessionRepository,
+    logger: Logger,
+): SubmitPostUseCase = DefaultSubmitPostUseCase(
+    postsApi = postsApi,
+    postsSessionRepository = postsSessionRepository,
+    debugAttachmentsProvider = { null },
+    logger = logger,
+)
+
+private const val LOGGER_TAG = "[SubmitPost]"
 
 /** Debug attachments provider's total time budget; on expiry the report proceeds without files. */
 private const val DEBUG_PROVIDER_TIMEOUT_MILLIS = 10_000L
@@ -58,33 +84,62 @@ private const val MAX_DEBUG_ATTACHMENT_BYTES = 10L * 1024 * 1024
 /** The kind the API stores debug attachments under - dashboard-only, never shown to the end user. */
 private const val DEBUG_ATTACHMENT_KIND = "debug"
 
-/** Anonymous sessions can't write; the gate that publishes the prompt already keeps anonymous users out. */
-internal class ReadOnlyPostsSessionException :
-    Exception("This posts session is read-only and can't submit a report.")
-
-private class DefaultSubmitScreenshotReportUseCase(
+private class DefaultSubmitPostUseCase(
     private val postsApi: WandKitApi<PostsApi>,
     private val postsSessionRepository: PostsSessionRepository,
     private val debugAttachmentsProvider: () -> WandKitDebugAttachmentsProvider?,
     private val logger: Logger,
-) : SubmitScreenshotReportUseCase {
+) : SubmitScreenshotReportUseCase, SubmitPostUseCase {
     override suspend fun invoke(
         text: String,
         attachment: WandKitComposerAttachment,
         replay: ReplayRecording?,
+    ): Result<String> = submit(
+        text = text,
+        type = WandKitPostType.BUG,
+        tags = emptyList(),
+        attachment = attachment,
+        debugAttachments = null,
+        replay = replay,
+    )
+
+    override suspend fun invoke(
+        text: String,
+        type: WandKitPostType?,
+        tags: List<String>,
+        debugAttachments: List<WandKitDebugAttachment>,
+    ): Result<String> = submit(
+        text = text,
+        type = type,
+        tags = tags,
+        attachment = null,
+        debugAttachments = debugAttachments,
+        replay = null,
+    )
+
+    /** [debugAttachments] `null` means "ask the config's provider"; a list is the host's explicit files. */
+    private suspend fun submit(
+        text: String,
+        type: WandKitPostType?,
+        tags: List<String>,
+        attachment: WandKitComposerAttachment?,
+        debugAttachments: List<WandKitDebugAttachment>?,
+        replay: ReplayRecording?,
     ): Result<String> = runCatching {
         val session = postsSessionRepository.mintSession().getOrThrow()
-        if (session.readOnly) throw ReadOnlyPostsSessionException()
+        if (session.readOnly) throw WandKitReadOnlySessionException()
 
-        val debugFiles = collectDebugAttachments()
+        val debugFiles = debugAttachments?.let(::applyDebugCaps) ?: collectDebugAttachments()
 
-        val screenshotId = mintAndUpload(
-            token = session.token,
-            kind = attachment.kind,
-            contentType = attachment.contentType,
-            data = attachment.data,
-            fileName = attachment.fileName,
-        ).getOrThrow()
+        val screenshotId = attachment?.let {
+            mintAndUpload(
+                token = session.token,
+                kind = it.kind,
+                contentType = it.contentType,
+                data = it.data,
+                fileName = it.fileName,
+            ).getOrThrow()
+        }
 
         val debugIds = debugFiles.mapNotNull { file ->
             mintAndUpload(
@@ -105,15 +160,18 @@ private class DefaultSubmitScreenshotReportUseCase(
                 session.token,
                 SdkCreatePostRequestDto(
                     text = text,
-                    type = WandKitPostType.BUG.wireValue,
-                    attachmentIds = listOf(screenshotId) + debugIds + listOfNotNull(replayId),
+                    type = type?.wireValue,
+                    tags = tags.ifEmpty { null },
+                    attachmentIds = (listOfNotNull(screenshotId) + debugIds + listOfNotNull(replayId)).ifEmpty { null },
                 ),
             )
         }.getOrThrow().data
 
         post.id
     }.onFailure {
-        logger.warn(LOGGER_TAG, "Screenshot report submission failed.", it)
+        // runCatching also catches the caller's cancellation; it must keep propagating.
+        if (it is CancellationException) throw it
+        logger.warn(LOGGER_TAG, "Post submission failed.", it)
     }
 
     /**
@@ -170,7 +228,7 @@ private class DefaultSubmitScreenshotReportUseCase(
         }.getOrThrow()
 
         created.id
-    }
+    }.onFailure { if (it is CancellationException) throw it }
 
     /**
      * Runs the host's debug attachments provider (if any) under a time budget
@@ -196,6 +254,10 @@ private class DefaultSubmitScreenshotReportUseCase(
             return emptyList()
         }
 
+        return applyDebugCaps(files)
+    }
+
+    private fun applyDebugCaps(files: List<WandKitDebugAttachment>): List<WandKitDebugAttachment> {
         val withinSizeLimit = files.filter { file ->
             val fits = file.data.size.toLong() <= MAX_DEBUG_ATTACHMENT_BYTES
             if (!fits) {

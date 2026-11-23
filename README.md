@@ -453,6 +453,22 @@ What it does not do:
   )
   ```
 
+### Submitting a post without UI
+
+To collect feedback in your own screens (a thumbs-down sheet, say), create the post directly:
+
+```kotlin
+val result = WandKit.submitPost(
+    text = "The map pins overlap",
+    type = WandKitPostType.BUG,
+    tags = listOf("map"),
+    debugAttachments = listOf(WandKitDebugAttachment.text(log, "app.log")),
+)
+result.onSuccess { postId -> /* ... */ }
+```
+
+`text` is visible on the feedback board; `debugAttachments` are for your team only and best-effort, with the same caps as [Debug attachments](#debug-attachments). `type` and `tags` are optional. `tags` are names of tags that already exist in the project (create them in the dashboard first), matched case-insensitively; unknown, blank and repeated names are skipped and only the first 10 count, so a tag never fails the post. The invite gate does not hold it back. The call returns a `Result` with the post id and fails for anonymous users, so call `WandKit.identify(...)` first.
+
 ### Session replay
 
 Opt in alongside screenshot reporting and a report can carry a short replay of what led up to the screenshot:
