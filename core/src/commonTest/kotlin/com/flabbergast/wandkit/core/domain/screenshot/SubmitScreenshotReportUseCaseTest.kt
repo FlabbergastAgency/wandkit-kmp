@@ -6,6 +6,8 @@ import com.flabbergast.wandkit.core.domain.posts.PostsSessionRepository
 import com.flabbergast.wandkit.core.feedback.WandKitComposerAttachment
 import com.flabbergast.wandkit.core.feedback.WandKitDebugAttachment
 import com.flabbergast.wandkit.core.feedback.WandKitDebugAttachmentsProvider
+import com.flabbergast.wandkit.core.feedback.WandKitPostType
+import com.flabbergast.wandkit.core.feedback.WandKitReadOnlySessionException
 import com.flabbergast.wandkit.core.replay.InMemoryRecordingSource
 import com.flabbergast.wandkit.core.replay.ReplayRecording
 import com.flabbergast.wandkit.core.testutil.NoOpLogger
@@ -74,6 +76,59 @@ class SubmitScreenshotReportUseCaseTest {
         assertEquals("/api/v1/sdk/posts", createPost.url.encodedPath)
         val postBody = createPost.bodyText()
         assertTrue(postBody.contains(""""attachment_ids":["att-1","att-2"]"""), "Expected both ids in order in $postBody")
+        assertTrue(postBody.contains(""""type":"bug""""), "Expected the report to keep its type in $postBody")
+    }
+
+    @Test
+    fun headlessPostUploadsTheGivenDebugFilesAndSendsType() = runTest {
+        val engine = createRoutedEngine()
+        val useCase = createSubmitPostUseCase(
+            postsApi = createTestPostsApi(engine),
+            postsSessionRepository = session(),
+            logger = NoOpLogger,
+        )
+
+        val result = useCase(
+            "Nice",
+            WandKitPostType.PRAISE,
+            listOf(WandKitDebugAttachment.text("log line", "app.log")),
+        )
+
+        assertTrue(result.isSuccess, "Expected success but got $result")
+        val postBody = engine.requestHistory.last().bodyText()
+        assertTrue(postBody.contains(""""type":"praise""""), "Expected type in $postBody")
+        assertTrue(postBody.contains(""""attachment_ids":["att-1"]"""), "Expected the debug id in $postBody")
+    }
+
+    @Test
+    fun headlessPostWithoutExtrasSendsOnlyTheText() = runTest {
+        val engine = createRoutedEngine()
+        val useCase = createSubmitPostUseCase(
+            postsApi = createTestPostsApi(engine),
+            postsSessionRepository = session(),
+            logger = NoOpLogger,
+        )
+
+        val result = useCase("Hi", null, emptyList())
+
+        assertTrue(result.isSuccess, "Expected success but got $result")
+        assertEquals(listOf("/api/v1/sdk/posts"), engine.requestHistory.map { it.url.encodedPath })
+        assertEquals("""{"text":"Hi"}""", engine.requestHistory.single().bodyText())
+    }
+
+    @Test
+    fun headlessPostOnAReadOnlySessionFails() = runTest {
+        val engine = createRoutedEngine()
+        val useCase = createSubmitPostUseCase(
+            postsApi = createTestPostsApi(engine),
+            postsSessionRepository = session(readOnly = true),
+            logger = NoOpLogger,
+        )
+
+        val result = useCase("Hi", null, emptyList())
+
+        assertTrue(result.exceptionOrNull() is WandKitReadOnlySessionException)
+        assertTrue(engine.requestHistory.isEmpty())
     }
 
     @Test

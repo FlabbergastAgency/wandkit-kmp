@@ -4,7 +4,7 @@ import com.flabbergast.wandkit.core.data.networking.WandKitApi
 import com.flabbergast.wandkit.core.data.posts.PostsApi
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import com.flabbergast.wandkit.core.domain.posts.PostsSessionRepository
-import com.flabbergast.wandkit.core.domain.screenshot.ReadOnlyPostsSessionException
+import com.flabbergast.wandkit.core.feedback.WandKitReadOnlySessionException
 
 /**
  * Votes (and therefore follows) the post behind a coming-soon sheet. Mints a
@@ -35,7 +35,7 @@ private class DefaultVoteFeaturePreviewPostUseCase(
 ) : VoteFeaturePreviewPostUseCase {
     override suspend fun invoke(postId: String): Result<Unit> = runCatching {
         val session = postsSessionRepository.mintSession().getOrThrow()
-        if (session.readOnly) throw ReadOnlyPostsSessionException()
+        if (session.readOnly) throw WandKitReadOnlySessionException()
 
         postsApi { votePost(session.token, postId) }.getOrThrow()
 

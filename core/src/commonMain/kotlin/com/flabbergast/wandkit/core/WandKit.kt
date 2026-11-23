@@ -12,7 +12,10 @@ import com.flabbergast.wandkit.core.domain.referrals.ReferralMatch
 import com.flabbergast.wandkit.core.domain.referrals.ReferralProgress
 import com.flabbergast.wandkit.core.featurepreview.WandKitFeaturePreviewResult
 import com.flabbergast.wandkit.core.featurepreview.presentFeaturePreviewFlow
+import com.flabbergast.wandkit.core.feedback.WandKitDebugAttachment
 import com.flabbergast.wandkit.core.feedback.WandKitFeedbackScreen
+import com.flabbergast.wandkit.core.feedback.WandKitPostType
+import com.flabbergast.wandkit.core.feedback.WandKitReadOnlySessionException
 import com.flabbergast.wandkit.core.feedback.presentFeedbackScreen
 import com.flabbergast.wandkit.core.replay.WandKitSessionReplayStatus
 import kotlin.time.Instant
@@ -163,6 +166,28 @@ public object WandKit {
     ) {
         presentFeedbackScreen(WandKitSdkContainer.get(), startAt)
     }
+
+    /**
+     * Creates a feedback post without any WandKit UI, for host apps that
+     * collect the text in their own screens (a thumbs-down sheet, say).
+     * Returns the new post's id, or a failure.
+     *
+     * [text] is visible on the feedback board. [debugAttachments] are
+     * team-only - shown in the dashboard, never to end users - and best-effort:
+     * one that fails to upload is skipped and the post still goes out. At
+     * most five files of 10 MB each are kept. [type] is a hint; the backend
+     * falls back to `other`.
+     *
+     * It uses whichever user [identify] last named. Anonymous sessions are
+     * read-only, so the call fails for them with a
+     * [WandKitReadOnlySessionException]. It is not held back by the
+     * invite gate: the host decides when to offer it.
+     */
+    public suspend fun submitPost(
+        text: String,
+        type: WandKitPostType? = null,
+        debugAttachments: List<WandKitDebugAttachment> = emptyList(),
+    ): Result<String> = WandKitSdkContainer.get().submitPostUseCase(text, type, debugAttachments)
 
     /**
      * Presents the native "coming soon / it's here" sheet for [postId] - a

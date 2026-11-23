@@ -71,8 +71,10 @@ import com.flabbergast.wandkit.core.domain.install.createInstallIdentity
 import com.flabbergast.wandkit.core.domain.posts.PostsSessionRepository
 import com.flabbergast.wandkit.core.domain.referrals.ReferralsRepository
 import com.flabbergast.wandkit.core.domain.screenshot.ScreenshotPromptController
+import com.flabbergast.wandkit.core.domain.screenshot.SubmitPostUseCase
 import com.flabbergast.wandkit.core.domain.screenshot.SubmitScreenshotReportUseCase
 import com.flabbergast.wandkit.core.domain.screenshot.createScreenshotPromptController
+import com.flabbergast.wandkit.core.domain.screenshot.createSubmitPostUseCase
 import com.flabbergast.wandkit.core.domain.screenshot.createSubmitScreenshotReportUseCase
 import com.flabbergast.wandkit.core.domain.infrastructure.threading.BackgroundDispatcher
 import com.flabbergast.wandkit.core.feedback.WandKitFeedbackScreen
@@ -373,6 +375,14 @@ internal class WandKitSdkContainer private constructor(
             postsApi = postsApi,
             postsSessionRepository = postsSessionRepository,
             debugAttachmentsProvider = { config.debugAttachmentsProvider },
+            logger = logger,
+        )
+    }
+
+    internal val submitPostUseCase: SubmitPostUseCase by lazy {
+        createSubmitPostUseCase(
+            postsApi = postsApi,
+            postsSessionRepository = postsSessionRepository,
             logger = logger,
         )
     }
