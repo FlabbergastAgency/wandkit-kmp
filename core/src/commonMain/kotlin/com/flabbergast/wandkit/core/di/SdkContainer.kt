@@ -1,7 +1,6 @@
 package com.flabbergast.wandkit.core.di
 
 import com.arkivanov.essenty.instancekeeper.InstanceKeeper
-import com.flabbergast.wandkit.core.localization.WandKitLanguage
 import com.flabbergast.wandkit.core.accessgate.createAccessGatePresenter
 import com.flabbergast.wandkit.core.accessgate.isBlocking
 import com.flabbergast.wandkit.core.config.WandKitConfig
@@ -82,6 +81,7 @@ import com.flabbergast.wandkit.core.domain.screenshot.createSubmitScreenshotRepo
 import com.flabbergast.wandkit.core.domain.infrastructure.threading.BackgroundDispatcher
 import com.flabbergast.wandkit.core.feedback.WandKitFeedbackScreen
 import com.flabbergast.wandkit.core.feedback.presentFeedbackScreen
+import com.flabbergast.wandkit.core.localization.WandKitLanguage
 import com.flabbergast.wandkit.core.models.createWandKitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -488,9 +488,9 @@ internal class WandKitSdkContainer private constructor(
             platformContext: PlatformContext? = null,
             keyValueStore: KeyValueStore? = null,
         ) {
+            WandKitLanguage.override = config.locale
             // A second configure must not stack a second gate: the previous
             // one stops for good before the new one starts.
-            WandKitLanguage.override = config.locale
             activeAccessGate.value?.shutdown()
             activeAccessGate.value = null
 

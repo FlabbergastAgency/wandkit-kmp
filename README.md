@@ -93,7 +93,7 @@ WandKitConfig(
 WandKit.setLocale("en")
 ```
 
-A language WandKit doesn't ship yet falls back to English. To reword a string, or to add a language before WandKit ships it, declare the same string resource in your app (for example `wandkit_access_gate_title` in `values-de/strings.xml`). Your app's resource wins. The names are in `core/src/androidMain/res/values/wandkit_strings.xml`.
+On Android, "the app's language" is the phone's language unless the app limits it: an app that doesn't ship Croatian should set `androidResources.localeFilters` or pass `locale = "en"`, or a Croatian phone gets Croatian WandKit screens. A language WandKit doesn't ship yet falls back to English. To reword a string, or to add a language before WandKit ships it, declare the same string resource in your app (for example `wandkit_access_gate_title` in `values-de/strings.xml`). Your app's resource wins. The names are in `core/src/androidMain/res/values/wandkit_strings.xml`.
 
 Text you write in the dashboard (gate title and message, surveys, forms) is shown as you wrote it.
 

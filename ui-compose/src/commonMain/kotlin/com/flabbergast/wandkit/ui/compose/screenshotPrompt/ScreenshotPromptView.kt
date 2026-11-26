@@ -1,9 +1,5 @@
-@file:OptIn(InternalWandKitApi::class)
-
 package com.flabbergast.wandkit.ui.compose.screenshotPrompt
 
-import com.flabbergast.wandkit.core.InternalWandKitApi
-import com.flabbergast.wandkit.core.localization.WandKitStrings
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,8 +34,10 @@ import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.Cancellation
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import com.arkivanov.decompose.value.Value
+import com.flabbergast.wandkit.core.InternalWandKitApi
 import com.flabbergast.wandkit.core.components.screenshotPrompt.ScreenshotPromptComponent
 import com.flabbergast.wandkit.core.feedback.WandKitComposerAttachment
+import com.flabbergast.wandkit.core.localization.WandKitStrings
 import com.flabbergast.wandkit.ui.compose.WandKitColors
 import com.flabbergast.wandkit.ui.compose.WandKitThemeDefaults
 import com.flabbergast.wandkit.ui.compose.WandKitThemeProvider
@@ -55,6 +53,7 @@ import org.jetbrains.compose.resources.decodeToImageBitmap
 /** iOS system red - there's no dedicated error token in [WandKitColors] yet. */
 private val ScreenshotReportErrorColor = Color(0xFFFF3B30)
 
+@OptIn(InternalWandKitApi::class)
 @Composable
 internal fun ScreenshotPromptView(
     component: ScreenshotPromptComponent,
@@ -164,6 +163,7 @@ internal fun ScreenshotPromptView(
     }
 }
 
+@OptIn(InternalWandKitApi::class)
 @Composable
 private fun ScreenshotPromptCardContent() {
     Column(
@@ -181,7 +181,7 @@ private fun ScreenshotPromptCardContent() {
         )
 
         Text(
-            text = WandKitStrings.get("wandkit.screenshot_prompt.message", "Attach this screenshot to report so we can take a look."),
+            text = WandKitStrings.get("wandkit.screenshot_prompt.message", "Attach this screenshot to a report so we can take a look."),
             style = WandKitTypography.modalSubtitle,
             color = WandKitColors.label,
             textAlign = TextAlign.Center,
@@ -189,6 +189,7 @@ private fun ScreenshotPromptCardContent() {
     }
 }
 
+@OptIn(InternalWandKitApi::class)
 @Composable
 private fun ScreenshotComposingContent(
     phase: ScreenshotPromptComponent.ViewState.Phase.Composing,
@@ -252,6 +253,7 @@ private fun ScreenshotComposingContent(
     }
 }
 
+@OptIn(InternalWandKitApi::class)
 @Composable
 private fun ReplayToggleRow(
     checked: Boolean,
@@ -287,6 +289,7 @@ private fun ReplayToggleRow(
     }
 }
 
+@OptIn(InternalWandKitApi::class)
 @Composable
 private fun ScreenshotSentContent() {
     Column(
@@ -312,6 +315,7 @@ private fun ScreenshotSentContent() {
     }
 }
 
+@OptIn(InternalWandKitApi::class)
 @Composable
 private fun ScreenshotActions(
     primaryLabel: String,

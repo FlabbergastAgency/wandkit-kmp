@@ -1,9 +1,5 @@
-@file:OptIn(InternalWandKitApi::class)
-
 package com.flabbergast.wandkit.ui.compose.shared
 
-import com.flabbergast.wandkit.core.InternalWandKitApi
-import com.flabbergast.wandkit.core.localization.WandKitStrings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -23,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.flabbergast.wandkit.core.InternalWandKitApi
+import com.flabbergast.wandkit.core.localization.WandKitStrings
 import com.flabbergast.wandkit.ui.compose.Res
 import com.flabbergast.wandkit.ui.compose.WandKitColors
 import com.flabbergast.wandkit.ui.compose.ic_close
@@ -67,6 +65,7 @@ internal fun WandKitModalCard(
     }
 }
 
+@OptIn(InternalWandKitApi::class)
 @Composable
 internal fun WandKitModalCloseButton(
     onClick: () -> Unit,

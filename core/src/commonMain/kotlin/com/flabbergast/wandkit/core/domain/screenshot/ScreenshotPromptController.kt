@@ -1,12 +1,9 @@
-@file:OptIn(InternalWandKitApi::class)
-
 package com.flabbergast.wandkit.core.domain.screenshot
 
-import com.flabbergast.wandkit.core.InternalWandKitApi
-import com.flabbergast.wandkit.core.localization.WandKitStrings
 import com.flabbergast.wandkit.core.domain.infrastructure.concurrency.FireAndForgetTask
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import com.flabbergast.wandkit.core.feedback.WandKitComposerAttachment
+import com.flabbergast.wandkit.core.localization.wandKitString
 import com.flabbergast.wandkit.core.replay.ReplayRecording
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -88,7 +85,7 @@ internal fun createScreenshotPromptController(
 
 private const val LOGGER_TAG = "[ScreenshotPromptController]"
 private const val SENT_AUTO_DISMISS_MILLIS = 1200L
-private val DEFAULT_ERROR_MESSAGE: String get() = WandKitStrings.get("wandkit.screenshot_prompt.failed_generic", "Couldn't send that. Please try again.")
+private val DEFAULT_ERROR_MESSAGE: String get() = wandKitString("wandkit.screenshot_prompt.failed_generic", "Couldn't send that. Please try again.")
 
 private class ScreenshotPromptControllerImpl(
     private val submitReport: SubmitScreenshotReportUseCase,

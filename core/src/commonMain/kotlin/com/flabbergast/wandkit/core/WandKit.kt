@@ -37,7 +37,7 @@ public object WandKit {
      * Changes the language of the SDK's own screens (a BCP 47 tag such as
      * `"hr"`); the next one shown uses it. `null` follows the app's language.
      * Call it when your app's language picker changes, if the app does not
-     * restart its activities.
+     * restart its activities. `configure` resets it to [WandKitConfig.locale].
      */
     public fun setLocale(languageTag: String?) {
         WandKitLanguage.override = languageTag

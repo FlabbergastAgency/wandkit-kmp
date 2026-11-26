@@ -1,15 +1,12 @@
-@file:OptIn(InternalWandKitApi::class)
-
 package com.flabbergast.wandkit.core.data.events.mappers
 
-import com.flabbergast.wandkit.core.InternalWandKitApi
-import com.flabbergast.wandkit.core.localization.WandKitStrings
 import com.flabbergast.wandkit.core.data.events.dto.EventFormDto
 import com.flabbergast.wandkit.core.data.events.dto.EventNextRuleDto
 import com.flabbergast.wandkit.core.data.events.dto.EventPageDto
 import com.flabbergast.wandkit.core.data.events.dto.EventPageTypeDto
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackForm
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPage
+import com.flabbergast.wandkit.core.localization.wandKitString
 
 internal fun toFeedbackForm(dto: EventFormDto): FeedbackForm? = FeedbackForm(
     formId = dto.publicId,
@@ -27,7 +24,7 @@ private fun EventPageDto.mapFormPage(): FeedbackFormPage {
         imageUrl = imageUrl,
         nextButtonLabel = nextButtonLabel,
         skipButtonLabel = skipButtonLabel,
-        promoLabel = WandKitStrings.get("wandkit.powered_by", "Powered by WandKit"), // todo matko: put backend value
+        promoLabel = wandKitString("wandkit.powered_by", "Powered by WandKit"), // todo matko: put backend value
         isRequired = required,
         content = mapContent(),
         next = next.map(::mapNextPageRule),

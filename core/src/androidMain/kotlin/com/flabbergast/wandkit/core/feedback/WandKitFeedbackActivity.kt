@@ -1,10 +1,5 @@
-@file:OptIn(InternalWandKitApi::class)
-
 package com.flabbergast.wandkit.core.feedback
 
-import com.flabbergast.wandkit.core.InternalWandKitApi
-import com.flabbergast.wandkit.core.localization.WandKitLanguage
-import com.flabbergast.wandkit.core.localization.WandKitStrings
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
@@ -44,6 +39,8 @@ import androidx.webkit.WebViewFeature
 import com.flabbergast.wandkit.core.config.WandKitColorSchemePreference
 import com.flabbergast.wandkit.core.di.WandKitSdkContainer
 import com.flabbergast.wandkit.core.domain.posts.PostsSession
+import com.flabbergast.wandkit.core.localization.WandKitLanguage
+import com.flabbergast.wandkit.core.localization.wandKitString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -250,19 +247,19 @@ public class WandKitFeedbackActivity : ComponentActivity() {
     private fun buildErrorView(): LinearLayout {
         val density = resources.displayMetrics.density
         val titleView = TextView(this).apply {
-            text = WandKitStrings.get("wandkit.feedback.load_failed.title", "Couldn't load")
+            text = wandKitString("wandkit.feedback.load_failed.title", "Couldn't load")
             setTypeface(typeface, Typeface.BOLD)
             textSize = 18f
             gravity = Gravity.CENTER
         }
         val messageView = TextView(this).apply {
-            text = WandKitStrings.get("wandkit.feedback.load_failed.message", "Check your connection and try again.")
+            text = wandKitString("wandkit.feedback.load_failed.message", "Check your connection and try again.")
             textSize = 14f
             gravity = Gravity.CENTER
             setPadding(0, (8 * density).toInt(), 0, 0)
         }
         val retryButton = Button(this).apply {
-            text = WandKitStrings.get("wandkit.feedback.load_failed.retry", "Retry")
+            text = wandKitString("wandkit.feedback.load_failed.retry", "Retry")
             setOnClickListener { reload() }
         }
 

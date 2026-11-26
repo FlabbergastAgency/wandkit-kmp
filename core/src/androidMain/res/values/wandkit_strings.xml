@@ -27,7 +27,7 @@
     <string name="wandkit_screenshot_prompt_debug_disclosure">Diagnostic logs will be included to help us fix this.</string>
     <string name="wandkit_screenshot_prompt_failed_generic">Couldn\'t send that. Please try again.</string>
     <string name="wandkit_screenshot_prompt_include_replay">Include a replay of the last minute</string>
-    <string name="wandkit_screenshot_prompt_message">Attach this screenshot to report so we can take a look.</string>
+    <string name="wandkit_screenshot_prompt_message">Attach this screenshot to a report so we can take a look.</string>
     <string name="wandkit_screenshot_prompt_not_now">Not now</string>
     <string name="wandkit_screenshot_prompt_report">Continue</string>
     <string name="wandkit_screenshot_prompt_retry">Try again</string>

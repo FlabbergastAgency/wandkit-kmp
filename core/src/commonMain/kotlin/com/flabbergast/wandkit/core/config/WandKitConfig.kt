@@ -67,5 +67,11 @@ public data class WandKitConfig(
      * default) means the SDK never gates and never makes a gate network call.
      */
     val accessGate: WandKitAccessGateOptions? = null,
+    /**
+     * Language for the SDK's own screens, the feedback board and server
+     * messages, as a BCP 47 tag such as `"hr"`. `null` (the default) follows
+     * the app's language. Change it later with
+     * [com.flabbergast.wandkit.core.WandKit.setLocale].
+     */
     val locale: String? = null,
 )

@@ -1,9 +1,7 @@
 package com.flabbergast.wandkit.core.data.networking
 
-import com.flabbergast.wandkit.core.localization.WandKitLanguage
-import io.ktor.http.HttpHeaders
-import io.ktor.client.request.header
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
+import com.flabbergast.wandkit.core.localization.WandKitLanguage
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpSend
@@ -14,7 +12,9 @@ import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.plugin
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.client.request.accept
+import io.ktor.client.request.header
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import kotlinx.serialization.json.Json
 import kotlin.jvm.JvmInline

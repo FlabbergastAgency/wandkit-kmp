@@ -1,13 +1,10 @@
-@file:OptIn(InternalWandKitApi::class)
-
 package com.flabbergast.wandkit.core.components.formPage.mapper
 
-import com.flabbergast.wandkit.core.InternalWandKitApi
-import com.flabbergast.wandkit.core.localization.WandKitStrings
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageButton
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageUiState
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPage
 import com.flabbergast.wandkit.core.domain.forms.models.PageInput
+import com.flabbergast.wandkit.core.localization.wandKitString
 
 internal fun formPageViewStateMapper(
     input: PageInput,
@@ -56,7 +53,7 @@ internal fun formPageViewStateMapper(
 }
 
 /** Default primary-button label for content types with no server-set copy of their own. */
-private val DEFAULT_CONTINUE_BUTTON_LABEL: String get() = WandKitStrings.get("wandkit.survey.continue", "Continue")
+private val DEFAULT_CONTINUE_BUTTON_LABEL: String get() = wandKitString("wandkit.survey.continue", "Continue")
 
 private fun mapButtons(page: FeedbackFormPage?) = buildList {
     if (page == null || page.content is FeedbackFormPage.Content.End) return@buildList
