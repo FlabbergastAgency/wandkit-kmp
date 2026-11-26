@@ -1,5 +1,8 @@
 package com.flabbergast.wandkit.core.data.networking
 
+import com.flabbergast.wandkit.core.localization.WandKitLanguage
+import io.ktor.http.HttpHeaders
+import io.ktor.client.request.header
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
@@ -36,6 +39,8 @@ internal fun createHttpClient(
         install(DefaultRequest) {
             contentType(ContentType.Application.Json)
             accept(ContentType.Application.Json)
+            // Runs per request, so a language change applies to the next call.
+            header(HttpHeaders.AcceptLanguage, WandKitLanguage.current())
         }
 
         install(ContentNegotiation) {

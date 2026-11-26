@@ -1,5 +1,9 @@
+@file:OptIn(InternalWandKitApi::class)
+
 package com.flabbergast.wandkit.core.domain.featurepreview
 
+import com.flabbergast.wandkit.core.InternalWandKitApi
+import com.flabbergast.wandkit.core.localization.WandKitStrings
 import com.flabbergast.wandkit.core.domain.infrastructure.concurrency.FireAndForgetTask
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import com.flabbergast.wandkit.core.featurepreview.WandKitFeaturePreviewResult
@@ -91,7 +95,7 @@ internal fun createFeaturePreviewController(
 )
 
 private const val LOGGER_TAG = "[FeaturePreviewController]"
-private const val DEFAULT_VOTE_ERROR_MESSAGE = "Couldn't save, please try again"
+private val DEFAULT_VOTE_ERROR_MESSAGE: String get() = WandKitStrings.get("wandkit.feature_preview.vote_error", "Couldn't save, please try again")
 internal const val FEATURE_PREVIEW_FOLLOWED_EVENT = "feature_preview_followed"
 internal const val FEATURE_PREVIEW_SECONDARY_EVENT = "feature_preview_secondary"
 

@@ -1,5 +1,10 @@
+@file:OptIn(InternalWandKitApi::class)
+
 package com.flabbergast.wandkit.core.feedback
 
+import com.flabbergast.wandkit.core.InternalWandKitApi
+import com.flabbergast.wandkit.core.localization.WandKitLanguage
+import com.flabbergast.wandkit.core.localization.WandKitStrings
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
@@ -48,7 +53,6 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
-import java.util.Locale
 import kotlin.math.max
 
 private const val TAG = "[WandKitFeedbackActivity]"
@@ -246,19 +250,19 @@ public class WandKitFeedbackActivity : ComponentActivity() {
     private fun buildErrorView(): LinearLayout {
         val density = resources.displayMetrics.density
         val titleView = TextView(this).apply {
-            text = "Couldn't load"
+            text = WandKitStrings.get("wandkit.feedback.load_failed.title", "Couldn't load")
             setTypeface(typeface, Typeface.BOLD)
             textSize = 18f
             gravity = Gravity.CENTER
         }
         val messageView = TextView(this).apply {
-            text = "Check your connection and try again."
+            text = WandKitStrings.get("wandkit.feedback.load_failed.message", "Check your connection and try again.")
             textSize = 14f
             gravity = Gravity.CENTER
             setPadding(0, (8 * density).toInt(), 0, 0)
         }
         val retryButton = Button(this).apply {
-            text = "Retry"
+            text = WandKitStrings.get("wandkit.feedback.load_failed.retry", "Retry")
             setOnClickListener { reload() }
         }
 
@@ -391,7 +395,7 @@ public class WandKitFeedbackActivity : ComponentActivity() {
             theme = container.config.feedbackTheme,
             isDark = isDark,
             safeAreaInsets = currentSafeAreaInsets,
-            locale = Locale.getDefault().toLanguageTag(),
+            locale = WandKitLanguage.current(),
             platform = FeedbackBootstrap.PLATFORM_ANDROID,
             prefill = prefill,
         ).toJavaScript(container.json)

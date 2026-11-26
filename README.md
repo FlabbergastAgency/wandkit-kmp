@@ -78,6 +78,25 @@ WandKit.configure(
 )
 ```
 
+## Languages
+
+WandKit's own screens (invite gate, "Report a problem?" card, survey buttons, error states) ship in English and Croatian, and follow the app's language. If your app has its own language picker, pass the language:
+
+```kotlin
+WandKitConfig(
+    apiKey = "your_api_key",
+    isDebugLoggingEnabled = false,
+    locale = "hr",
+)
+
+// Later, if the app changes language without restarting its activities
+WandKit.setLocale("en")
+```
+
+A language WandKit doesn't ship yet falls back to English. To reword a string, or to add a language before WandKit ships it, declare the same string resource in your app (for example `wandkit_access_gate_title` in `values-de/strings.xml`). Your app's resource wins. The names are in `core/src/androidMain/res/values/wandkit_strings.xml`.
+
+Text you write in the dashboard (gate title and message, surveys, forms) is shown as you wrote it.
+
 ## Identify A User
 
 When the user signs in, identify them - and again on every launch while they are signed in, since the SDK keeps the user id in memory only:

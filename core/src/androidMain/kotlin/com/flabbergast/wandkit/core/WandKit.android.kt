@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import com.flabbergast.wandkit.core.config.WandKitConfig
 import com.flabbergast.wandkit.core.di.WandKitSdkContainer
+import com.flabbergast.wandkit.core.localization.AndroidLocalization
 import com.flabbergast.wandkit.core.platform.PlatformContext
 import com.flabbergast.wandkit.core.replay.AndroidSessionReplayRecorder
 import android.os.Build
@@ -33,6 +34,7 @@ public fun WandKit.configureForAndroid(
     config: WandKitConfig,
     context: Context,
 ) {
+    AndroidLocalization.context = context.applicationContext
     WandKitSdkContainer.init(config, PlatformContext(context.applicationContext))
     (context.applicationContext as? Application)?.let { CurrentActivityTracker.install(it) }
     ScreenshotDetector.setEnabled(config.screenshotReporting)

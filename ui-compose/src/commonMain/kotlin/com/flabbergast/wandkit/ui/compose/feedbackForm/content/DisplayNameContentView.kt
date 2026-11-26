@@ -1,5 +1,9 @@
+@file:OptIn(InternalWandKitApi::class)
+
 package com.flabbergast.wandkit.ui.compose.feedbackForm.content
 
+import com.flabbergast.wandkit.core.InternalWandKitApi
+import com.flabbergast.wandkit.core.localization.WandKitStrings
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
@@ -13,7 +17,7 @@ import com.flabbergast.wandkit.core.components.formPage.model.FormPageUiState
 
 /** Enforced client-side; matches the server's `suggested_display_name` cap. */
 private const val DISPLAY_NAME_MAX_LENGTH = 40
-private const val DISPLAY_NAME_PLACEHOLDER = "Your name"
+private val DISPLAY_NAME_PLACEHOLDER: String get() = WandKitStrings.get("wandkit.survey.display_name_placeholder", "Your name")
 
 @Composable
 internal fun DisplayNameContentView(

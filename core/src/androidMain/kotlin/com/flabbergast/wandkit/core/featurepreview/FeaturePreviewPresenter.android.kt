@@ -1,5 +1,9 @@
+@file:OptIn(InternalWandKitApi::class)
+
 package com.flabbergast.wandkit.core.featurepreview
 
+import com.flabbergast.wandkit.core.InternalWandKitApi
+import com.flabbergast.wandkit.core.localization.WandKitStrings
 import com.flabbergast.wandkit.core.di.WandKitSdkContainer
 import com.flabbergast.wandkit.core.domain.events.WandKitEvent
 import com.flabbergast.wandkit.core.domain.featurepreview.FeaturePreviewCopy
@@ -12,12 +16,13 @@ private const val EVENT_OPENED = "feature_preview_opened"
 private const val LOGGER_TAG = "[FeaturePreviewPresenter]"
 
 /** Fixed copy for [FeaturePreviewResolution.Generic] - there is no dashboard-managed copy to show, so it isn't fetched. */
-private val GENERIC_PREVIEW_COPY = FeaturePreviewCopy(
-    title = "This feature is coming soon",
-    message = "We're still working on it. Check back in a future update.",
-    primaryLabel = "Close",
-    secondaryLabel = "",
-)
+private val GENERIC_PREVIEW_COPY: FeaturePreviewCopy
+    get() = FeaturePreviewCopy(
+        title = WandKitStrings.get("wandkit.feature_preview.generic.title", "This feature is coming soon"),
+        message = WandKitStrings.get("wandkit.feature_preview.generic.message", "We're still working on it. Check back in a future update."),
+        primaryLabel = WandKitStrings.get("wandkit.feature_preview.close", "Close"),
+        secondaryLabel = "",
+    )
 
 internal actual fun presentFeaturePreviewFlow(
     container: WandKitSdkContainer,

@@ -90,6 +90,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.flabbergast.wandkit.core.InternalWandKitApi
+import com.flabbergast.wandkit.core.localization.WandKitStrings
 import com.flabbergast.wandkit.core.accessgate.WandKitAccessGateViewState
 import com.flabbergast.wandkit.ui.compose.WandKitColors
 import com.flabbergast.wandkit.ui.compose.WandKitThemeDefaults
@@ -111,13 +112,14 @@ internal object AccessGateTestTags {
  * state. The offline screen has fixed copy - the server title is about
  * the invite, not the connection.
  */
+@OptIn(InternalWandKitApi::class)
 private object AccessGateLabels {
-    const val PLACEHOLDER = "Invite code"
-    const val BUTTON = "Continue"
-    const val HELP = "Need a code?"
-    const val OFFLINE_TITLE = "You're offline"
-    const val OFFLINE_MESSAGE = "Connect to the internet and try again."
-    const val RETRY = "Try again"
+    val PLACEHOLDER: String get() = WandKitStrings.get("wandkit.access_gate.placeholder", "Invite code")
+    val BUTTON: String get() = WandKitStrings.get("wandkit.access_gate.button", "Continue")
+    val HELP: String get() = WandKitStrings.get("wandkit.access_gate.help_link", "Need a code?")
+    val OFFLINE_TITLE: String get() = WandKitStrings.get("wandkit.access_gate.offline.title", "You're offline")
+    val OFFLINE_MESSAGE: String get() = WandKitStrings.get("wandkit.access_gate.offline.message", "Connect to the internet and try again.")
+    val RETRY: String get() = WandKitStrings.get("wandkit.access_gate.retry", "Try again")
 }
 
 private val ContentMaxWidth = 420.dp

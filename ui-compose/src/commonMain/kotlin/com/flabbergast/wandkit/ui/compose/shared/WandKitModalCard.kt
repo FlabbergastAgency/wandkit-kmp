@@ -1,5 +1,9 @@
+@file:OptIn(InternalWandKitApi::class)
+
 package com.flabbergast.wandkit.ui.compose.shared
 
+import com.flabbergast.wandkit.core.InternalWandKitApi
+import com.flabbergast.wandkit.core.localization.WandKitStrings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -81,7 +85,7 @@ internal fun WandKitModalCloseButton(
     ) {
         Icon(
             painter = painterResource(Res.drawable.ic_close),
-            contentDescription = "Close",
+            contentDescription = WandKitStrings.get("wandkit.close", "Close"),
             tint = WandKitColors.label,
             modifier = Modifier.size(24.dp),
         )

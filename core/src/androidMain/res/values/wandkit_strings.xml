@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wandkit_access_gate_button">Continue</string>
+    <string name="wandkit_access_gate_error_already_used">This code has already been used.</string>
+    <string name="wandkit_access_gate_error_expired">That code has expired.</string>
+    <string name="wandkit_access_gate_error_generic">Something went wrong. Please try again.</string>
+    <string name="wandkit_access_gate_error_not_found">That code isn\'t valid.</string>
+    <string name="wandkit_access_gate_error_rate_limited">Too many attempts. Try again in a minute.</string>
+    <string name="wandkit_access_gate_error_revoked">That code is no longer valid.</string>
+    <string name="wandkit_access_gate_help_link">Need a code?</string>
+    <string name="wandkit_access_gate_message">Enter your invite code to continue.</string>
+    <string name="wandkit_access_gate_offline_message">Connect to the internet and try again.</string>
+    <string name="wandkit_access_gate_offline_title">You\'re offline</string>
+    <string name="wandkit_access_gate_placeholder">Invite code</string>
+    <string name="wandkit_access_gate_retry">Try again</string>
+    <string name="wandkit_access_gate_title">Invite only</string>
+    <string name="wandkit_close">Close</string>
+    <string name="wandkit_feature_preview_close">Close</string>
+    <string name="wandkit_feature_preview_generic_message">We\'re still working on it. Check back in a future update.</string>
+    <string name="wandkit_feature_preview_generic_title">This feature is coming soon</string>
+    <string name="wandkit_feature_preview_vote_error">Couldn\'t save, please try again</string>
+    <string name="wandkit_feedback_load_failed_message">Check your connection and try again.</string>
+    <string name="wandkit_feedback_load_failed_retry">Retry</string>
+    <string name="wandkit_feedback_load_failed_title">Couldn\'t load</string>
+    <string name="wandkit_powered_by">Powered by WandKit</string>
+    <string name="wandkit_screenshot_prompt_compose_placeholder">What went wrong?</string>
+    <string name="wandkit_screenshot_prompt_debug_disclosure">Diagnostic logs will be included to help us fix this.</string>
+    <string name="wandkit_screenshot_prompt_failed_generic">Couldn\'t send that. Please try again.</string>
+    <string name="wandkit_screenshot_prompt_include_replay">Include a replay of the last minute</string>
+    <string name="wandkit_screenshot_prompt_message">Attach this screenshot to report so we can take a look.</string>
+    <string name="wandkit_screenshot_prompt_not_now">Not now</string>
+    <string name="wandkit_screenshot_prompt_report">Continue</string>
+    <string name="wandkit_screenshot_prompt_retry">Try again</string>
+    <string name="wandkit_screenshot_prompt_send">Send</string>
+    <string name="wandkit_screenshot_prompt_sent_message">The team will take a look.</string>
+    <string name="wandkit_screenshot_prompt_sent_title">Thanks — we got it</string>
+    <string name="wandkit_screenshot_prompt_thumbnail">Your screenshot</string>
+    <string name="wandkit_screenshot_prompt_title">Report a problem?</string>
+    <string name="wandkit_survey_continue">Continue</string>
+    <string name="wandkit_survey_display_name_placeholder">Your name</string>
+</resources>

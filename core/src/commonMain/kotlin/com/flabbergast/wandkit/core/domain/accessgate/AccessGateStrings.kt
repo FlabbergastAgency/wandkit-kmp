@@ -1,22 +1,24 @@
 package com.flabbergast.wandkit.core.domain.accessgate
 
+import com.flabbergast.wandkit.core.InternalWandKitApi
 import com.flabbergast.wandkit.core.accessgate.WandKitAccessGateBlockReason
+import com.flabbergast.wandkit.core.localization.WandKitStrings
 
 /**
- * Copy the controller decides on. Hard-coded English like the rest of the KMP
- * SDK; the server's `title`/`message` override the first two when non-blank.
- * The screen's own labels (placeholder, buttons) live with the view in
- * `ui-compose`.
+ * Copy the controller decides on, looked up when shown. The server's
+ * `title`/`message` override the first two when non-blank. The screen's own
+ * labels (placeholder, buttons) live with the view in `ui-compose`.
  */
+@OptIn(InternalWandKitApi::class)
 internal object AccessGateStrings {
-    const val TITLE = "Invite only"
-    const val MESSAGE = "Enter your invite code to continue."
-    const val ERROR_NOT_FOUND = "That code isn't valid."
-    const val ERROR_EXPIRED = "That code has expired."
-    const val ERROR_REVOKED = "That code is no longer valid."
-    const val ERROR_ALREADY_USED = "This code has already been used."
-    const val ERROR_RATE_LIMITED = "Too many attempts. Try again in a minute."
-    const val ERROR_GENERIC = "Something went wrong. Please try again."
+    val TITLE: String get() = WandKitStrings.get("wandkit.access_gate.title", "Invite only")
+    val MESSAGE: String get() = WandKitStrings.get("wandkit.access_gate.message", "Enter your invite code to continue.")
+    val ERROR_NOT_FOUND: String get() = WandKitStrings.get("wandkit.access_gate.error.not_found", "That code isn't valid.")
+    val ERROR_EXPIRED: String get() = WandKitStrings.get("wandkit.access_gate.error.expired", "That code has expired.")
+    val ERROR_REVOKED: String get() = WandKitStrings.get("wandkit.access_gate.error.revoked", "That code is no longer valid.")
+    val ERROR_ALREADY_USED: String get() = WandKitStrings.get("wandkit.access_gate.error.already_used", "This code has already been used.")
+    val ERROR_RATE_LIMITED: String get() = WandKitStrings.get("wandkit.access_gate.error.rate_limited", "Too many attempts. Try again in a minute.")
+    val ERROR_GENERIC: String get() = WandKitStrings.get("wandkit.access_gate.error.generic", "Something went wrong. Please try again.")
 }
 
 /**

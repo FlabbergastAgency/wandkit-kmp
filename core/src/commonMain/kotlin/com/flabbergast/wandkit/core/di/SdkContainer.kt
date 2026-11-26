@@ -1,6 +1,7 @@
 package com.flabbergast.wandkit.core.di
 
 import com.arkivanov.essenty.instancekeeper.InstanceKeeper
+import com.flabbergast.wandkit.core.localization.WandKitLanguage
 import com.flabbergast.wandkit.core.accessgate.createAccessGatePresenter
 import com.flabbergast.wandkit.core.accessgate.isBlocking
 import com.flabbergast.wandkit.core.config.WandKitConfig
@@ -489,6 +490,7 @@ internal class WandKitSdkContainer private constructor(
         ) {
             // A second configure must not stack a second gate: the previous
             // one stops for good before the new one starts.
+            WandKitLanguage.override = config.locale
             activeAccessGate.value?.shutdown()
             activeAccessGate.value = null
 

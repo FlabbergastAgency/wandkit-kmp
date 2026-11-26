@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wandkit_access_gate_button">Nastavi</string>
+    <string name="wandkit_access_gate_error_already_used">Ovaj kôd je već iskorišten.</string>
+    <string name="wandkit_access_gate_error_expired">Taj kôd je istekao.</string>
+    <string name="wandkit_access_gate_error_generic">Dogodila se greška. Pokušaj ponovno.</string>
+    <string name="wandkit_access_gate_error_not_found">Taj kôd nije valjan.</string>
+    <string name="wandkit_access_gate_error_rate_limited">Previše pokušaja. Pokušaj ponovno za minutu.</string>
+    <string name="wandkit_access_gate_error_revoked">Taj kôd više nije valjan.</string>
+    <string name="wandkit_access_gate_help_link">Trebaš kôd?</string>
+    <string name="wandkit_access_gate_message">Upiši pozivni kôd za nastavak.</string>
+    <string name="wandkit_access_gate_offline_message">Spoji se na internet i pokušaj ponovno.</string>
+    <string name="wandkit_access_gate_offline_title">Nisi povezan s internetom</string>
+    <string name="wandkit_access_gate_placeholder">Pozivni kôd</string>
+    <string name="wandkit_access_gate_retry">Pokušaj ponovno</string>
+    <string name="wandkit_access_gate_title">Samo uz pozivnicu</string>
+    <string name="wandkit_close">Zatvori</string>
+    <string name="wandkit_feature_preview_close">Zatvori</string>
+    <string name="wandkit_feature_preview_generic_message">Još radimo na tome. Provjeri u nekom od sljedećih ažuriranja.</string>
+    <string name="wandkit_feature_preview_generic_title">Ova značajka uskoro stiže</string>
+    <string name="wandkit_feature_preview_vote_error">Spremanje nije uspjelo. Pokušaj ponovno.</string>
+    <string name="wandkit_feedback_load_failed_message">Provjeri vezu i pokušaj ponovno.</string>
+    <string name="wandkit_feedback_load_failed_retry">Pokušaj ponovno</string>
+    <string name="wandkit_feedback_load_failed_title">Učitavanje nije uspjelo</string>
+    <string name="wandkit_powered_by">Pokreće WandKit</string>
+    <string name="wandkit_screenshot_prompt_compose_placeholder">Što je pošlo po zlu?</string>
+    <string name="wandkit_screenshot_prompt_debug_disclosure">Priložit ćemo dijagnostičke zapise kako bismo lakše riješili problem.</string>
+    <string name="wandkit_screenshot_prompt_failed_generic">Slanje nije uspjelo. Pokušaj ponovno.</string>
+    <string name="wandkit_screenshot_prompt_include_replay">Priloži snimku zadnje minute</string>
+    <string name="wandkit_screenshot_prompt_message">Priloži ovu snimku zaslona prijavi da pogledamo što se dogodilo.</string>
+    <string name="wandkit_screenshot_prompt_not_now">Ne sada</string>
+    <string name="wandkit_screenshot_prompt_report">Nastavi</string>
+    <string name="wandkit_screenshot_prompt_retry">Pokušaj ponovno</string>
+    <string name="wandkit_screenshot_prompt_send">Pošalji</string>
+    <string name="wandkit_screenshot_prompt_sent_message">Tim će to pogledati.</string>
+    <string name="wandkit_screenshot_prompt_sent_title">Hvala, zaprimili smo</string>
+    <string name="wandkit_screenshot_prompt_thumbnail">Tvoja snimka zaslona</string>
+    <string name="wandkit_screenshot_prompt_title">Prijaviti problem?</string>
+    <string name="wandkit_survey_continue">Nastavi</string>
+    <string name="wandkit_survey_display_name_placeholder">Tvoje ime</string>
+</resources>

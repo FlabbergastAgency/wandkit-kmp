@@ -67,4 +67,5 @@ public data class WandKitConfig(
      * default) means the SDK never gates and never makes a gate network call.
      */
     val accessGate: WandKitAccessGateOptions? = null,
+    val locale: String? = null,
 )
