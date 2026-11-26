@@ -5,6 +5,7 @@ import com.flabbergast.wandkit.core.data.events.dto.EventPageDto
 import com.flabbergast.wandkit.core.data.events.dto.EventPageTypeDto
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPage
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -82,5 +83,34 @@ class EventFormDataMapperTest {
         )
 
         assertFalse(form?.pages?.get("page-text")?.hasPostCreation == true)
+    }
+
+    private fun requestNativeReviewFor(type: EventPageTypeDto, value: JsonPrimitive?): Boolean {
+        val form = toFeedbackForm(
+            formDto(EventPageDto(id = "page", type = type, title = "Q", requestNativeReview = value))
+        )
+        return form?.pages?.get("page")?.requestNativeReview == true
+    }
+
+    @Test
+    fun mapsRequestNativeReviewOnStarsPage() {
+        assertTrue(requestNativeReviewFor(EventPageTypeDto.STARS, JsonPrimitive(true)))
+    }
+
+    @Test
+    fun missingOrFalseRequestNativeReviewIsOff() {
+        assertFalse(requestNativeReviewFor(EventPageTypeDto.STARS, null))
+        assertFalse(requestNativeReviewFor(EventPageTypeDto.STARS, JsonPrimitive(false)))
+    }
+
+    @Test
+    fun malformedRequestNativeReviewIsOff() {
+        assertFalse(requestNativeReviewFor(EventPageTypeDto.STARS, JsonPrimitive("yes")))
+    }
+
+    @Test
+    fun requestNativeReviewOnOtherPageTypesIsIgnored() {
+        assertFalse(requestNativeReviewFor(EventPageTypeDto.THUMBS, JsonPrimitive(true)))
+        assertFalse(requestNativeReviewFor(EventPageTypeDto.TEXT, JsonPrimitive(true)))
     }
 }

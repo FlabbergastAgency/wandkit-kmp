@@ -19,6 +19,7 @@ import androidx.annotation.RequiresApi
 import com.flabbergast.wandkit.core.config.WandKitSessionReplayOptions
 import com.flabbergast.wandkit.core.di.WandKitSdkContainer
 import com.flabbergast.wandkit.core.feedback.WandKitFeedbackActivity
+import com.flabbergast.wandkit.core.review.isPlayReviewActivity
 import com.flabbergast.wandkit.core.screenshot.CurrentActivityTracker
 import java.io.ByteArrayOutputStream
 import java.util.WeakHashMap
@@ -197,7 +198,7 @@ internal object AndroidSessionReplayRecorder : SessionReplayRecorder {
     internal fun onActivityResumed(activity: Activity) {
         if (!isRecording) return
         installTouchCallback(activity)
-        if (activity !is WandKitFeedbackActivity) {
+        if (!activity.isExcludedFromReplay()) {
             consecutiveBlankCaptures = 0
             blankPauseActive = false
         }
@@ -254,7 +255,7 @@ internal object AndroidSessionReplayRecorder : SessionReplayRecorder {
     // region Touches
 
     private fun installTouchCallback(activity: Activity) {
-        if (activity is WandKitFeedbackActivity) return
+        if (activity.isExcludedFromReplay()) return
         if (touchCallbackInstalled[activity] == true) return
         val window = activity.window ?: return
         val current = window.callback ?: return
@@ -306,7 +307,7 @@ internal object AndroidSessionReplayRecorder : SessionReplayRecorder {
 
     private fun captureFrame(capturedAt: Long) {
         val activity = CurrentActivityTracker.currentActivity
-        if (activity == null || activity is WandKitFeedbackActivity) return
+        if (activity == null || activity.isExcludedFromReplay()) return
 
         val window = activity.window
         val decor = window?.peekDecorView()
@@ -546,8 +547,18 @@ internal object AndroidSessionReplayRecorder : SessionReplayRecorder {
         publishStatus()
     }
 
+    /**
+     * The SDK's own feedback screen and the Play review card's host Activity
+     * are never recorded: neither is the app's UI.
+     */
+    private fun Activity.isExcludedFromReplay(): Boolean =
+        this is WandKitFeedbackActivity || isPlayReviewActivity()
+
     private fun isSdkUiVisible(): Boolean {
         if (WandKitFeedbackActivity.visibleCount > 0) return true
+        // The Play review card is the store's UI on top of the app; pause
+        // like for SDK UI rather than recording it.
+        if (CurrentActivityTracker.currentActivity?.isPlayReviewActivity() == true) return true
         val container = container() ?: return false
         return container.screenshotPromptController.prompt.value != null ||
             container.feedbackFormController.form.value != null ||

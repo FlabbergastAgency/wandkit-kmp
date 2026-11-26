@@ -6,6 +6,8 @@ import com.flabbergast.wandkit.core.data.events.dto.EventPageDto
 import com.flabbergast.wandkit.core.data.events.dto.EventPageTypeDto
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackForm
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPage
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
 
 internal fun toFeedbackForm(dto: EventFormDto): FeedbackForm? = FeedbackForm(
     formId = dto.publicId,
@@ -28,6 +30,8 @@ private fun EventPageDto.mapFormPage(): FeedbackFormPage {
         content = mapContent(),
         next = next.map(::mapNextPageRule),
         hasPostCreation = postCreation != null,
+        requestNativeReview = type == EventPageTypeDto.STARS &&
+            (requestNativeReview as? JsonPrimitive)?.booleanOrNull == true,
     )
 }
 

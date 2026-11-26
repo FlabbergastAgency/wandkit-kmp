@@ -97,4 +97,29 @@ class EventPageDtoTest {
         assertNull(page.postCreation)
         assertNull(page.suggestedDisplayName)
     }
+
+    @Test
+    fun decodesRequestNativeReview() {
+        val page = createJson().decodeFromString(
+            EventPageDto.serializer(),
+            """
+            {"id": "rate", "type": "stars", "title": "How was it?", "request_native_review": true}
+            """.trimIndent(),
+        )
+
+        assertEquals("true", page.requestNativeReview.toString())
+    }
+
+    /** A malformed value must not fail the whole page; the mapper reads it as "no review". */
+    @Test
+    fun decodesMalformedRequestNativeReviewLeniently() {
+        val page = createJson().decodeFromString(
+            EventPageDto.serializer(),
+            """
+            {"id": "rate", "type": "stars", "title": "How was it?", "request_native_review": {"yes": 1}}
+            """.trimIndent(),
+        )
+
+        assertEquals(EventPageTypeDto.STARS, page.type)
+    }
 }

@@ -15,11 +15,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
+import com.flabbergast.wandkit.core.InternalWandKitApi
 import com.flabbergast.wandkit.core.components.root.WandKitComponent
+import com.flabbergast.wandkit.core.components.root.WandKitSlotAnimation
 import com.flabbergast.wandkit.ui.compose.featurePreview.FeaturePreviewView
 import com.flabbergast.wandkit.ui.compose.feedbackForm.FeedbackFormView
 import com.flabbergast.wandkit.ui.compose.screenshotPrompt.ScreenshotPromptView
 
+@OptIn(InternalWandKitApi::class)
 @Composable
 internal fun WandKitRootView(
     component: WandKitComponent,
@@ -32,13 +35,15 @@ internal fun WandKitRootView(
         targetState = slotStack.child?.instance,
         contentAlignment = Alignment.Center,
         transitionSpec = {
-            (fadeIn(animationSpec = tween(220, delayMillis = 90)) +
-                    scaleIn(initialScale = 0.92f, animationSpec = tween(220, delayMillis = 90)))
+            val duration = WandKitSlotAnimation.DURATION_MILLIS
+            val delay = WandKitSlotAnimation.DELAY_MILLIS
+            (fadeIn(animationSpec = tween(duration, delayMillis = delay)) +
+                    scaleIn(initialScale = 0.92f, animationSpec = tween(duration, delayMillis = delay)))
                 .togetherWith(
-                    fadeOut(animationSpec = tween(220)) +
+                    fadeOut(animationSpec = tween(duration)) +
                             scaleOut(
                                 targetScale = 0.92f,
-                                animationSpec = tween(220, delayMillis = 90)
+                                animationSpec = tween(duration, delayMillis = delay)
                             )
                 ) using
                     SizeTransform(clip = false)

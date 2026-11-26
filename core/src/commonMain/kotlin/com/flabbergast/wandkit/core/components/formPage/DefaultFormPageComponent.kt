@@ -28,7 +28,7 @@ private const val END_PAGE_DISMISS_DELAY = 2000L
 
 internal class DefaultFormPageComponent(
     private val pageId: FeedbackFormPageId,
-    formController: FeedbackFormController,
+    private val formController: FeedbackFormController,
     private val onDismissForm: () -> Unit,
     private val onSubmitPage: (pageId: FeedbackFormPageId, result: PageInput) -> Unit,
     private val onSkipPage: (pageId: FeedbackFormPageId) -> Unit,
@@ -93,8 +93,15 @@ internal class DefaultFormPageComponent(
         input.update {
             it.copy(stars = stars)
         }
+        // Recorded on the tap itself rather than on continue: closing the
+        // form during the auto-continue delay still counts as an answer.
+        if (currentPage()?.requestsNativeReview(stars) == true) {
+            formController.markNativeReviewRequested()
+        }
         autoContinueIfNeeded()
     }
+
+    private fun currentPage(): FeedbackFormPage? = formController.form.value?.pages?.get(pageId)
 
     override fun updateText(text: String) {
         input.update {
