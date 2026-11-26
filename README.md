@@ -468,6 +468,34 @@ result.onSuccess { postId -> /* ... */ }
 
 `text` is visible on the feedback board; `debugAttachments` are for your team only and best-effort, with the same caps as [Debug attachments](#debug-attachments). `type` is optional. The invite gate does not hold it back. The call returns a `Result` with the post id and fails for anonymous users, so call `WandKit.identify(...)` first.
 
+### Showing a post and its votes in your own UI
+
+To show a post as a card in your own screens (with its vote count and an upvote button), read it and set the vote directly:
+
+```kotlin
+var post by remember { mutableStateOf<WandKitPost?>(null) }
+LaunchedEffect(postId) {
+    post = WandKit.post(postId).getOrNull() // null on 404 or a network failure: hide the card
+}
+
+post?.let { current ->
+    PostCard(
+        title = current.title,
+        votes = current.voteCount,
+        voted = current.viewerVoted,
+        voteEnabled = current.canVote,
+        onVote = {
+            scope.launch {
+                WandKit.setVote(current.id, voted = !current.viewerVoted)
+                    .onSuccess { vote -> post = current.copy(voteCount = vote.voteCount, viewerVoted = vote.viewerVoted) }
+            }
+        },
+    )
+}
+```
+
+Both calls return a `Result` and are safe to call from the main thread. `post` fails when the post is hidden, unknown or in another environment, or when the network fails. `canVote` is false while no user is identified; `setVote` then fails with `WandKitReadOnlySessionException` without sending anything, so call `WandKit.identify(...)` first. `setVote(id, true)` votes and `setVote(id, false)` takes the vote back; both are idempotent. Neither is held back by the invite gate.
+
 ### Session replay
 
 Opt in alongside screenshot reporting and a report can carry a short replay of what led up to the screenshot:

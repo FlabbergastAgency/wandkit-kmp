@@ -380,6 +380,77 @@ class PostsApiTest {
         assertTrue(data.viewerVoted)
     }
 
+    @Test
+    fun unvotePostSendsBearerTokenAsDeleteToVoteEndpointAndDecodesBody() = runBlocking {
+        var capturedAuth: String? = null
+        var capturedUrl: String? = null
+        var capturedMethod: HttpMethod? = null
+        val postsApi = createTestPostsApi { request ->
+            capturedAuth = request.headers[HttpHeaders.Authorization]
+            capturedUrl = request.url.toString()
+            capturedMethod = request.method
+            respond(
+                content = """{"vote_count":3,"viewer_voted":false}""",
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+            )
+        }
+
+        val result = postsApi { unvotePost("tok", "post-1") }
+
+        assertEquals("Bearer tok", capturedAuth)
+        assertEquals("https://example.test/api/v1/sdk/posts/post-1/vote", capturedUrl)
+        assertEquals(HttpMethod.Delete, capturedMethod)
+        val data = result.getOrThrow().data
+        assertEquals(3, data.voteCount)
+        assertFalse(data.viewerVoted)
+    }
+
+    @Test
+    fun getPostSendsBearerTokenAndDecodesBodyIgnoringUnknownFields() = runBlocking {
+        var capturedAuth: String? = null
+        var capturedUrl: String? = null
+        var capturedMethod: HttpMethod? = null
+        val postsApi = createTestPostsApi { request ->
+            capturedAuth = request.headers[HttpHeaders.Authorization]
+            capturedUrl = request.url.toString()
+            capturedMethod = request.method
+            respond(
+                content = """
+                    {"id":"post-1","title":"Dark mode","body":"Please","type":"feature_request",
+                    "status":"planned","vote_count":12,"viewer_voted":true,"comment_count":2,"tags":[]}
+                """.trimIndent().replace("\n", ""),
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+            )
+        }
+
+        val result = postsApi { getPost("tok", "post-1") }
+
+        assertEquals("Bearer tok", capturedAuth)
+        assertEquals("https://example.test/api/v1/sdk/posts/post-1", capturedUrl)
+        assertEquals(HttpMethod.Get, capturedMethod)
+        val data = result.getOrThrow().data
+        assertEquals("post-1", data.id)
+        assertEquals("Dark mode", data.title)
+        assertEquals("planned", data.status)
+        assertEquals(12, data.voteCount)
+        assertTrue(data.viewerVoted)
+    }
+
+    @Test
+    fun getPostFailsOn404() = runBlocking {
+        val postsApi = createTestPostsApi { _ ->
+            respond(content = "", status = HttpStatusCode.NotFound)
+        }
+
+        val result = postsApi { getPost("tok", "missing-post") }
+
+        val exception = result.exceptionOrNull()
+        assertTrue(exception is WandKitHttpException, "Expected WandKitHttpException but got $exception")
+        assertEquals(404, exception.statusCode)
+    }
+
     private fun testSessionRequest(displayName: String? = null) = SdkPostsSessionRequestDto(
         externalUserId = "u1",
         displayName = displayName,
