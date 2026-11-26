@@ -14,7 +14,9 @@ import com.flabbergast.wandkit.core.featurepreview.WandKitFeaturePreviewResult
 import com.flabbergast.wandkit.core.featurepreview.presentFeaturePreviewFlow
 import com.flabbergast.wandkit.core.feedback.WandKitDebugAttachment
 import com.flabbergast.wandkit.core.feedback.WandKitFeedbackScreen
+import com.flabbergast.wandkit.core.feedback.WandKitPost
 import com.flabbergast.wandkit.core.feedback.WandKitPostType
+import com.flabbergast.wandkit.core.feedback.WandKitPostVote
 import com.flabbergast.wandkit.core.feedback.WandKitReadOnlySessionException
 import com.flabbergast.wandkit.core.feedback.presentFeedbackScreen
 import com.flabbergast.wandkit.core.replay.WandKitSessionReplayStatus
@@ -188,6 +190,32 @@ public object WandKit {
         type: WandKitPostType? = null,
         debugAttachments: List<WandKitDebugAttachment> = emptyList(),
     ): Result<String> = WandKitSdkContainer.get().submitPostUseCase(text, type, debugAttachments)
+
+    /**
+     * Reads the post [postId] as the current user sees it - title, status,
+     * vote count and whether they voted - for host apps that show a post as a
+     * card in their own screens. Returns a failure carrying the HTTP error
+     * when the post is hidden, unknown or in another environment (404), or
+     * when the network fails.
+     *
+     * It uses whichever user [identify] last named. Anonymous users can read
+     * posts but not vote, which [WandKitPost.canVote] reports. Not held back
+     * by the invite gate.
+     */
+    public suspend fun post(postId: String): Result<WandKitPost> =
+        WandKitSdkContainer.get().postVotesUseCase.post(postId)
+
+    /**
+     * Votes for the post [postId] when [voted] is true, takes the vote back
+     * when false. Both are idempotent. Returns the post's vote state
+     * afterwards, or a failure.
+     *
+     * Anonymous sessions are read-only, so the call fails for them with a
+     * [WandKitReadOnlySessionException] before any vote is sent; call
+     * [identify] first. Not held back by the invite gate.
+     */
+    public suspend fun setVote(postId: String, voted: Boolean): Result<WandKitPostVote> =
+        WandKitSdkContainer.get().postVotesUseCase.setVote(postId, voted)
 
     /**
      * Presents the native "coming soon / it's here" sheet for [postId] - a

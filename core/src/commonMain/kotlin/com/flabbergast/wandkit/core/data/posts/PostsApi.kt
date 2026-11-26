@@ -8,12 +8,14 @@ import com.flabbergast.wandkit.core.data.posts.dto.SdkCreateAttachmentResponseDt
 import com.flabbergast.wandkit.core.data.posts.dto.SdkCreatePostRequestDto
 import com.flabbergast.wandkit.core.data.posts.dto.SdkCreatedPostDto
 import com.flabbergast.wandkit.core.data.posts.dto.SdkFeaturePreviewDto
+import com.flabbergast.wandkit.core.data.posts.dto.SdkPostDto
 import com.flabbergast.wandkit.core.data.posts.dto.SdkPostVoteResponseDto
 import com.flabbergast.wandkit.core.data.posts.dto.SdkPostsSessionRequestDto
 import com.flabbergast.wandkit.core.data.posts.dto.SdkPostsSessionResponseDto
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
 import io.ktor.client.request.parameter
@@ -59,6 +61,18 @@ internal interface PostsApi {
         token: String,
         postId: String,
     ): WandKitHttpResponse<SdkPostVoteResponseDto>
+
+    /** Takes the viewer's vote back. Idempotent server-side, like [votePost]. */
+    suspend fun unvotePost(
+        token: String,
+        postId: String,
+    ): WandKitHttpResponse<SdkPostVoteResponseDto>
+
+    /** One post as the session's viewer sees it. 404 when it's hidden, unknown or in another environment. */
+    suspend fun getPost(
+        token: String,
+        postId: String,
+    ): WandKitHttpResponse<SdkPostDto>
 
     /**
      * PUTs the raw bytes to a mint response's `upload_url`. Not deserialized -
@@ -145,6 +159,26 @@ private class PostsApiImpl(
         postId: String,
     ): WandKitHttpResponse<SdkPostVoteResponseDto> {
         val response = client.put("$baseUrl/api/v1/sdk/posts/$postId/vote") {
+            bearerAuth(token)
+        }
+        return WandKitHttpResponse(response)
+    }
+
+    override suspend fun unvotePost(
+        token: String,
+        postId: String,
+    ): WandKitHttpResponse<SdkPostVoteResponseDto> {
+        val response = client.delete("$baseUrl/api/v1/sdk/posts/$postId/vote") {
+            bearerAuth(token)
+        }
+        return WandKitHttpResponse(response)
+    }
+
+    override suspend fun getPost(
+        token: String,
+        postId: String,
+    ): WandKitHttpResponse<SdkPostDto> {
+        val response = client.get("$baseUrl/api/v1/sdk/posts/$postId") {
             bearerAuth(token)
         }
         return WandKitHttpResponse(response)
