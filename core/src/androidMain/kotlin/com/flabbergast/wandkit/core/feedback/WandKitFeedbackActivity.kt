@@ -40,7 +40,7 @@ import com.flabbergast.wandkit.core.config.WandKitColorSchemePreference
 import com.flabbergast.wandkit.core.di.WandKitSdkContainer
 import com.flabbergast.wandkit.core.domain.posts.PostsSession
 import com.flabbergast.wandkit.core.localization.WandKitLanguage
-import com.flabbergast.wandkit.core.localization.wandKitString
+import com.flabbergast.wandkit.core.localization.WandKitText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -247,19 +247,19 @@ public class WandKitFeedbackActivity : ComponentActivity() {
     private fun buildErrorView(): LinearLayout {
         val density = resources.displayMetrics.density
         val titleView = TextView(this).apply {
-            text = wandKitString("wandkit.feedback.load_failed.title", "Couldn't load")
+            text = WandKitText.FEEDBACK_LOAD_FAILED_TITLE.string
             setTypeface(typeface, Typeface.BOLD)
             textSize = 18f
             gravity = Gravity.CENTER
         }
         val messageView = TextView(this).apply {
-            text = wandKitString("wandkit.feedback.load_failed.message", "Check your connection and try again.")
+            text = WandKitText.FEEDBACK_LOAD_FAILED_MESSAGE.string
             textSize = 14f
             gravity = Gravity.CENTER
             setPadding(0, (8 * density).toInt(), 0, 0)
         }
         val retryButton = Button(this).apply {
-            text = wandKitString("wandkit.feedback.load_failed.retry", "Retry")
+            text = WandKitText.FEEDBACK_LOAD_FAILED_RETRY.string
             setOnClickListener { reload() }
         }
 

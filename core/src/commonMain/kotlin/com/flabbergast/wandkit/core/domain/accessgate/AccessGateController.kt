@@ -7,6 +7,7 @@ import com.flabbergast.wandkit.core.accessgate.isBlocking
 import com.flabbergast.wandkit.core.config.WandKitAccessGateOptions
 import com.flabbergast.wandkit.core.data.accessgate.AccessGateStore
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
+import com.flabbergast.wandkit.core.localization.WandKitText
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -385,14 +386,14 @@ internal class AccessGateController(
         }
 
         val message = when {
-            error.errorCode == ERROR_CODE_NOT_FOUND -> AccessGateStrings.ERROR_NOT_FOUND
-            error.errorCode == ERROR_CODE_EXPIRED -> AccessGateStrings.ERROR_EXPIRED
-            error.errorCode == ERROR_CODE_REVOKED -> AccessGateStrings.ERROR_REVOKED
-            error.errorCode == ERROR_CODE_ALREADY_USED -> AccessGateStrings.ERROR_ALREADY_USED
-            error.statusCode == 429 -> AccessGateStrings.ERROR_RATE_LIMITED
+            error.errorCode == ERROR_CODE_NOT_FOUND -> WandKitText.ACCESS_GATE_ERROR_NOT_FOUND.string
+            error.errorCode == ERROR_CODE_EXPIRED -> WandKitText.ACCESS_GATE_ERROR_EXPIRED.string
+            error.errorCode == ERROR_CODE_REVOKED -> WandKitText.ACCESS_GATE_ERROR_REVOKED.string
+            error.errorCode == ERROR_CODE_ALREADY_USED -> WandKitText.ACCESS_GATE_ERROR_ALREADY_USED.string
+            error.statusCode == 429 -> WandKitText.ACCESS_GATE_ERROR_RATE_LIMITED.string
             else -> {
                 logger.error(LOGGER_TAG, "Claim failed (HTTP ${error.statusCode}, ${error.errorCode ?: "no error code"})")
-                AccessGateStrings.ERROR_GENERIC
+                WandKitText.ACCESS_GATE_ERROR_GENERIC.string
             }
         }
         _screen.update { it.copy(claimErrorMessage = message) }

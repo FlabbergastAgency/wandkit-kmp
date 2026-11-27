@@ -3,8 +3,8 @@ package com.flabbergast.wandkit.core.accessgate
 import com.flabbergast.wandkit.core.InternalWandKitApi
 import com.flabbergast.wandkit.core.di.WandKitSdkContainer
 import com.flabbergast.wandkit.core.domain.accessgate.AccessGateScreenState
-import com.flabbergast.wandkit.core.domain.accessgate.AccessGateStrings
 import com.flabbergast.wandkit.core.domain.accessgate.cachedPassInlineMessage
+import com.flabbergast.wandkit.core.localization.WandKitText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -37,8 +37,8 @@ public data class WandKitAccessGateViewState(
     public companion object {
         public val HIDDEN: WandKitAccessGateViewState = WandKitAccessGateViewState(
             phase = Phase.Hidden,
-            title = AccessGateStrings.TITLE,
-            message = AccessGateStrings.MESSAGE,
+            title = WandKitText.ACCESS_GATE_TITLE.string,
+            message = WandKitText.ACCESS_GATE_MESSAGE.string,
             helpUrl = null,
             errorMessage = null,
             isSubmitting = false,
@@ -104,8 +104,8 @@ internal fun accessGateViewState(
     }
     return WandKitAccessGateViewState(
         phase = phase,
-        title = screen.serverTitle ?: AccessGateStrings.TITLE,
-        message = screen.serverMessage ?: AccessGateStrings.MESSAGE,
+        title = screen.serverTitle ?: WandKitText.ACCESS_GATE_TITLE.string,
+        message = screen.serverMessage ?: WandKitText.ACCESS_GATE_MESSAGE.string,
         helpUrl = screen.helpUrl,
         // A claim failure wins; before any attempt, a cached code that went
         // bad explains why the gate is up at all.

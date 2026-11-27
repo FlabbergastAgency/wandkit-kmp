@@ -4,7 +4,7 @@ import com.flabbergast.wandkit.core.components.formPage.model.FormPageButton
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageUiState
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPage
 import com.flabbergast.wandkit.core.domain.forms.models.PageInput
-import com.flabbergast.wandkit.core.localization.wandKitString
+import com.flabbergast.wandkit.core.localization.WandKitText
 
 internal fun formPageViewStateMapper(
     input: PageInput,
@@ -52,16 +52,13 @@ internal fun formPageViewStateMapper(
     )
 }
 
-/** Default primary-button label for content types with no server-set copy of their own. */
-private val DEFAULT_CONTINUE_BUTTON_LABEL: String get() = wandKitString("wandkit.survey.continue", "Continue")
-
 private fun mapButtons(page: FeedbackFormPage?) = buildList {
     if (page == null || page.content is FeedbackFormPage.Content.End) return@buildList
 
     // Thumbs / stars / single-choice auto-advance when there's no next label.
     // Text, display-name, and multi-select need an explicit primary action.
     val primaryButtonLabel = page.nextButtonLabel
-        ?: DEFAULT_CONTINUE_BUTTON_LABEL.takeIf { page.requiresExplicitPrimaryButton() }
+        ?: WandKitText.SURVEY_CONTINUE.string.takeIf { page.requiresExplicitPrimaryButton() }
 
     primaryButtonLabel?.let { label ->
         add(

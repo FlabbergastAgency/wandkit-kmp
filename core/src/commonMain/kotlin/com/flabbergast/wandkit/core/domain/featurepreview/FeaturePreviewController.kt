@@ -3,7 +3,7 @@ package com.flabbergast.wandkit.core.domain.featurepreview
 import com.flabbergast.wandkit.core.domain.infrastructure.concurrency.FireAndForgetTask
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import com.flabbergast.wandkit.core.featurepreview.WandKitFeaturePreviewResult
-import com.flabbergast.wandkit.core.localization.wandKitString
+import com.flabbergast.wandkit.core.localization.WandKitText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.getAndUpdate
@@ -92,7 +92,6 @@ internal fun createFeaturePreviewController(
 )
 
 private const val LOGGER_TAG = "[FeaturePreviewController]"
-private val DEFAULT_VOTE_ERROR_MESSAGE: String get() = wandKitString("wandkit.feature_preview.vote_error", "Couldn't save, please try again")
 internal const val FEATURE_PREVIEW_FOLLOWED_EVENT = "feature_preview_followed"
 internal const val FEATURE_PREVIEW_SECONDARY_EVENT = "feature_preview_secondary"
 
@@ -154,7 +153,7 @@ private class FeaturePreviewControllerImpl(
                 }
                 .onFailure { error ->
                     logger.warn(LOGGER_TAG, "Feature preview vote failed (postId=${current.postId})", error)
-                    updateComingSoon { it.copy(isVoting = false, error = DEFAULT_VOTE_ERROR_MESSAGE) }
+                    updateComingSoon { it.copy(isVoting = false, error = WandKitText.FEATURE_PREVIEW_VOTE_ERROR.string) }
                 }
         }
     }

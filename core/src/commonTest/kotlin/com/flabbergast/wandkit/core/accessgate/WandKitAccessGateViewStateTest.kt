@@ -2,7 +2,7 @@ package com.flabbergast.wandkit.core.accessgate
 
 import com.flabbergast.wandkit.core.InternalWandKitApi
 import com.flabbergast.wandkit.core.domain.accessgate.AccessGateScreenState
-import com.flabbergast.wandkit.core.domain.accessgate.AccessGateStrings
+import com.flabbergast.wandkit.core.localization.WandKitText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -34,8 +34,8 @@ class WandKitAccessGateViewStateTest {
     fun defaultsApplyWithoutServerCopy() {
         val view = accessGateViewState(WandKitAccessGateState.Blocked(WandKitAccessGateBlockReason.NoCode), AccessGateScreenState())
 
-        assertEquals("Invite only", view.title)
-        assertEquals("Enter your invite code to continue.", view.message)
+        assertEquals(WandKitText.ACCESS_GATE_TITLE.string, view.title)
+        assertEquals(WandKitText.ACCESS_GATE_MESSAGE.string, view.message)
         assertNull(view.errorMessage)
         assertNull(view.helpUrl)
     }
@@ -56,27 +56,27 @@ class WandKitAccessGateViewStateTest {
     fun aRevokedCachedCodeExplainsItself() {
         val view = accessGateViewState(WandKitAccessGateState.Blocked(WandKitAccessGateBlockReason.Revoked), AccessGateScreenState())
 
-        assertEquals(AccessGateStrings.ERROR_REVOKED, view.errorMessage)
+        assertEquals(WandKitText.ACCESS_GATE_ERROR_REVOKED.string, view.errorMessage)
     }
 
     @Test
     fun anAlreadyUsedClaimShowsItsMessageOnTheCodeField() {
         val view = accessGateViewState(
             WandKitAccessGateState.Blocked(WandKitAccessGateBlockReason.NoCode),
-            AccessGateScreenState(claimErrorMessage = AccessGateStrings.ERROR_ALREADY_USED),
+            AccessGateScreenState(claimErrorMessage = WandKitText.ACCESS_GATE_ERROR_ALREADY_USED.string),
         )
 
         assertEquals(WandKitAccessGateViewState.Phase.CodeEntry, view.phase)
-        assertEquals("This code has already been used.", view.errorMessage)
+        assertEquals(WandKitText.ACCESS_GATE_ERROR_ALREADY_USED.string, view.errorMessage)
     }
 
     @Test
     fun aClaimErrorWinsOverTheBlockReason() {
         val view = accessGateViewState(
             WandKitAccessGateState.Blocked(WandKitAccessGateBlockReason.Expired),
-            AccessGateScreenState(claimErrorMessage = AccessGateStrings.ERROR_RATE_LIMITED, isSubmitting = false),
+            AccessGateScreenState(claimErrorMessage = WandKitText.ACCESS_GATE_ERROR_RATE_LIMITED.string, isSubmitting = false),
         )
 
-        assertEquals(AccessGateStrings.ERROR_RATE_LIMITED, view.errorMessage)
+        assertEquals(WandKitText.ACCESS_GATE_ERROR_RATE_LIMITED.string, view.errorMessage)
     }
 }

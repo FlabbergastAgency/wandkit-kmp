@@ -3,6 +3,7 @@ package com.flabbergast.wandkit.core.components.formPage.mapper
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageButton
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPage
 import com.flabbergast.wandkit.core.domain.forms.models.PageInput
+import com.flabbergast.wandkit.core.localization.WandKitText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -36,7 +37,7 @@ class FormPageViewStateMapperTest {
         val mapped = buttons(page(FeedbackFormPage.Content.Text(placeholder = "", maxLength = 100)))
 
         assertEquals(
-            listOf("Continue", "Skip"),
+            listOf(WandKitText.SURVEY_CONTINUE.string, "Skip"),
             mapped.map { it.label },
         )
         assertEquals(FormPageButton.Type.PRIMARY, mapped.first().type)
@@ -54,7 +55,7 @@ class FormPageViewStateMapperTest {
             ),
         )
 
-        assertEquals("Continue", mapped.first().label)
+        assertEquals(WandKitText.SURVEY_CONTINUE.string, mapped.first().label)
         assertEquals(FormPageButton.Type.PRIMARY, mapped.first().type)
     }
 

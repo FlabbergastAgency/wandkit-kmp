@@ -6,7 +6,7 @@ import com.flabbergast.wandkit.core.data.events.dto.EventPageDto
 import com.flabbergast.wandkit.core.data.events.dto.EventPageTypeDto
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackForm
 import com.flabbergast.wandkit.core.domain.forms.models.FeedbackFormPage
-import com.flabbergast.wandkit.core.localization.wandKitString
+import com.flabbergast.wandkit.core.localization.WandKitText
 
 internal fun toFeedbackForm(dto: EventFormDto): FeedbackForm? = FeedbackForm(
     formId = dto.publicId,
@@ -24,7 +24,7 @@ private fun EventPageDto.mapFormPage(): FeedbackFormPage {
         imageUrl = imageUrl,
         nextButtonLabel = nextButtonLabel,
         skipButtonLabel = skipButtonLabel,
-        promoLabel = wandKitString("wandkit.powered_by", "Powered by WandKit"), // todo matko: put backend value
+        promoLabel = WandKitText.POWERED_BY.string, // todo matko: put backend value
         isRequired = required,
         content = mapContent(),
         next = next.map(::mapNextPageRule),

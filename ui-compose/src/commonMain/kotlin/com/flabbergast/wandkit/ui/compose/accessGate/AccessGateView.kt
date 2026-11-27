@@ -90,8 +90,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.flabbergast.wandkit.core.InternalWandKitApi
-import com.flabbergast.wandkit.core.localization.WandKitStrings
 import com.flabbergast.wandkit.core.accessgate.WandKitAccessGateViewState
+import com.flabbergast.wandkit.core.localization.WandKitText
 import com.flabbergast.wandkit.ui.compose.WandKitColors
 import com.flabbergast.wandkit.ui.compose.WandKitThemeDefaults
 import com.flabbergast.wandkit.ui.compose.WandKitThemeProvider
@@ -107,20 +107,6 @@ internal object AccessGateTestTags {
     const val PROGRESS = "wandkit.accessGate.progress"
 }
 
-/**
- * The screen's own labels; title, message and errors come with the view
- * state. The offline screen has fixed copy - the server title is about
- * the invite, not the connection.
- */
-@OptIn(InternalWandKitApi::class)
-private object AccessGateLabels {
-    val PLACEHOLDER: String get() = WandKitStrings.get("wandkit.access_gate.placeholder", "Invite code")
-    val BUTTON: String get() = WandKitStrings.get("wandkit.access_gate.button", "Continue")
-    val HELP: String get() = WandKitStrings.get("wandkit.access_gate.help_link", "Need a code?")
-    val OFFLINE_TITLE: String get() = WandKitStrings.get("wandkit.access_gate.offline.title", "You're offline")
-    val OFFLINE_MESSAGE: String get() = WandKitStrings.get("wandkit.access_gate.offline.message", "Connect to the internet and try again.")
-    val RETRY: String get() = WandKitStrings.get("wandkit.access_gate.retry", "Try again")
-}
 
 private val ContentMaxWidth = 420.dp
 private val HorizontalPadding = 24.dp
@@ -346,6 +332,7 @@ private fun CheckingContent(palette: AccessGatePalette) {
     }
 }
 
+@OptIn(InternalWandKitApi::class)
 @Composable
 private fun OfflineContent(
     palette: AccessGatePalette,
@@ -355,14 +342,14 @@ private fun OfflineContent(
         top = {
             GateHeader(
                 icon = AccessGateIcons.WifiOff,
-                title = AccessGateLabels.OFFLINE_TITLE,
-                message = AccessGateLabels.OFFLINE_MESSAGE,
+                title = WandKitText.ACCESS_GATE_OFFLINE_TITLE.string,
+                message = WandKitText.ACCESS_GATE_OFFLINE_MESSAGE.string,
                 palette = palette,
             )
         },
         actions = {
             GatePrimaryButton(
-                text = AccessGateLabels.RETRY,
+                text = WandKitText.ACCESS_GATE_RETRY.string,
                 onClick = onRetry,
                 palette = palette,
                 modifier = Modifier.testTag(AccessGateTestTags.RETRY_BUTTON),
@@ -403,7 +390,7 @@ private fun CodeEntryContent(
         },
         actions = {
             GatePrimaryButton(
-                text = AccessGateLabels.BUTTON,
+                text = WandKitText.ACCESS_GATE_BUTTON.string,
                 onClick = onSubmit,
                 palette = palette,
                 enabled = code.isNotBlank(),
@@ -421,7 +408,7 @@ private fun CodeEntryContent(
                         .testTag(AccessGateTestTags.HELP_BUTTON),
                 ) {
                     Text(
-                        text = AccessGateLabels.HELP,
+                        text = WandKitText.ACCESS_GATE_HELP_LINK.string,
                         style = TextStyle(fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
                         color = palette.accentForeground,
                     )
@@ -471,6 +458,7 @@ private fun GateHeader(
     )
 }
 
+@OptIn(InternalWandKitApi::class)
 @Composable
 private fun AccessGateCodeField(
     value: String,
@@ -534,7 +522,7 @@ private fun AccessGateCodeField(
                 placeholder = if (value.isEmpty()) {
                     {
                         Text(
-                            text = AccessGateLabels.PLACEHOLDER,
+                            text = WandKitText.ACCESS_GATE_PLACEHOLDER.string,
                             style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
                             color = palette.placeholder,
                         )

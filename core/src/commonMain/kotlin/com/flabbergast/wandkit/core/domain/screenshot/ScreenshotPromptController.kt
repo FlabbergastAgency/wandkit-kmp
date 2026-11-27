@@ -3,7 +3,7 @@ package com.flabbergast.wandkit.core.domain.screenshot
 import com.flabbergast.wandkit.core.domain.infrastructure.concurrency.FireAndForgetTask
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
 import com.flabbergast.wandkit.core.feedback.WandKitComposerAttachment
-import com.flabbergast.wandkit.core.localization.wandKitString
+import com.flabbergast.wandkit.core.localization.WandKitText
 import com.flabbergast.wandkit.core.replay.ReplayRecording
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -85,7 +85,6 @@ internal fun createScreenshotPromptController(
 
 private const val LOGGER_TAG = "[ScreenshotPromptController]"
 private const val SENT_AUTO_DISMISS_MILLIS = 1200L
-private val DEFAULT_ERROR_MESSAGE: String get() = wandKitString("wandkit.screenshot_prompt.failed_generic", "Couldn't send that. Please try again.")
 
 private class ScreenshotPromptControllerImpl(
     private val submitReport: SubmitScreenshotReportUseCase,
@@ -175,7 +174,7 @@ private class ScreenshotPromptControllerImpl(
                     logger.debug(LOGGER_TAG, "Screenshot report failed: $error")
                     _prompt.update { updated ->
                         val phase = updated?.phase as? ScreenshotPrompt.Phase.Composing ?: return@update updated
-                        updated.copy(phase = phase.copy(isSending = false, error = error.message ?: DEFAULT_ERROR_MESSAGE))
+                        updated.copy(phase = phase.copy(isSending = false, error = error.message ?: WandKitText.SCREENSHOT_PROMPT_FAILED_GENERIC.string))
                     }
                 }
         }

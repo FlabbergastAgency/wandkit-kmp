@@ -2,6 +2,7 @@ package com.flabbergast.wandkit.core.domain.featurepreview
 
 import com.flabbergast.wandkit.core.domain.infrastructure.concurrency.FireAndForgetTask
 import com.flabbergast.wandkit.core.featurepreview.WandKitFeaturePreviewResult
+import com.flabbergast.wandkit.core.localization.WandKitText
 import com.flabbergast.wandkit.core.testutil.NoOpLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -233,7 +234,7 @@ class FeaturePreviewControllerTest {
 
         val state = assertIs<FeaturePreviewPrompt.State.ComingSoon>(controller.prompt.value?.state)
         assertFalse(state.isVoting)
-        assertEquals("Couldn't save, please try again", state.error)
+        assertEquals(WandKitText.FEATURE_PREVIEW_VOTE_ERROR.string, state.error)
         assertNull(openedPostId)
         assertNull(result)
     }

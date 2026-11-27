@@ -11,13 +11,12 @@ import androidx.compose.ui.unit.dp
 import com.flabbergast.wandkit.core.InternalWandKitApi
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageButton
 import com.flabbergast.wandkit.core.components.formPage.model.FormPageUiState
-import com.flabbergast.wandkit.core.localization.WandKitStrings
+import com.flabbergast.wandkit.core.localization.WandKitText
 
 /** Enforced client-side; matches the server's `suggested_display_name` cap. */
 private const val DISPLAY_NAME_MAX_LENGTH = 40
-@OptIn(InternalWandKitApi::class)
-private val DISPLAY_NAME_PLACEHOLDER: String get() = WandKitStrings.get("wandkit.survey.display_name_placeholder", "Your name")
 
+@OptIn(InternalWandKitApi::class)
 @Composable
 internal fun DisplayNameContentView(
     content: FormPageUiState.Content.DisplayName,
@@ -29,7 +28,7 @@ internal fun DisplayNameContentView(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 16.dp, bottom = 24.dp),
-        placeholder = DISPLAY_NAME_PLACEHOLDER,
+        placeholder = WandKitText.SURVEY_DISPLAY_NAME_PLACEHOLDER.string,
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
         autoFocus = true,
         singleLine = true,

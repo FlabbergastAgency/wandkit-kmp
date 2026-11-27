@@ -6,7 +6,7 @@ import com.flabbergast.wandkit.core.domain.featurepreview.FeaturePreviewCopy
 import com.flabbergast.wandkit.core.domain.featurepreview.FeaturePreviewPrompt
 import com.flabbergast.wandkit.core.domain.featurepreview.FeaturePreviewResolution
 import com.flabbergast.wandkit.core.domain.featurepreview.statusForEvent
-import com.flabbergast.wandkit.core.localization.wandKitString
+import com.flabbergast.wandkit.core.localization.WandKitText
 import kotlin.time.Clock
 
 private const val EVENT_OPENED = "feature_preview_opened"
@@ -15,9 +15,9 @@ private const val LOGGER_TAG = "[FeaturePreviewPresenter]"
 /** Fixed copy for [FeaturePreviewResolution.Generic] - there is no dashboard-managed copy to show, so it isn't fetched. */
 private val GENERIC_PREVIEW_COPY: FeaturePreviewCopy
     get() = FeaturePreviewCopy(
-        title = wandKitString("wandkit.feature_preview.generic.title", "This feature is coming soon"),
-        message = wandKitString("wandkit.feature_preview.generic.message", "We're still working on it. Check back in a future update."),
-        primaryLabel = wandKitString("wandkit.feature_preview.close", "Close"),
+        title = WandKitText.FEATURE_PREVIEW_GENERIC_TITLE.string,
+        message = WandKitText.FEATURE_PREVIEW_GENERIC_MESSAGE.string,
+        primaryLabel = WandKitText.FEATURE_PREVIEW_CLOSE.string,
         secondaryLabel = "",
     )
 

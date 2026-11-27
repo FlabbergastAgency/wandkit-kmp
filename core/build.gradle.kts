@@ -15,6 +15,11 @@ apply(from = rootProject.file("gradle/wandkit-core-build-info.gradle.kts"))
 tasks.named("sourcesJar") {
     dependsOn("generateLibraryBuildInfo")
 }
+// WandKitTextTest reads the strings and the screens' sources.
+tasks.withType<Test>().configureEach {
+    inputs.dir("src/androidMain/res")
+    inputs.dir("../ui-compose/src")
+}
 val generatedBuildInfoDir = extra["generatedBuildInfoDir"]!!
 
 kotlin {
@@ -53,6 +58,8 @@ kotlin {
     }
 
     sourceSets {
+        // Core owns InternalWandKitApi; the opt-in is for host apps.
+        all { languageSettings.optIn("com.flabbergast.wandkit.core.InternalWandKitApi") }
         commonMain {
             kotlin.srcDir(generatedBuildInfoDir)
             dependencies {

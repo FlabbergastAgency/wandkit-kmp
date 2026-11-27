@@ -6,6 +6,7 @@ import com.flabbergast.wandkit.core.accessgate.WandKitAccessPass
 import com.flabbergast.wandkit.core.config.WandKitAccessGateOptions
 import com.flabbergast.wandkit.core.data.accessgate.AccessGateStore
 import com.flabbergast.wandkit.core.domain.infrastructure.logger.Logger
+import com.flabbergast.wandkit.core.localization.WandKitText
 import com.flabbergast.wandkit.core.testutil.NoOpLogger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -464,44 +465,43 @@ class AccessGateControllerTest {
 
     @Test
     fun claim_notFound_showsInlineError_andStaysOnTheField() = runTest {
-        assertClaimShowsError(AccessGateApiException(404, ERROR_CODE_NOT_FOUND), AccessGateStrings.ERROR_NOT_FOUND)
+        assertClaimShowsError(AccessGateApiException(404, ERROR_CODE_NOT_FOUND), WandKitText.ACCESS_GATE_ERROR_NOT_FOUND.string)
     }
 
     @Test
     fun claim_expired_showsInlineError() = runTest {
-        assertClaimShowsError(AccessGateApiException(409, ERROR_CODE_EXPIRED), AccessGateStrings.ERROR_EXPIRED)
+        assertClaimShowsError(AccessGateApiException(409, ERROR_CODE_EXPIRED), WandKitText.ACCESS_GATE_ERROR_EXPIRED.string)
     }
 
     @Test
     fun claim_revoked_showsInlineError() = runTest {
-        assertClaimShowsError(AccessGateApiException(409, ERROR_CODE_REVOKED), AccessGateStrings.ERROR_REVOKED)
+        assertClaimShowsError(AccessGateApiException(409, ERROR_CODE_REVOKED), WandKitText.ACCESS_GATE_ERROR_REVOKED.string)
     }
 
     @Test
     fun claim_alreadyUsed_showsItsOwnInlineError() = runTest {
-        assertClaimShowsError(AccessGateApiException(409, ERROR_CODE_ALREADY_USED), AccessGateStrings.ERROR_ALREADY_USED)
-        assertEquals("This code has already been used.", AccessGateStrings.ERROR_ALREADY_USED)
+        assertClaimShowsError(AccessGateApiException(409, ERROR_CODE_ALREADY_USED), WandKitText.ACCESS_GATE_ERROR_ALREADY_USED.string)
     }
 
     /** An older server, or a 409 this SDK does not know yet, keeps the generic message. */
     @Test
     fun claim_unknownConflict_showsGenericError() = runTest {
-        assertClaimShowsError(AccessGateApiException(409, "access_code_something_new"), AccessGateStrings.ERROR_GENERIC)
+        assertClaimShowsError(AccessGateApiException(409, "access_code_something_new"), WandKitText.ACCESS_GATE_ERROR_GENERIC.string)
     }
 
     @Test
     fun claim_conflictWithoutAnErrorCode_showsGenericError() = runTest {
-        assertClaimShowsError(AccessGateApiException(409, null), AccessGateStrings.ERROR_GENERIC)
+        assertClaimShowsError(AccessGateApiException(409, null), WandKitText.ACCESS_GATE_ERROR_GENERIC.string)
     }
 
     @Test
     fun claim_rateLimited_showsTryAgainInAMinute() = runTest {
-        assertClaimShowsError(AccessGateApiException(429, null), AccessGateStrings.ERROR_RATE_LIMITED)
+        assertClaimShowsError(AccessGateApiException(429, null), WandKitText.ACCESS_GATE_ERROR_RATE_LIMITED.string)
     }
 
     @Test
     fun claim_unexpectedApiError_showsGenericError() = runTest {
-        assertClaimShowsError(AccessGateApiException(500, null), AccessGateStrings.ERROR_GENERIC)
+        assertClaimShowsError(AccessGateApiException(500, null), WandKitText.ACCESS_GATE_ERROR_GENERIC.string)
     }
 
     private fun TestScope.assertClaimShowsError(error: AccessGateApiException, expectedMessage: String) {
@@ -588,7 +588,7 @@ class AccessGateControllerTest {
         val controller = blockedController()
         repository.onClaim = { Result.failure(AccessGateApiException(404, ERROR_CODE_NOT_FOUND)) }
         controller.submitCode("WRONG")
-        assertEquals(AccessGateStrings.ERROR_NOT_FOUND, controller.screen.value.claimErrorMessage)
+        assertEquals(WandKitText.ACCESS_GATE_ERROR_NOT_FOUND.string, controller.screen.value.claimErrorMessage)
 
         repository.onClaim = { awaitCancellation() }
         controller.submitCode("K7QM-2XFT")

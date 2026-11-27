@@ -20,7 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.flabbergast.wandkit.core.InternalWandKitApi
-import com.flabbergast.wandkit.core.localization.WandKitStrings
+import com.flabbergast.wandkit.core.localization.WandKitText
 import com.flabbergast.wandkit.ui.compose.Res
 import com.flabbergast.wandkit.ui.compose.WandKitColors
 import com.flabbergast.wandkit.ui.compose.ic_close
@@ -84,7 +84,7 @@ internal fun WandKitModalCloseButton(
     ) {
         Icon(
             painter = painterResource(Res.drawable.ic_close),
-            contentDescription = WandKitStrings.get("wandkit.close", "Close"),
+            contentDescription = WandKitText.CLOSE.string,
             tint = WandKitColors.label,
             modifier = Modifier.size(24.dp),
         )

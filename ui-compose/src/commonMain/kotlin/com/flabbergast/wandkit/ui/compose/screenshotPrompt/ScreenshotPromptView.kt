@@ -37,7 +37,7 @@ import com.arkivanov.decompose.value.Value
 import com.flabbergast.wandkit.core.InternalWandKitApi
 import com.flabbergast.wandkit.core.components.screenshotPrompt.ScreenshotPromptComponent
 import com.flabbergast.wandkit.core.feedback.WandKitComposerAttachment
-import com.flabbergast.wandkit.core.localization.WandKitStrings
+import com.flabbergast.wandkit.core.localization.WandKitText
 import com.flabbergast.wandkit.ui.compose.WandKitColors
 import com.flabbergast.wandkit.ui.compose.WandKitThemeDefaults
 import com.flabbergast.wandkit.ui.compose.WandKitThemeProvider
@@ -104,7 +104,7 @@ internal fun ScreenshotPromptView(
                                 image?.let {
                                     Image(
                                         bitmap = it,
-                                        contentDescription = WandKitStrings.get("wandkit.screenshot_prompt.thumbnail", "Your screenshot"),
+                                        contentDescription = WandKitText.SCREENSHOT_PROMPT_THUMBNAIL.string,
                                         contentScale = ContentScale.Fit,
                                         modifier = Modifier
                                             .widthIn(max = 94.dp)
@@ -130,18 +130,18 @@ internal fun ScreenshotPromptView(
                 when (phase) {
                     is ScreenshotPromptComponent.ViewState.Phase.Prompt -> {
                         ScreenshotActions(
-                            primaryLabel = WandKitStrings.get("wandkit.screenshot_prompt.report", "Continue"),
+                            primaryLabel = WandKitText.SCREENSHOT_PROMPT_REPORT.string,
                             onPrimary = component::onReport,
-                            secondaryLabel = WandKitStrings.get("wandkit.screenshot_prompt.not_now", "Not now"),
+                            secondaryLabel = WandKitText.SCREENSHOT_PROMPT_NOT_NOW.string,
                             onSecondary = component::onDismiss,
                         )
                     }
 
                     is ScreenshotPromptComponent.ViewState.Phase.Composing -> {
                         ScreenshotActions(
-                            primaryLabel = if (phase.error != null) WandKitStrings.get("wandkit.screenshot_prompt.retry", "Try again") else WandKitStrings.get("wandkit.screenshot_prompt.send", "Send"),
+                            primaryLabel = if (phase.error != null) WandKitText.SCREENSHOT_PROMPT_RETRY.string else WandKitText.SCREENSHOT_PROMPT_SEND.string,
                             onPrimary = component::onSend,
-                            secondaryLabel = WandKitStrings.get("wandkit.screenshot_prompt.not_now", "Not now"),
+                            secondaryLabel = WandKitText.SCREENSHOT_PROMPT_NOT_NOW.string,
                             onSecondary = component::onDismiss,
                             primaryEnabled = phase.text.isNotBlank() && !phase.isSending,
                             secondaryEnabled = !phase.isSending,
@@ -151,7 +151,7 @@ internal fun ScreenshotPromptView(
 
                     is ScreenshotPromptComponent.ViewState.Phase.Sent -> {
                         Text(
-                            text = WandKitStrings.get("wandkit.powered_by", "Powered by WandKit"),
+                            text = WandKitText.POWERED_BY.string,
                             style = WandKitTypography.modalPromoLabel,
                             textAlign = TextAlign.Center,
                             color = WandKitColors.label,
@@ -174,14 +174,14 @@ private fun ScreenshotPromptCardContent() {
             .padding(horizontal = 20.dp),
     ) {
         Text(
-            text = WandKitStrings.get("wandkit.screenshot_prompt.title", "Report a problem?"),
+            text = WandKitText.SCREENSHOT_PROMPT_TITLE.string,
             style = WandKitTypography.modalTitle,
             textAlign = TextAlign.Center,
             color = WandKitColors.label,
         )
 
         Text(
-            text = WandKitStrings.get("wandkit.screenshot_prompt.message", "Attach this screenshot to a report so we can take a look."),
+            text = WandKitText.SCREENSHOT_PROMPT_MESSAGE.string,
             style = WandKitTypography.modalSubtitle,
             color = WandKitColors.label,
             textAlign = TextAlign.Center,
@@ -204,7 +204,7 @@ private fun ScreenshotComposingContent(
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text(
-            text = WandKitStrings.get("wandkit.screenshot_prompt.title", "Report a problem?"),
+            text = WandKitText.SCREENSHOT_PROMPT_TITLE.string,
             style = WandKitTypography.modalTitle,
             textAlign = TextAlign.Center,
             color = WandKitColors.label,
@@ -217,7 +217,7 @@ private fun ScreenshotComposingContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 120.dp),
-            placeholder = WandKitStrings.get("wandkit.screenshot_prompt.compose_placeholder", "What went wrong?"),
+            placeholder = WandKitText.SCREENSHOT_PROMPT_COMPOSE_PLACEHOLDER.string,
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             autoFocus = true,
         )
@@ -234,7 +234,7 @@ private fun ScreenshotComposingContent(
 
         if (includesDebugAttachments) {
             Text(
-                text = WandKitStrings.get("wandkit.screenshot_prompt.debug_disclosure", "Diagnostic logs will be included to help us fix this."),
+                text = WandKitText.SCREENSHOT_PROMPT_DEBUG_DISCLOSURE.string,
                 style = WandKitTypography.bodySmall,
                 color = WandKitColors.secondaryLabel,
                 textAlign = TextAlign.Center,
@@ -274,7 +274,7 @@ private fun ReplayToggleRow(
             .padding(horizontal = 4.dp),
     ) {
         Text(
-            text = WandKitStrings.get("wandkit.screenshot_prompt.include_replay", "Include a replay of the last minute"),
+            text = WandKitText.SCREENSHOT_PROMPT_INCLUDE_REPLAY.string,
             style = WandKitTypography.bodySmall,
             color = WandKitColors.label,
             modifier = Modifier.weight(1f),
@@ -300,14 +300,14 @@ private fun ScreenshotSentContent() {
             .padding(horizontal = 20.dp),
     ) {
         Text(
-            text = WandKitStrings.get("wandkit.screenshot_prompt.sent_title", "Thanks — we got it"),
+            text = WandKitText.SCREENSHOT_PROMPT_SENT_TITLE.string,
             style = WandKitTypography.modalTitle,
             textAlign = TextAlign.Center,
             color = WandKitColors.label,
         )
 
         Text(
-            text = WandKitStrings.get("wandkit.screenshot_prompt.sent_message", "The team will take a look."),
+            text = WandKitText.SCREENSHOT_PROMPT_SENT_MESSAGE.string,
             style = WandKitTypography.modalSubtitle,
             color = WandKitColors.label,
             textAlign = TextAlign.Center,
@@ -352,7 +352,7 @@ private fun ScreenshotActions(
         }
 
         Text(
-            text = WandKitStrings.get("wandkit.powered_by", "Powered by WandKit"),
+            text = WandKitText.POWERED_BY.string,
             style = WandKitTypography.modalPromoLabel,
             textAlign = TextAlign.Center,
             color = WandKitColors.label,
